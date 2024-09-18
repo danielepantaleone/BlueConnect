@@ -124,6 +124,55 @@ public class BlePeripheralInteractor: NSObject {
         self.peripheral.peripheralDelegate = self
     }
     
+    /// Perform `BlePeripheralInteractor` graceful deinitialization.
+    deinit {
+        mutex.lock()
+        defer { mutex.unlock() }
+        peripheral.peripheralDelegate = nil
+        readingCharacteristics.removeAll()
+        cache.removeAll()
+        // Stop timers
+        discoverServiceTimers.forEach { $1.cancel() }
+        discoverServiceTimers.removeAll()
+        discoverCharacteristicTimers.forEach { $1.cancel() }
+        discoverCharacteristicTimers.removeAll()
+        characteristicReadTimers.forEach { $1.cancel() }
+        characteristicReadTimers.removeAll()
+        characteristicWriteTimers.forEach { $1.cancel() }
+        characteristicWriteTimers.removeAll()
+        characteristicNotifyTimers.forEach { $1.cancel() }
+        characteristicNotifyTimers.removeAll()
+        // Notify callbacks
+        discoverServiceCallbacks.values
+            .flatMap { $0 }
+            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+        discoverServiceCallbacks.removeAll()
+        discoverCharacteristicCallbacks.values
+            .flatMap { $0 }
+            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+        discoverCharacteristicCallbacks.removeAll()
+        characteristicReadCallbacks.values
+            .flatMap { $0 }
+            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+        characteristicReadCallbacks.removeAll()
+        characteristicNotifyCallbacks.values
+            .flatMap { $0 }
+            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+        characteristicNotifyCallbacks.removeAll()
+        characteristicWriteCallbacks.values
+            .flatMap { $0 }
+            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+        characteristicWriteCallbacks.removeAll()
+        // Notify publishers
+        didDiscoverCharacteristicsSubject.send(completion: .finished)
+        didDiscoverServicesSubject.send(completion: .finished)
+        didUpdateNameSubject.send(completion: .finished)
+        didUpdateNotificationStateSubject.send(completion: .finished)
+        didUpdateRSSISubject.send(completion: .finished)
+        didUpdateValueSubject.send(completion: .finished)
+        didWriteValueSubject.send(completion: .finished)
+    }
+    
     // MARK: - Internals
     
     /// Retrieves a service by its UUID from the peripheral's list of services.
