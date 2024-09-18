@@ -192,7 +192,7 @@ extension BlePeripheralInteractor {
     
     /// Initiates the discovery of a specific service by its UUID and registers a callback to be executed when the service is discovered.
     ///
-    /// The discovered service will also trigger the `didDiscoverServicesPublisher`, which can notify multiple times if multiple services are found.
+    /// The discovered service will also trigger the `didDiscoverServicesPublisher`.
     ///
     /// - Parameters:
     ///   - serviceUUID: The UUID of the service to discover.
