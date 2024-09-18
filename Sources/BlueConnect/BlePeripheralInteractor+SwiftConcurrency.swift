@@ -38,8 +38,8 @@ public extension BlePeripheralInteractor {
     ///   - serviceUUID: The UUID of the service to discover.
     ///   - timeout: The timeout duration for the service discovery operation. Defaults to 10 seconds.
     ///
-    /// - Throws: If the service cannot be discovered within the specified timeout.
     /// - Returns: The discovered `CBService`.
+    /// - Throws: If the service cannot be discovered within the specified timeout.
     @discardableResult
     func discover(
         serviceUUID: CBUUID,
@@ -61,8 +61,8 @@ public extension BlePeripheralInteractor {
     ///   - serviceUUID: The UUID of the service containing the characteristic.
     ///   - timeout: The timeout duration for the characteristic discovery operation. Defaults to 10 seconds.
     ///
-    /// - Throws: If the characteristic cannot be discovered within the specified timeout.
     /// - Returns: The discovered `CBCharacteristic`.
+    /// - Throws: If the characteristic cannot be discovered within the specified timeout.
     @discardableResult
     func discover(
         characteristicUUID: CBUUID,
@@ -86,8 +86,8 @@ public extension BlePeripheralInteractor {
     ///   - policy: The cache policy dictating whether to fetch the value from the peripheral or use cached data. Defaults to `.never`, meaning fresh data is read directly from the peripheral.
     ///   - timeout: The timeout duration for the read operation. Ignored if fetching from cache. Defaults to 10 seconds.
     ///
-    /// - Throws: If the characteristic cannot be read within the specified timeout or contains no data.
     /// - Returns: The characteristic data as `Data`.
+    /// - Throws: If the characteristic cannot be read within the specified timeout or contains no data.
     func read(
         characteristicUUID: CBUUID,
         policy: BlePeripheralCachePolicy,
