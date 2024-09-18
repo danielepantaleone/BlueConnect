@@ -1,5 +1,5 @@
 //
-//  BlePeripheralInteractor.swift
+//  BleWritingCharacteristicInteractor+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,32 +25,28 @@
 //  THE SOFTWARE.
 //
 
+import CoreBluetooth
 import Foundation
 
-/// An enum representing various errors that can occur during interactions with a BLE peripheral.
-///
-/// `BlePeripheralInteractorError` defines different types of errors encountered during BLE operations, such as missing characteristics, connectivity issues, or unsupported operations.
-public enum BlePeripheralInteractorError: Error {
+public extension BleWritingCharacteristicInteractor {
     
-    /// The specified characteristic was not found on the peripheral.
-    case characteristicNotFound
-    
-    /// The specified characteristic does not contain any data.
-    case characteristicDataIsNil
-    
-    /// The peripheral interactor instance has been destroyed and is no longer usable.
-    case destroyed
-    
-    /// The requested operation (read/write/notify) is not supported by the characteristic or peripheral.
-    case operationNotSupported
-    
-    /// The BLE peripheral is not connected, and operations cannot be performed.
-    case peripheralNotConnected
-    
-    /// The specified service was not found on the peripheral.
-    case serviceNotFound
-
-    /// The operation timed out before it could complete.
-    case timeout
+    /// Discover the characteristic and write a value to it asynchronously.
+    ///
+    /// This method first discovers the characteristic and then attempts to write the provided value to it.
+    /// If the write operation fails or encounters an error, an error will be thrown.
+    /// If the operation succeeds, the method completes without returning a value.
+    ///
+    /// - Parameters:
+    ///   - value: The value to write to the characteristic. This value will be encoded before writing.
+    ///   - timeout: The timeout duration for the write operation. Defaults to 10 seconds.
+    ///
+    /// - Throws: An error if the characteristic cannot be discovered, the value cannot be encoded, or the write operation fails.
+    func write(value: ValueType, timeout: DispatchTimeInterval = .seconds(10)) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            write(value: value, timeout: timeout) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
     
 }

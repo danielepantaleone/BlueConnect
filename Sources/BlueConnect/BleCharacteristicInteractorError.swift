@@ -1,5 +1,5 @@
 //
-//  BlePeripheralInteractor.swift
+//  BleCharacteristicInteractorError.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -27,30 +27,13 @@
 
 import Foundation
 
-/// An enum representing various errors that can occur during interactions with a BLE peripheral.
-///
-/// `BlePeripheralInteractorError` defines different types of errors encountered during BLE operations, such as missing characteristics, connectivity issues, or unsupported operations.
-public enum BlePeripheralInteractorError: Error {
+/// An enum representing various errors that can occur during interactions with a BLE characteristic.
+public enum BleCharacteristicInteractorError: Error {
     
-    /// The specified characteristic was not found on the peripheral.
-    case characteristicNotFound
+    /// The characteristic interactor correctly retrieved characteristic data but data conversion towards characteristic managed type failed.
+    case decodingError
     
-    /// The specified characteristic does not contain any data.
-    case characteristicDataIsNil
-    
-    /// The peripheral interactor instance has been destroyed and is no longer usable.
-    case destroyed
-    
-    /// The requested operation (read/write/notify) is not supported by the characteristic or peripheral.
-    case operationNotSupported
-    
-    /// The BLE peripheral is not connected, and operations cannot be performed.
-    case peripheralNotConnected
-    
-    /// The specified service was not found on the peripheral.
-    case serviceNotFound
-
-    /// The operation timed out before it could complete.
-    case timeout
+    /// The characteristic interactor didn't manage to encode characteristic value type into raw data to be written on the BLE peripheral.
+    case encodingError
     
 }

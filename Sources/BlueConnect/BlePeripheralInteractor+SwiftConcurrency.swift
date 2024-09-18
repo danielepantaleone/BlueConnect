@@ -39,7 +39,7 @@ public extension BlePeripheralInteractor {
     ///   - timeout: The timeout duration for the service discovery operation. Defaults to 10 seconds.
     ///
     /// - Returns: The discovered `CBService`.
-    /// - Throws: If the service cannot be discovered within the specified timeout.
+    /// - Throws: An error if the service cannot be discovered within the specified timeout.
     @discardableResult
     func discover(
         serviceUUID: CBUUID,
@@ -62,7 +62,7 @@ public extension BlePeripheralInteractor {
     ///   - timeout: The timeout duration for the characteristic discovery operation. Defaults to 10 seconds.
     ///
     /// - Returns: The discovered `CBCharacteristic`.
-    /// - Throws: If the characteristic cannot be discovered within the specified timeout.
+    /// - Throws: An error if the characteristic cannot be discovered within the specified timeout.
     @discardableResult
     func discover(
         characteristicUUID: CBUUID,
@@ -87,7 +87,7 @@ public extension BlePeripheralInteractor {
     ///   - timeout: The timeout duration for the read operation. Ignored if fetching from cache. Defaults to 10 seconds.
     ///
     /// - Returns: The characteristic data as `Data`.
-    /// - Throws: If the characteristic cannot be read within the specified timeout or contains no data.
+    /// - Throws: An error if the characteristic cannot be read within the specified timeout or contains no data.
     func read(
         characteristicUUID: CBUUID,
         policy: BlePeripheralCachePolicy,
@@ -109,7 +109,7 @@ public extension BlePeripheralInteractor {
     ///   - characteristicUUID: The UUID of the characteristic to write the data to.
     ///   - timeout: The timeout duration for the write operation. Defaults to 10 seconds.
     ///
-    /// - Throws: If the characteristic cannot be written within the specified timeout.
+    /// - Throws: An error if the characteristic cannot be written within the specified timeout.
     func write(
         data: Data,
         to characteristicUUID: CBUUID,

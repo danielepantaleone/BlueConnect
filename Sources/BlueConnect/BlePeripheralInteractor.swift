@@ -42,7 +42,7 @@ public class BlePeripheralInteractor: NSObject {
     
     /// A publisher that emits when characteristics are discovered for a service.
     /// It emits a tuple containing the service and an array of characteristics.
-    public lazy var didDiscoverCharacteristicsPublisher: AnyPublisher<(CBService, [CBCharacteristic]), Never> = {
+    public lazy var didDiscoverCharacteristicsPublisher: AnyPublisher<(service: CBService, characteristics: [CBCharacteristic]), Never> = {
         didDiscoverCharacteristicsSubject.eraseToAnyPublisher()
     }()
     
@@ -60,7 +60,7 @@ public class BlePeripheralInteractor: NSObject {
     
     /// A publisher that emits when the notification state for a characteristic changes.
     /// It emits a tuple containing the characteristic and a `Bool` indicating whether notifications are enabled.
-    public lazy var didUpdateNotificationStatePublisher: AnyPublisher<(CBCharacteristic, Bool), Never> = {
+    public lazy var didUpdateNotificationStatePublisher: AnyPublisher<(characteristic: CBCharacteristic, enabled: Bool), Never> = {
         didUpdateNotificationStateSubject.eraseToAnyPublisher()
     }()
     
@@ -72,7 +72,7 @@ public class BlePeripheralInteractor: NSObject {
     
     /// A publisher that emits when a characteristic's value has been updated.
     /// It emits a tuple containing the characteristic and the updated value as `Data`.
-    public lazy var didUpdateValuePublisher: AnyPublisher<(CBCharacteristic, Data), Never> = {
+    public lazy var didUpdateValuePublisher: AnyPublisher<(characteristic: CBCharacteristic, data: Data), Never> = {
         didUpdateValueSubject.eraseToAnyPublisher()
     }()
     
@@ -99,12 +99,12 @@ public class BlePeripheralInteractor: NSObject {
     var discoverServiceCallbacks: [CBUUID: [(Result<CBService, Error>) -> Void]] = [:]
     var discoverServiceTimers: [CBUUID: DispatchSourceTimer] = [:]
 
-    lazy var didDiscoverCharacteristicsSubject: PassthroughSubject<(CBService, [CBCharacteristic]), Never> = .init()
+    lazy var didDiscoverCharacteristicsSubject: PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never> = .init()
     lazy var didDiscoverServicesSubject: PassthroughSubject<[CBService], Never> = .init()
     lazy var didUpdateNameSubject: PassthroughSubject<String?, Never> = .init()
-    lazy var didUpdateNotificationStateSubject: PassthroughSubject<(CBCharacteristic, Bool), Never> = .init()
+    lazy var didUpdateNotificationStateSubject: PassthroughSubject<(characteristic: CBCharacteristic, enabled: Bool), Never> = .init()
     lazy var didUpdateRSSISubject: PassthroughSubject<NSNumber, Never> = .init()
-    lazy var didUpdateValueSubject: PassthroughSubject<(CBCharacteristic, Data), Never> = .init()
+    lazy var didUpdateValueSubject: PassthroughSubject<(characteristic: CBCharacteristic, data: Data), Never> = .init()
     lazy var didWriteValueSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
     
     // MARK: - Initialization

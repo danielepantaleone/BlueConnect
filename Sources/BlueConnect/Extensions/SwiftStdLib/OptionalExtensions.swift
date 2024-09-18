@@ -27,7 +27,7 @@
 
 extension Optional where Wrapped: Collection & ExpressibleByArrayLiteral {
     
-    ///  The collection itself or an empty collection if nil was found.
+    ///  The collection itself or an empty collection if `nil` was found.
     var emptyIfNil: Wrapped { self ?? [] }
     
 }

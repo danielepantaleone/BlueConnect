@@ -1,5 +1,5 @@
 //
-//  BlePeripheralInteractor.swift
+//  BleCharacteristicInteractor+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,32 +25,25 @@
 //  THE SOFTWARE.
 //
 
+import CoreBluetooth
 import Foundation
 
-/// An enum representing various errors that can occur during interactions with a BLE peripheral.
-///
-/// `BlePeripheralInteractorError` defines different types of errors encountered during BLE operations, such as missing characteristics, connectivity issues, or unsupported operations.
-public enum BlePeripheralInteractorError: Error {
+public extension BleCharacteristicInteractor {
     
-    /// The specified characteristic was not found on the peripheral.
-    case characteristicNotFound
-    
-    /// The specified characteristic does not contain any data.
-    case characteristicDataIsNil
-    
-    /// The peripheral interactor instance has been destroyed and is no longer usable.
-    case destroyed
-    
-    /// The requested operation (read/write/notify) is not supported by the characteristic or peripheral.
-    case operationNotSupported
-    
-    /// The BLE peripheral is not connected, and operations cannot be performed.
-    case peripheralNotConnected
-    
-    /// The specified service was not found on the peripheral.
-    case serviceNotFound
-
-    /// The operation timed out before it could complete.
-    case timeout
+    /// Discover the service and then characteristic.
+    ///
+    /// - Parameters:
+    ///   - timeout: The timeout duration for the characteristic discovery operation. Defaults to 10 seconds.
+    ///
+    /// - Throws: An error if the discovery fails within the specified timeout.
+    /// - Returns: The discovered `CBCharacteristic`.
+    @discardableResult
+    func discover(timeout: DispatchTimeInterval = .seconds(10)) async throws -> CBCharacteristic {
+        try await withCheckedThrowingContinuation { continuation in
+            discover(timeout: timeout) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
     
 }
