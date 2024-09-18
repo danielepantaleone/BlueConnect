@@ -85,6 +85,7 @@ public class BlePeripheralInteractor: NSObject {
     // MARK: - Internal properties
     
     var cache: [CBUUID: BlePeripheralCacheRecord] = [:]
+    var readingCharacteristics: Set<CBUUID> = []
     let mutex = RecursiveMutex()
     
     var characteristicReadCallbacks: [CBUUID: [(Result<Data, Error>) -> Void]] = [:]
@@ -147,13 +148,35 @@ public class BlePeripheralInteractor: NSObject {
         return nil
     }
     
+    /// Register a callback for a specific characteristic or service to the provided store.
+    ///
+    /// - Parameters:
+    ///   - store: The dictionary storing arrays of callback closures associated with their respective UUIDs.
+    ///   - uuid: The UUID of the characteristic or service.
+    ///   - callback: A closure that will be invoked when a `Result<T, Error>` is available for the specified UUID.
+    ///
+    func registerCallback<T>(
+        store: inout [CBUUID: [(Result<T, Error>) -> Void]],
+        uuid: CBUUID,
+        callback: @escaping (Result<T, Error>) -> Void
+    ) {
+        if store[uuid] == nil {
+            store[uuid] = []
+        }
+        store[uuid]?.append(callback)
+    }
+    
     /// Notifies registered callbacks with a result for a specific characteristic or service.
     ///
     /// - Parameters:
     ///   - store: The dictionary holding the callbacks for the characteristic or service.
     ///   - uuid: The UUID of the characteristic or service.
     ///   - value: The result to pass to the callbacks.
-    func notifyCallbacks<T>(store: inout [CBUUID: [(Result<T, Error>) -> Void]], uuid: CBUUID, value: Result<T, Error>) {
+    func notifyCallbacks<T>(
+        store: inout [CBUUID: [(Result<T, Error>) -> Void]],
+        uuid: CBUUID,
+        value: Result<T, Error>
+    ) {
         guard let callbacks = store[uuid] else {
             return
         }
@@ -182,8 +205,7 @@ extension BlePeripheralInteractor {
     ) {
         mutex.lock()
         defer { mutex.unlock() }
-        discoverServiceCallbacks[serviceUUID] = discoverServiceCallbacks[serviceUUID].emptyIfNil
-        discoverServiceCallbacks[serviceUUID]?.append(callback)
+        registerCallback(store: &discoverServiceCallbacks, uuid: serviceUUID, callback: callback)
         discover(serviceUUIDs: [serviceUUID], timeout: timeout)
     }
     
@@ -271,8 +293,7 @@ extension BlePeripheralInteractor {
     ) {
         mutex.lock()
         defer { mutex.unlock() }
-        discoverCharacteristicCallbacks[characteristicUUID] = discoverCharacteristicCallbacks[characteristicUUID].emptyIfNil
-        discoverCharacteristicCallbacks[characteristicUUID]?.append(callback)
+        registerCallback(store: &discoverCharacteristicCallbacks, uuid: characteristicUUID, callback: callback)
         discover(characteristicUUIDs: [characteristicUUID], in: serviceUUID, timeout: timeout)
     }
     
@@ -346,6 +367,65 @@ extension BlePeripheralInteractor {
             startDiscoverCharacteristicTimers(characteristicUUIDs: toDiscover, timeout: timeout)
             peripheral.discoverCharacteristics(toDiscover, for: service)
         }
+        
+    }
+    
+}
+
+// MARK: - Characteristic read
+
+extension BlePeripheralInteractor {
+    
+    /// Reads the value of a characteristic and notifies the result through the provided callback.
+    ///
+    /// This method attempts to read the characteristic's value, either from the peripheral or the cache, depending on the specified cache policy.
+    /// If a read operation for the same characteristic is already in progress, the operation will not be triggered again.
+    ///
+    /// - Parameters:
+    ///   - characteristicUUID: The UUID of the characteristic to read.
+    ///   - policy: The cache policy that dictates whether the value should be fetched from the peripheral or retrieved from the cache. Defaults to `.never`, meaning fresh data is read directly from the peripheral unless specified otherwise.
+    ///   - timeout: The timeout for the characteristic read operation. This is ignored if the value is fetched from the cache. Defaults to 10 seconds.
+    ///   - callback: A closure that is executed when the read operation completes. The closure is passed a `Result` containing the characteristic's data or an error if the read fails.
+    ///
+    /// - Note: The read operation will only occur if no other read for the same characteristic is already in progress. Multiple simultaneous read requests for the same characteristic will not trigger multiple read operations.
+    public func read(
+        characteristicUUID: CBUUID,
+        policy: BlePeripheralCachePolicy = .never,
+        timeout: DispatchTimeInterval = .seconds(10),
+        callback: @escaping (Result<Data, Error>) -> Void
+    ) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        if let record = cache[characteristicUUID], policy.isValid(time: record.time) {
+            callback(.success(record.data))
+            return
+        }
+        
+        guard peripheral.state == .connected else {
+            callback(.failure(BlePeripheralInteractorError.peripheralNotConnected))
+            return
+        }
+        guard let characteristic = getCharacteristic(characteristicUUID) else {
+            callback(.failure(BlePeripheralInteractorError.characteristicNotFound))
+            return
+        }
+        guard characteristic.properties.contains(.read) else {
+            callback(.failure(BlePeripheralInteractorError.operationNotSupported))
+            return
+        }
+        
+        registerCallback(store: &characteristicReadCallbacks, uuid: characteristicUUID, callback: callback)
+        startCharacteristicReadTimer(characteristicUUID: characteristicUUID, timeout: timeout)
+        
+        guard !readingCharacteristics.contains(characteristicUUID) else {
+            // Characteristic is already being read from the peripheral so avoid sending multiple read requests
+            return
+        }
+        
+        // Read from the peripheral.
+        peripheral.readValue(for: characteristic)
         
     }
     
@@ -631,6 +711,35 @@ extension BlePeripheralInteractor: BlePeripheralDelegate {
         defer { mutex.unlock() }
         guard error == nil else { return }
         didUpdateRSSISubject.send(RSSI)
+    }
+    
+    public func blePeripheral(_ peripheral: BlePeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // Stop reading timer and remove currently reading characteristics even if it errored.
+        readingCharacteristics.remove(characteristic.uuid)
+        stopCharacteristicReadTimer(characteristicUUID: characteristic.uuid)
+        
+        // Notify missing data error on awaiting callbacks.
+        guard let data = characteristic.value else {
+            notifyCallbacks(
+                store: &characteristicReadCallbacks,
+                uuid: characteristic.uuid,
+                value: .failure(BlePeripheralInteractorError.characteristicDataIsNil))
+            return
+        }
+        
+        // Save to local cache (will be reused in the future according with the provided read policy)
+        cache[characteristic.uuid] = .init(data: data)
+        
+        // Notify on the publisher
+        didUpdateValueSubject.send((characteristic, data))
+
+        // Notify callbacks
+        notifyCallbacks(store: &characteristicReadCallbacks, uuid: characteristic.uuid, value: .success(data))
+
     }
     
 }
