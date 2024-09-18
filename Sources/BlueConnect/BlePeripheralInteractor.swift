@@ -471,15 +471,15 @@ extension BlePeripheralInteractor {
     /// In case of failure, the callback will contain an `Error`.
     ///
     /// - Parameters:
-    ///   - characteristicUUID: The UUID of the characteristic to which the data should be written.
     ///   - data: The data to write to the characteristic.
+    ///   - characteristicUUID: The UUID of the characteristic to which the data should be written.
     ///   - timeout: The timeout for the characteristic write operation. Defaults to 10 seconds.
     ///   - callback: A closure that is executed when the write operation completes. The closure is passed a `Result` indicating whether the operation succeeded (`.success`) or failed with an `Error`.
     ///
     /// - Note: The write operation will attempt to complete within the specified timeout, after which it may fail if the peripheral does not respond in time.
     public func write(
-        to characteristicUUID: CBUUID,
         data: Data,
+        to characteristicUUID: CBUUID,
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<Void, Error>) -> Void
     ) {
@@ -519,15 +519,15 @@ extension BlePeripheralInteractor {
     /// If the write operation fails, an error is thrown.
     ///
     /// - Parameters:
-    ///   - characteristicUUID: The UUID of the characteristic to which the data should be written.
     ///   - data: The data to write to the characteristic.
+    ///   - characteristicUUID: The UUID of the characteristic to which the data should be written.
     ///
     /// - Throws: `BlePeripheralInteractorError.peripheralNotConnected` if the peripheral is not connected.
     /// - Throws: `BlePeripheralInteractorError.characteristicNotFound` if the characteristic with the specified UUID cannot be found.
     /// - Throws: `BlePeripheralInteractorError.operationNotSupported` if the characteristic does not support writing without a response.
     ///
     /// - Note: This method is useful for sending data where a response from the peripheral is not required, such as sending notifications or control commands.
-    public func writeWithoutResponse(to characteristicUUID: CBUUID, data: Data) throws {
+    public func writeWithoutResponse(data: Data, to characteristicUUID: CBUUID) throws {
         
         mutex.lock()
         defer { mutex.unlock() }
@@ -544,6 +544,64 @@ extension BlePeripheralInteractor {
 
         peripheral.writeValue(data, for: characteristic, type: .withoutResponse)
 
+    }
+    
+}
+
+// MARK: - Characteristic notify
+
+extension BlePeripheralInteractor {
+ 
+    /// Enables or disables notifications for a specific characteristic.
+    ///
+    /// This method updates the notification state for the given characteristic and executes the provided callback when the operation is complete.
+    /// If notifications are already in the desired state, the callback is called immediately with the current state.
+    ///
+    /// - Parameters:
+    ///   - enabled: `true` to enable notifications, `false` to disable notifications for the characteristic.
+    ///   - characteristicUUID: The UUID of the characteristic for which to set the notification state.
+    ///   - timeout: The timeout duration for the notification set operation. If the operation does not complete within this time, it will fail.
+    ///   - callback: A closure to execute when the characteristic notification state is updated. The closure receives a `Result` indicating success or failure, with the current notification state as a success value.
+    ///
+    /// - Note: If the desired notification state is already set, the method will immediately return the current state without performing any further operations.
+    public func setNotify(
+        enabled: Bool,
+        for characteristicUUID: CBUUID,
+        timeout: DispatchTimeInterval = .seconds(10),
+        callback: @escaping (Result<Bool, Error>) -> Void
+    ) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        guard peripheral.state == .connected else {
+            callback(.failure(BlePeripheralInteractorError.peripheralNotConnected))
+            return
+        }
+        guard let characteristic = getCharacteristic(characteristicUUID) else {
+            callback(.failure(BlePeripheralInteractorError.characteristicNotFound))
+            return
+        }
+        guard characteristic.properties.contains(.notify) else {
+            callback(.failure(BlePeripheralInteractorError.operationNotSupported))
+            return
+        }
+        guard enabled != characteristic.isNotifying else {
+            callback(.success(characteristic.isNotifying))
+            return
+        }
+        
+        registerCallback(
+            store: &characteristicNotifyCallbacks,
+            uuid: characteristicUUID,
+            callback: callback)
+        
+        startCharacteristicNotifyTimer(
+            characteristicUUID: characteristicUUID,
+            timeout: timeout)
+        
+        peripheral.setNotifyValue(enabled, for: characteristic)
+        
     }
     
 }
@@ -828,6 +886,33 @@ extension BlePeripheralInteractor: BlePeripheralDelegate {
         defer { mutex.unlock() }
         guard error == nil else { return }
         didUpdateRSSISubject.send(RSSI)
+    }
+    
+    public func blePeripheral(_ peripheral: BlePeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
+      
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        stopCharacteristicNotifyTimer(characteristicUUID: characteristic.uuid)
+        
+        // Notify any error on awaiting callbacks
+        if let error {
+            notifyCallbacks(
+                store: &characteristicNotifyCallbacks,
+                uuid: characteristic.uuid,
+                value: .failure(error))
+            return
+        }
+        
+        // Notify on the publisher
+        didUpdateNotificationStateSubject.send((characteristic, characteristic.isNotifying))
+
+        // Notify callbacks
+        notifyCallbacks(
+            store: &characteristicNotifyCallbacks,
+            uuid: characteristic.uuid,
+            value: .success(characteristic.isNotifying))
+        
     }
     
     public func blePeripheral(_ peripheral: BlePeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
