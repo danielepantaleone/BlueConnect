@@ -44,13 +44,6 @@ public protocol BlePeripheralDelegate: CBPeripheralDelegate {
     /// - Parameter peripheral: The mock `BlePeripheral` that updated its name.
     func blePeripheralDidUpdateName(_ peripheral: BlePeripheral)
     
-    /// Called when the BLE peripheral's RSSI (Received Signal Strength Indicator) is updated.
-    ///
-    /// - Parameters:
-    ///   - peripheral: The mock `BlePeripheral` that updated its RSSI.
-    ///   - error: An optional error if the operation failed.
-    func blePeripheralDidUpdateRSSI(_ peripheral: BlePeripheral, error: Error?)
-    
     /// Called when the BLE peripheral has discovered the characteristics for a specific service.
     ///
     /// - Parameters:
@@ -81,7 +74,7 @@ public protocol BlePeripheralDelegate: CBPeripheralDelegate {
     ///   - invalidatedServices: An array of invalidated `CBService` objects.
     func blePeripheral(_ peripheral: BlePeripheral, didModifyServices invalidatedServices: [CBService])
     
-    /// Called when the BLE peripheral has read its RSSI value.
+    /// Called when the BLE peripheral has read its RSSI value (Received Signal Strength Indicator).
     ///
     /// - Parameters:
     ///   - peripheral: The mock `BlePeripheral` that read its RSSI.
@@ -117,7 +110,6 @@ public protocol BlePeripheralDelegate: CBPeripheralDelegate {
 
 extension BlePeripheralDelegate {
     public func blePeripheralDidUpdateName(_ peripheral: BlePeripheral) { }
-    public func blePeripheralDidUpdateRSSI(_ peripheral: BlePeripheral, error: Error?) { }
     public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) { }
     public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverIncludedServicesFor service: CBService, error: Error?) { }
     public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverServices error: Error?) { }
