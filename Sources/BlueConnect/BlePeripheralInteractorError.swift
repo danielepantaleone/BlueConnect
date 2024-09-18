@@ -27,53 +27,44 @@
 
 import Foundation
 
-/// A struct representing errors related to interactions with a BLE peripheral.
+/// An enum representing various errors that can occur during interactions with a BLE peripheral.
 ///
-/// `BlePeripheralInteractorError` encapsulates various error categories that might occur during BLE peripheral interactions.
-/// It provides detailed information about the nature of the error, including an optional underlying error and a descriptive message.
-public struct BlePeripheralInteractorError: Error {
+/// `BlePeripheralInteractorError` defines different types of errors encountered during BLE operations, such as missing characteristics, connectivity issues, or unsupported operations.
+public enum BlePeripheralInteractorError: Error {
     
-    // MARK: - Category
-    
-    /// An enumeration defining different categories of errors that can occur during BLE peripheral interactions.
-    public enum Category {
-        /// The specified characteristic was not found on the peripheral.
-        case characteristicNotFound
-        /// The specified characteristic does not contain any data.
-        case characteristicDataIsNil
-        /// The peripheral interactor instance has been destroyed and is no longer usable.
-        case destroyed
-        /// The requested operation (read/write/notify) is not supported by the characteristic or peripheral.
-        case operationNotSupported
-        /// The BLE peripheral is not connected, and operations cannot be performed.
-        case peripheralNotConnected
-        /// The specified service was not found on the peripheral.
-        case serviceNotFound
-        /// The operation timed out before it could complete.
-        case timeout
-    }
-    
-    // MARK: - Properties
-    
-    /// The category of the error, indicating the type of issue encountered.
-    public internal(set) var category: Category
-    /// The underlying error that caused this error, if any.
-    public internal(set) var internalError: Error?
-    /// An optional descriptive message providing additional context about the error.
-    public internal(set) var message: String?
-    
-    // MARK: - Initialization
-    
-    /// Initializes a new instance of `BlePeripheralInteractorError`.
+    /// The specified characteristic was not found on the peripheral.
     ///
-    /// - Parameters:
-    ///   - category: The category of the error, describing the type of issue encountered.
-    ///   - internalError: An optional underlying error that provides more details about the cause of the error.
-    ///   - message: An optional descriptive message providing additional context about the error.
-    public init(category: Category, internalError: Error? = nil, message: String? = nil) {
-        self.category = category
-        self.internalError = internalError
-        self.message = message
-    }
+    /// This error is triggered when an operation attempts to access a characteristic that doesn't exist.
+    case characteristicNotFound
+    
+    /// The specified characteristic does not contain any data.
+    ///
+    /// This error occurs when a read operation finds the characteristic but it contains no valid data.
+    case characteristicDataIsNil
+    
+    /// The peripheral interactor instance has been destroyed and is no longer usable.
+    ///
+    /// This error indicates that the peripheral interactor object was deallocated or invalidated.
+    case destroyed
+    
+    /// The requested operation (read/write/notify) is not supported by the characteristic or peripheral.
+    ///
+    /// This error is raised when the peripheral does not support a requested operation, such as writing or enable notifying on a characteristic.
+    case operationNotSupported
+    
+    /// The BLE peripheral is not connected, and operations cannot be performed.
+    ///
+    /// This error occurs when a BLE operation is attempted but the peripheral is not connected.
+    case peripheralNotConnected
+    
+    /// The specified service was not found on the peripheral.
+    ///
+    /// This error is triggered when a service that the operation requires is missing from the peripheral.
+    case serviceNotFound
+    
+    /// The operation timed out before it could complete.
+    ///
+    /// This error occurs when a BLE operation exceeds the allowed time limit.
+    case timeout
     
 }
