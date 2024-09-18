@@ -1,5 +1,5 @@
 //
-//  BleReadingCharacteristicInteractor.swift
+//  BleCharacteristicReadInteractor.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -35,7 +35,7 @@ import Foundation
 /// It requires that conforming types define a specific `ValueType` for the characteristic, and provide access to the UUIDs of the characteristic and its associated service.
 ///
 /// Additionally, it allows access to the `BlePeripheralInteractor` managing the peripheral.
-public protocol BleReadingCharacteristicInteractor: BleCharacteristicInteractor {
+public protocol BleCharacteristicReadInteractor: BleCharacteristicInteractor {
     
     /// Decode the provided data into the interactor's value type.
     ///
@@ -50,7 +50,7 @@ public protocol BleReadingCharacteristicInteractor: BleCharacteristicInteractor 
     
 }
 
-public extension BleReadingCharacteristicInteractor {
+public extension BleCharacteristicReadInteractor {
     
     /// A publisher that emits updates when the value of the characteristic changes.
     ///
@@ -106,7 +106,7 @@ public extension BleReadingCharacteristicInteractor {
     
 }
 
-public extension BleReadingCharacteristicInteractor where ValueType == Data {
+public extension BleCharacteristicReadInteractor where ValueType == Data {
     
     /// Bypass data decoding and return raw data.
     ///

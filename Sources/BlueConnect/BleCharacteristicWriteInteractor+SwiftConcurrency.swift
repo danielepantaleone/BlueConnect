@@ -1,5 +1,5 @@
 //
-//  BleWritingCharacteristicInteractor+SwiftConcurrency.swift
+//  BleCharacteristicWriteInteractor+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -28,9 +28,9 @@
 import CoreBluetooth
 import Foundation
 
-public extension BleWritingCharacteristicInteractor {
+public extension BleCharacteristicWriteInteractor {
     
-    /// Discover the characteristic and write a value to it asynchronously.
+    /// Write characteristic value asynchronously.
     ///
     /// This method first discovers the characteristic and then attempts to write the provided value to it.
     /// If the write operation fails or encounters an error, an error will be thrown.

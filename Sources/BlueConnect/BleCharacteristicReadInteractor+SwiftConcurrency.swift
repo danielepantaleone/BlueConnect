@@ -28,7 +28,7 @@
 import CoreBluetooth
 import Foundation
 
-public extension BleReadingCharacteristicInteractor {
+public extension BleCharacteristicReadInteractor {
     
     /// Read the characteristic value according to the provided cache policy.
     ///

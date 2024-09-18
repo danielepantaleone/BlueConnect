@@ -1,5 +1,5 @@
 //
-//  BleWritingCharacteristicInteractor.swift
+//  BleCharacteristicWriteInteractor.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -29,7 +29,13 @@ import Combine
 import CoreBluetooth
 import Foundation
 
-public protocol BleWritingCharacteristicInteractor: BleCharacteristicInteractor {
+/// A protocol defining the interaction with a BLE characteristic having write capabilities.
+///
+/// This protocol provides the essential properties and methods needed to interact with a Bluetooth Low Energy (BLE) characteristic.
+/// It requires that conforming types define a specific `ValueType` for the characteristic, and provide access to the UUIDs of the characteristic and its associated service.
+///
+/// Additionally, it allows access to the `BlePeripheralInteractor` managing the peripheral.
+public protocol BleCharacteristicWriteInteractor: BleCharacteristicInteractor {
  
     /// Encode data using the interactor's information.
     ///
@@ -45,7 +51,7 @@ public protocol BleWritingCharacteristicInteractor: BleCharacteristicInteractor 
     
 }
 
-public extension BleWritingCharacteristicInteractor {
+public extension BleCharacteristicWriteInteractor {
     
     /// A publisher that emits a value when the characteristic's value is successfully written.
     ///
@@ -59,7 +65,7 @@ public extension BleWritingCharacteristicInteractor {
             .eraseToAnyPublisher()
     }
     
-    /// Write a value to a specific characteristic and notify the result via the provided callback.
+    /// Write a value to the characteristic and notify the result via the provided callback.
     ///
     /// This method discovers the characteristic and then attempts to write the provided value to it.
     /// If the write operation fails, an error will be reported through the callback.
@@ -97,7 +103,7 @@ public extension BleWritingCharacteristicInteractor {
     
 }
 
-public extension BleWritingCharacteristicInteractor where ValueType == Data {
+public extension BleCharacteristicWriteInteractor where ValueType == Data {
     
     /// Bypass data encoding and return raw data.
     ///
