@@ -205,8 +205,14 @@ extension BlePeripheralInteractor {
     ) {
         mutex.lock()
         defer { mutex.unlock() }
-        registerCallback(store: &discoverServiceCallbacks, uuid: serviceUUID, callback: callback)
+        
+        registerCallback(
+            store: &discoverServiceCallbacks,
+            uuid: serviceUUID,
+            callback: callback)
+        
         discover(serviceUUIDs: [serviceUUID], timeout: timeout)
+        
     }
     
     /// Initiates the discovery of a set of services, or discovers all available services if `nil` is specified as `serviceUUIDs`.
@@ -265,8 +271,13 @@ extension BlePeripheralInteractor {
         // Discover the remaining ones
         let toDiscover = serviceUUIDs.emptyIfNil.filter { !alreadyDiscovered.map { $0.uuid }.contains($0) }
         if !toDiscover.isEmpty {
-            startDiscoverServiceTimers(serviceUUIDs: toDiscover, timeout: timeout)
+            
+            startDiscoverServiceTimers(
+                serviceUUIDs: toDiscover,
+                timeout: timeout)
+            
             peripheral.discoverServices(toDiscover)
+            
         }
         
     }
@@ -291,10 +302,17 @@ extension BlePeripheralInteractor {
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<CBCharacteristic, Error>) -> Void
     ) {
+        
         mutex.lock()
         defer { mutex.unlock() }
-        registerCallback(store: &discoverCharacteristicCallbacks, uuid: characteristicUUID, callback: callback)
+        
+        registerCallback(
+            store: &discoverCharacteristicCallbacks,
+            uuid: characteristicUUID,
+            callback: callback)
+        
         discover(characteristicUUIDs: [characteristicUUID], in: serviceUUID, timeout: timeout)
+        
     }
     
     /// Discover a set of characteristics for the provided service, or all available characteristics if `nil` is specified for `characteristicUUIDs`.
@@ -364,8 +382,13 @@ extension BlePeripheralInteractor {
         // Discover the remaining ones
         let toDiscover = characteristicUUIDs.emptyIfNil.filter { !alreadyDiscovered.map { $0.uuid }.contains($0) }
         if !toDiscover.isEmpty {
-            startDiscoverCharacteristicTimers(characteristicUUIDs: toDiscover, timeout: timeout)
+            
+            startDiscoverCharacteristicTimers(
+                characteristicUUIDs: toDiscover,
+                timeout: timeout)
+            
             peripheral.discoverCharacteristics(toDiscover, for: service)
+            
         }
         
     }
@@ -416,17 +439,111 @@ extension BlePeripheralInteractor {
             return
         }
         
-        registerCallback(store: &characteristicReadCallbacks, uuid: characteristicUUID, callback: callback)
-        startCharacteristicReadTimer(characteristicUUID: characteristicUUID, timeout: timeout)
+        registerCallback(
+            store: &characteristicReadCallbacks,
+            uuid: characteristicUUID,
+            callback: callback)
+        
+        startCharacteristicReadTimer(
+            characteristicUUID: characteristicUUID,
+            timeout: timeout)
         
         guard !readingCharacteristics.contains(characteristicUUID) else {
             // Characteristic is already being read from the peripheral so avoid sending multiple read requests
             return
         }
         
-        // Read from the peripheral.
+        // Read from the peripheral
         peripheral.readValue(for: characteristic)
         
+    }
+    
+}
+
+// MARK: - Characteristic write
+
+extension BlePeripheralInteractor {
+    
+    /// Writes a value to a specific characteristic and notifies the result through the provided callback.
+    ///
+    /// This method writes the specified data to the given characteristic and invokes the callback upon completion.
+    /// If the write operation succeeds, the callback is passed a `Result` containing `.success`.
+    /// In case of failure, the callback will contain an `Error`.
+    ///
+    /// - Parameters:
+    ///   - characteristicUUID: The UUID of the characteristic to which the data should be written.
+    ///   - data: The data to write to the characteristic.
+    ///   - timeout: The timeout for the characteristic write operation. Defaults to 10 seconds.
+    ///   - callback: A closure that is executed when the write operation completes. The closure is passed a `Result` indicating whether the operation succeeded (`.success`) or failed with an `Error`.
+    ///
+    /// - Note: The write operation will attempt to complete within the specified timeout, after which it may fail if the peripheral does not respond in time.
+    public func write(
+        to characteristicUUID: CBUUID,
+        data: Data,
+        timeout: DispatchTimeInterval = .seconds(10),
+        callback: @escaping (Result<Void, Error>) -> Void
+    ) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        guard peripheral.state == .connected else {
+            callback(.failure(BlePeripheralInteractorError.peripheralNotConnected))
+            return
+        }
+        guard let characteristic = getCharacteristic(characteristicUUID) else {
+            callback(.failure(BlePeripheralInteractorError.characteristicNotFound))
+            return
+        }
+        guard characteristic.properties.contains(.write) else {
+            callback(.failure(BlePeripheralInteractorError.operationNotSupported))
+            return
+        }
+        
+        registerCallback(
+            store: &characteristicWriteCallbacks,
+            uuid: characteristicUUID,
+            callback: callback)
+        
+        startCharacteristicWriteTimer(
+            characteristicUUID: characteristicUUID,
+            timeout: timeout)
+        
+        peripheral.writeValue(data, for: characteristic, type: .withResponse)
+        
+    }
+    
+    /// Writes a value to a specific characteristic without triggering a response from the peripheral.
+    ///
+    /// This method writes the specified data to the given characteristic and does not wait for a response from the peripheral.
+    /// If the write operation fails, an error is thrown.
+    ///
+    /// - Parameters:
+    ///   - characteristicUUID: The UUID of the characteristic to which the data should be written.
+    ///   - data: The data to write to the characteristic.
+    ///
+    /// - Throws: `BlePeripheralInteractorError.peripheralNotConnected` if the peripheral is not connected.
+    /// - Throws: `BlePeripheralInteractorError.characteristicNotFound` if the characteristic with the specified UUID cannot be found.
+    /// - Throws: `BlePeripheralInteractorError.operationNotSupported` if the characteristic does not support writing without a response.
+    ///
+    /// - Note: This method is useful for sending data where a response from the peripheral is not required, such as sending notifications or control commands.
+    public func writeWithoutResponse(to characteristicUUID: CBUUID, data: Data) throws {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        guard peripheral.state == .connected else {
+            throw BlePeripheralInteractorError.peripheralNotConnected
+        }
+        guard let characteristic = getCharacteristic(characteristicUUID) else {
+            throw BlePeripheralInteractorError.characteristicNotFound
+        }
+        guard characteristic.properties.contains(.writeWithoutResponse) else {
+            throw BlePeripheralInteractorError.operationNotSupported
+        }
+
+        peripheral.writeValue(data, for: characteristic, type: .withoutResponse)
+
     }
     
 }
@@ -718,11 +835,20 @@ extension BlePeripheralInteractor: BlePeripheralDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
-        // Stop reading timer and remove currently reading characteristics even if it errored.
+        // Stop reading timer and remove currently reading characteristics even if it errored
         readingCharacteristics.remove(characteristic.uuid)
         stopCharacteristicReadTimer(characteristicUUID: characteristic.uuid)
         
-        // Notify missing data error on awaiting callbacks.
+        // Notify any error on awaiting callbacks
+        if let error {
+            notifyCallbacks(
+                store: &characteristicReadCallbacks,
+                uuid: characteristic.uuid,
+                value: .failure(error))
+            return
+        }
+        
+        // Notify missing data error on awaiting callbacks
         guard let data = characteristic.value else {
             notifyCallbacks(
                 store: &characteristicReadCallbacks,
@@ -738,8 +864,35 @@ extension BlePeripheralInteractor: BlePeripheralDelegate {
         didUpdateValueSubject.send((characteristic, data))
 
         // Notify callbacks
-        notifyCallbacks(store: &characteristicReadCallbacks, uuid: characteristic.uuid, value: .success(data))
+        notifyCallbacks(
+            store: &characteristicReadCallbacks,
+            uuid: characteristic.uuid,
+            value: .success(data))
 
+    }
+    
+    public func blePeripheral(_ peripheral: BlePeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        stopCharacteristicWriteTimer(characteristicUUID: characteristic.uuid)
+        
+        // Notify any error on awaiting callbacks
+        if let error {
+            notifyCallbacks(
+                store: &characteristicWriteCallbacks,
+                uuid: characteristic.uuid,
+                value: .failure(error))
+            return
+        }
+        
+        // Notify callbacks
+        notifyCallbacks(
+            store: &characteristicWriteCallbacks,
+            uuid: characteristic.uuid,
+            value: .success(()))
+        
     }
     
 }
