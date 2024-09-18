@@ -33,6 +33,9 @@ import Dispatch
 /// This helps optimize communication with Bluetooth hardware by reducing unnecessary requests when cached data is available and valid.
 public enum BlePeripheralCachePolicy {
     
+    /// Never use the cached value and always fetch the latest data from the peripheral.
+    case never
+    
     /// Always use the cached value if present, regardless of its age.
     case always
     
@@ -41,9 +44,6 @@ public enum BlePeripheralCachePolicy {
     /// - Parameter timeInterval: The maximum time interval for which the cached value is considered valid.
     case timeSensitive(DispatchTimeInterval)
 
-    /// Never use the cached value and always fetch the latest data from the peripheral.
-    case never
-    
     // MARK: - Functions
     
     /// Determines whether the cached data is still valid based on the cache policy.
@@ -52,12 +52,12 @@ public enum BlePeripheralCachePolicy {
     /// - Returns: `true` if the cached data is valid according to the cache policy, `false` otherwise.
     public func isValid(time: DispatchTime = .now()) -> Bool {
         switch self {
+            case .never:
+                return false
             case .always:
                 return true
             case .timeSensitive(let timeInterval):
                 return time.distance(to: .now()) < timeInterval
-            case .never:
-                return false
         }
     }
     
