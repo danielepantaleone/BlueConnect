@@ -29,7 +29,7 @@ import Combine
 import CoreBluetooth
 import Foundation
 
-extension BleCentralManagerInteractor: CBCentralManagerDelegate{
+extension BleCentralManagerInteractor: CBCentralManagerDelegate {
     
     public func centralManagerDidUpdateState(_ central: CBCentralManager) {
         bleCentralManagerDidUpdateState(central)
@@ -39,7 +39,7 @@ extension BleCentralManagerInteractor: CBCentralManagerDelegate{
         bleCentralManager(central, didConnect: peripheral)
     }
     
-    public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
+    public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
         bleCentralManager(central, didDiscover: peripheral, advertisementData: .init(advertisementData), rssi: RSSI)
     }
     

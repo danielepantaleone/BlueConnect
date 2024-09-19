@@ -1,5 +1,5 @@
 //
-//  BleAdvertisementData.swift
+//  MockBlePeripheral.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -91,7 +91,7 @@ class MockBlePeripheral: BlePeripheral {
     // MARK: - Initialization
     
     init(identifier: UUID,
-         name: String,
+         name: String?,
          serialNumber: String,
          batteryLevel: Int,
          firmwareRevision: String,

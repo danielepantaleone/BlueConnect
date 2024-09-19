@@ -46,7 +46,7 @@ extension BleCentralManagerInteractor {
     /// - Throws: An error if the connection fails or if the operation times out.
     public func connect(
         peripheral: BlePeripheral,
-        options: [String : Any]? = nil,
+        options: [String: Any]? = nil,
         timeout: DispatchTimeInterval = .never
     ) async throws {
         try await withCheckedThrowingContinuation { continuation in

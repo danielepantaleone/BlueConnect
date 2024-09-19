@@ -151,7 +151,7 @@ extension BleCentralManagerInteractor {
     ///   - callback: A callback that is called with the result of the connection attempt.
     public func connect(
         peripheral: BlePeripheral,
-        options: [String : Any]? = nil,
+        options: [String: Any]? = nil,
         timeout: DispatchTimeInterval = .never,
         callback: ((Result<Void, Error>) -> Void)? = nil
     ) {

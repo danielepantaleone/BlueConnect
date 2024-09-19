@@ -1,5 +1,5 @@
 //
-//  BleAdvertisementData.swift
+//  MockBleDescriptor.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -54,5 +54,10 @@ enum MockBleDescriptor {
     static let customServiceUUID = CBUUID(string: "C5405A74-7C07-4702-A631-9D5EBF007DAE")
     static let secretCharacteristicUUID = CBUUID(string: "5A8F2E01-58D9-4B0B-83B8-843402E49293")
     static let bufferCharacteristicUUID = CBUUID(string: "5A8F2E02-58D9-4B0B-83B8-843402E49293")
+    
+    // MARK: - Peripherals
+    
+    static let peripheralUUID_1 = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+    static let peripheralUUID_2 = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
     
 }

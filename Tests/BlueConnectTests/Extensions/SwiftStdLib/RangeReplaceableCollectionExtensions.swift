@@ -1,5 +1,5 @@
 //
-//  MockBleError.swift
+//  RangeReplaceableCollectionExtensions.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,16 +25,16 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
-
-enum MockBleError: Error {
-    /// BLE manager not powered on
-    case bluetoothIsOff
-    /// BLE peripheral not connected
-    case peripheralNotConnected
-    /// Peripheral interaction (read/write/notify) not supported
-    case operationNotSupported
-    /// Characteristic not found
-    case characteristicNotFound
+extension RangeReplaceableCollection {
+    
+    /// Returns `true` if the collection contains at lease one element of the provided sequence, `false` otherwise.
+    ///
+    /// - parameters:
+    ///   - sequence: The sequence where to serch for item presence
+    func contains<S: Sequence>(oneOf sequence: S) -> Bool where S.Element == Element, Element: Hashable {
+        var set = Set(sequence)
+        let intersection = filter { !set.insert($0).inserted }
+        return !intersection.isEmpty
+    }
+    
 }
-
