@@ -64,7 +64,6 @@ public extension BleCharacteristicWriteWithoutResponseInteractor {
         timeout: DispatchTimeInterval = .seconds(10),
         callback: ((Result<Void, Error>) -> Void)? = nil
     ) {
-        let start: DispatchTime = .now()
         discover(timeout: timeout) { result in
             result.forwardError(to: callback)
             result.onSuccess { characteristic in
