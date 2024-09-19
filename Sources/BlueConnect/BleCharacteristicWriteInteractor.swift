@@ -31,10 +31,8 @@ import Foundation
 
 /// A protocol defining the interaction with a BLE characteristic having write capabilities.
 ///
-/// This protocol provides the essential properties and methods needed to interact with a Bluetooth Low Energy (BLE) characteristic.
-/// It requires that conforming types define a specific `ValueType` for the characteristic, and provide access to the UUIDs of the characteristic and its associated service.
-///
-/// Additionally, it allows access to the `BlePeripheralInteractor` managing the peripheral.
+/// This protocol includes an `encode` method that allows for converting the interactor's `ValueType` into a raw `Data`
+/// representation to be written onto a BLE characteristic.
 public protocol BleCharacteristicWriteInteractor: BleCharacteristicInteractor {
  
     /// Encode data using the interactor's information.
