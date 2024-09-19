@@ -658,7 +658,7 @@ extension BlePeripheralInteractor {
 // MARK: - Timers
 
 extension BlePeripheralInteractor {
-
+    
     func startDiscoverCharacteristicTimers(characteristicUUIDs: [CBUUID], timeout: DispatchTimeInterval) {
         guard timeout != .never else { return }
         mutex.lock()
@@ -772,7 +772,7 @@ extension BlePeripheralInteractor {
         }
         characteristicWriteTimers[characteristicUUID]?.resume()
     }
-
+    
     func stopDiscoverCharacteristicTimers(characteristicUUIDs: [CBUUID]) {
         mutex.lock()
         defer { mutex.unlock() }
@@ -790,19 +790,12 @@ extension BlePeripheralInteractor {
             discoverServiceTimers[serviceUUID] = nil
         }
     }
-
+    
     func stopCharacteristicReadTimer(characteristicUUID: CBUUID) {
         mutex.lock()
         defer { mutex.unlock() }
         characteristicReadTimers[characteristicUUID]?.cancel()
         characteristicReadTimers[characteristicUUID] = nil
-    }
-
-    func stopCharacteristicWriteTimer(characteristicUUID: CBUUID) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        characteristicWriteTimers[characteristicUUID]?.cancel()
-        characteristicWriteTimers[characteristicUUID] = nil
     }
     
     func stopCharacteristicNotifyTimer(characteristicUUID: CBUUID) {
@@ -812,46 +805,11 @@ extension BlePeripheralInteractor {
         characteristicNotifyTimers[characteristicUUID] = nil
     }
     
-}
-
-// MARK: - CBPeripheralDelegate conformance
-
-extension BlePeripheralInteractor: CBPeripheralDelegate {
-    
-    public func peripheralDidUpdateName(_ peripheral: CBPeripheral) {
-        blePeripheralDidUpdateName(peripheral)
-    }
-    
-    public func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
-        blePeripheral(peripheral, didModifyServices: invalidatedServices)
-    }
-    
-    public func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
-        blePeripheral(peripheral, didReadRSSI: RSSI, error: error)
-    }
-    
-    public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
-        blePeripheral(peripheral, didDiscoverServices: error)
-    }
-    
-    public func peripheral(_ peripheral: CBPeripheral, didDiscoverIncludedServicesFor service: CBService, error: Error?) {
-        blePeripheral(peripheral, didDiscoverIncludedServicesFor: service, error: error)
-    }
-    
-    public func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-        blePeripheral(peripheral, didDiscoverCharacteristicsFor: service, error: error)
-    }
-    
-    public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        blePeripheral(peripheral, didUpdateValueFor: characteristic, error: error)
-    }
-    
-    public func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
-        blePeripheral(peripheral, didUpdateNotificationStateFor: characteristic, error: error)
-    }
-    
-    public func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
-        blePeripheral(peripheral, didWriteValueFor: characteristic, error: error)
+    func stopCharacteristicWriteTimer(characteristicUUID: CBUUID) {
+        mutex.lock()
+        defer { mutex.unlock() }
+        characteristicWriteTimers[characteristicUUID]?.cancel()
+        characteristicWriteTimers[characteristicUUID] = nil
     }
     
 }

@@ -25,8 +25,6 @@
 //  THE SOFTWARE.
 //
 
-import Foundation
-
 /// An enum representing various errors that can occur during interactions with a BLE peripheral.
 ///
 /// `BlePeripheralInteractorError` defines different types of errors encountered during BLE operations, such as missing characteristics, connectivity issues, or unsupported operations.

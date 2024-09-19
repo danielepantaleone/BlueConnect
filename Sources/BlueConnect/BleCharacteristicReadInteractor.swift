@@ -54,10 +54,9 @@ public extension BleCharacteristicReadInteractor {
     
     /// A publisher that emits updates when the value of the characteristic changes.
     ///
-    /// This publisher filters the updates to only include those related to the characteristic of interest.
-    /// It decodes the emitted data into the interactor's value type.
+    /// This publisher listens to characteristic value changes and emits a signal with data decoded into the interactor's value type.
     ///
-    /// - Note: This publisher requires that the `peripheralInteractor` is properly set up and connected. The publisher returns `nil` if `peripheralInteractor` is `nil`.
+    /// - Note: This publisher filters events to only those corresponding to the current characteristic.
     var didUpdateValuePublisher: AnyPublisher<ValueType, Never>? {
         peripheralInteractor?.didUpdateValuePublisher
             .filter { $0.characteristic.uuid == characteristicUUID }
