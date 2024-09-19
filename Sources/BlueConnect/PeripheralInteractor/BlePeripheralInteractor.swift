@@ -203,7 +203,6 @@ public class BlePeripheralInteractor: NSObject {
     ///   - store: The dictionary storing arrays of callback closures associated with their respective UUIDs.
     ///   - uuid: The UUID of the characteristic or service.
     ///   - callback: A closure that will be invoked when a `Result<T, Error>` is available for the specified UUID.
-    ///
     func registerCallback<T>(
         store: inout [CBUUID: [(Result<T, Error>) -> Void]],
         uuid: CBUUID,
@@ -819,8 +818,6 @@ extension BlePeripheralInteractor {
 extension BlePeripheralInteractor: BlePeripheralDelegate {
     
     public func blePeripheralDidUpdateName(_ peripheral: BlePeripheral) {
-        mutex.lock()
-        defer { mutex.unlock() }
         didUpdateNameSubject.send(peripheral.name)
     }
     
@@ -889,8 +886,6 @@ extension BlePeripheralInteractor: BlePeripheralDelegate {
     }
     
     public func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
-        mutex.lock()
-        defer { mutex.unlock() }
         guard error == nil else { return }
         didUpdateRSSISubject.send(RSSI)
     }
