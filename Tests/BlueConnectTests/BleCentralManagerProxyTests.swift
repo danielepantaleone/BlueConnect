@@ -32,54 +32,7 @@ import XCTest
 
 @testable import BlueConnect
 
-final class BleCentralManagerProxyTests: XCTestCase {
-    
-    // MARK: - Properties
-    
-    var bleCentralManager: MockBleCentralManager!
-    var bleCentralManagerProxy: BleCentralManagerProxy!
-    
-    var blePeripheral_1: MockBlePeripheral {
-        get throws {
-            let peripheralId = try XCTUnwrap(MockBleDescriptor.peripheralUUID_1)
-            let peripheral = bleCentralManager.retrievePeripherals(withIds: [peripheralId]).first
-            return try XCTUnwrap(peripheral as? MockBlePeripheral)
-        }
-    }
-    
-    var subscriptions: Set<AnyCancellable> = []
-    
-    // MARK: - Setup & tear down
-    
-    override func setUpWithError() throws {
-        try super.setUpWithError()
-        bleCentralManager = .init()
-        bleCentralManager.discoveredPeripherals([
-            MockBlePeripheral(
-                identifier: MockBleDescriptor.peripheralUUID_1,
-                name: nil,
-                serialNumber: "12345678",
-                batteryLevel: 77,
-                firmwareRevision: "1.0.7",
-                hardwareRevision: "2.0.4",
-                secret: "abcd"),
-            MockBlePeripheral(
-                identifier: MockBleDescriptor.peripheralUUID_1,
-                name: "PERIPHERAL_2",
-                serialNumber: "87654321",
-                batteryLevel: 43,
-                firmwareRevision: "1.0.2",
-                hardwareRevision: "2.0.1",
-                secret: "efgh")
-        ])
-        bleCentralManagerProxy = .init(centralManager: bleCentralManager)
-    }
-    
-    override func tearDownWithError() throws {
-        try super.tearDownWithError()
-        bleCentralManagerProxy = nil
-        bleCentralManager = nil
-    }
+final class BleCentralManagerProxyTests: BlueConnectTests {
     
     // MARK: - Test state change
     
@@ -265,7 +218,26 @@ final class BleCentralManagerProxyTests: XCTestCase {
             }
         wait(for: [connectExp, publisherExp], timeout: 4.0)
         // Assert final peripheral state
-        XCTAssertEqual(try blePeripheral_1.state, .connecting)
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+    }
+    
+    func testPeripheralConnectFailDueToTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Assert initial peripheral state
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        // Mock connection timeout
+        bleCentralManager.timeoutOnConnection = true
+        do {
+            try await bleCentralManagerProxy.connect(
+                peripheral: try blePeripheral_1,
+                options: nil,
+                timeout: .seconds(2))
+        } catch let proxyError as BleCentralManagerProxyError where proxyError.category == .timeout {
+            XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        } catch {
+            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError category 'timeout', got '\(type(of: error))' instead")
+        }
     }
     
     // MARK: - Test disconnection
@@ -329,39 +301,6 @@ final class BleCentralManagerProxyTests: XCTestCase {
         // Check final state
         wait(for: [expectation], timeout: 2.0)
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
-    }
-    
-    // MARK: - Functions
-    
-    func centralManager(state: CBManagerState) {
-        XCTAssertNotEqual(bleCentralManager.state, state)
-        let expectation = expectation(description: "waiting for bluetooth state to change to '\(state)'")
-        bleCentralManagerProxy.didUpdateStatePublisher
-            .receive(on: DispatchQueue.main)
-            .filter { $0 == state }
-            .sink { _ in expectation.fulfill() }
-            .store(in: &subscriptions)
-        bleCentralManager.state = state
-        wait(for: [expectation], timeout: 2.0)
-    }
-    
-    func connect(peripheral: BlePeripheral) {
-        XCTAssertEqual(bleCentralManager.state, .poweredOn)
-        XCTAssertEqual(peripheral.state, .disconnected)
-        let expectation = expectation(description: "waiting for peripheral to connect")
-        bleCentralManagerProxy.connect(
-            peripheral: peripheral,
-            options: nil,
-            timeout: .never) { result in
-                switch result {
-                    case .success:
-                        expectation.fulfill()
-                    case .failure(let error):
-                        XCTFail("peripheral connection failed with error: \(error)")
-                }
-            }
-        wait(for: [expectation], timeout: 2.0)
-        XCTAssertEqual(peripheral.state, .connected)
     }
     
 }
