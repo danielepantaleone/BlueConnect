@@ -142,13 +142,30 @@ public class BleCentralManagerProxy: NSObject {
 
 extension BleCentralManagerProxy {
     
-    /// Attempts to connect to a BLE peripheral with an optional timeout and callback.
+    /// Initiates a connection to a BLE peripheral with optional timeout and callback for result notification.
+    ///
+    /// Example usage:
+    ///
+    /// ```swift
+    /// bleCentralManagerProxy.connect(peripheral: peripheral, timeout: .seconds(10)) { result in
+    ///     switch result {
+    ///         case .success:
+    ///             print("Successfully connected to peripheral")
+    ///         case .failure(let error):
+    ///             print("Failed to connect: \(error)")
+    ///     }
+    /// }
+    /// ```
     ///
     /// - Parameters:
-    ///   - peripheral: The peripheral to connect to.
-    ///   - options: Options for the connection, defaulting to `nil`.
-    ///   - timeout: The timeout for the connection attempt, defaulting to `.never`.
-    ///   - callback: A callback that is called with the result of the connection attempt.
+    ///   - peripheral: The `BlePeripheral` to connect to.
+    ///   - options: A dictionary of options to customize the connection behavior, such as `CBConnectPeripheralOptionNotifyOnConnectionKey`. Defaults to `nil`.
+    ///   - timeout: A `DispatchTimeInterval` specifying how long to wait before considering the connection as failed due to timeout. Defaults to `.never`, meaning no timeout.
+    ///   - callback: An optional closure called with a `Result<Void, Error>` indicating the success or failure of the connection attempt. If the connection is successful,
+    ///     `.success(())` is passed. If it fails, `.failure(Error)` is passed with an appropriate error.
+    ///
+    /// - Note: If the peripheral is already in a `.connected` state, the callback is immediately invoked with success.
+    /// - Note: If the peripheral is already in the process of connecting (`.connecting` state), the method does not reinitiate the connection.
     public func connect(
         peripheral: BlePeripheral,
         options: [String: Any]? = nil,

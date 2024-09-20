@@ -27,13 +27,21 @@
 
 import CoreBluetooth
 
+/// A struct representing errors related to the BLE central manager proxy.
+///
+/// `BleCentralManagerProxyError` encapsulates various error categories that can occur during operations with the BLE central manager proxy.
+/// It provides detailed information about the nature of the error, including an optional underlying error and a descriptive message.
 public struct BleCentralManagerProxyError: Error {
     
     // MARK: - Category
 
+    /// An enumeration defining different categories of errors that can occur with the BLE central manager proxy.
     public enum Category {
+        /// Indicates that the central manager is in an invalid state for the requested operation.
         case invalidState(CBManagerState)
+        /// Indicates that a timeout occurred during an operation.
         case timeout
+        /// Represents an unknown error condition.
         case unknown
     }
     
@@ -48,10 +56,15 @@ public struct BleCentralManagerProxyError: Error {
     
     // MARK: - Initialization
     
+    /// Initializes a new instance of `BleCentralManagerProxyError`.
+    ///
+    /// - Parameters:
+    ///   - category: The category of the error, describing the type of issue encountered.
+    ///   - message: An optional descriptive message providing additional context about the error.
+    ///   - cause: An optional underlying error that provides more details about the cause of the error.
     public init(category: Category, message: String? = nil, cause: Error? = nil) {
         self.category = category
         self.cause = cause
         self.message = message
     }
-    
 }

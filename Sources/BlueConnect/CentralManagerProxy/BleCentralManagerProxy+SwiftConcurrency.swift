@@ -33,14 +33,20 @@ extension BleCentralManagerProxy {
     
     /// Connects to a specified BLE peripheral asynchronously.
     ///
-    /// This method attempts to establish a connection to the given `BlePeripheral` using the provided options and within the specified timeout period.
-    /// If the peripheral is already connected, the method will succeed immediately. If a timeout is specified and the connection is not established within
-    /// that period, an error will be thrown.
+    /// Example usage:
+    ///
+    /// ```swift
+    /// do {
+    ///     try await bleCentralManagerProxy.connect(peripheral: peripheral, timeout: .seconds(10))
+    /// } catch {
+    ///     print("Failed to connect: \(error)")
+    /// }
+    /// ```
     ///
     /// - Parameters:
     ///   - peripheral: The `BlePeripheral` to connect to.
-    ///   - options: An optional dictionary of connection options. Defaults to `nil`.
-    ///   - timeout: The maximum amount of time to wait for the connection. Defaults to `.never`, meaning no timeout.
+    ///   - options: A dictionary of options to customize the connection behavior, such as `CBConnectPeripheralOptionNotifyOnConnectionKey`. Defaults to `nil`.
+    ///   - timeout: A `DispatchTimeInterval` specifying how long to wait before considering the connection as failed due to timeout. Defaults to `.never`, meaning no timeout.
     ///
     /// - Returns: The method returns asynchronously when the connection is successfully established or an error occurs.
     /// - Throws: An error if the connection fails or if the operation times out.
