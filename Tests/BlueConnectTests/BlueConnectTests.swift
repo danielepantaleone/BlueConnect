@@ -102,7 +102,7 @@ class BlueConnectTests: XCTestCase {
     
     func connect(peripheral: BlePeripheral) {
         XCTAssertEqual(bleCentralManager.state, .poweredOn)
-        XCTAssertEqual(peripheral.state, .disconnected)
+        XCTAssertNotEqual(peripheral.state, .connected)
         let expectation = expectation(description: "waiting for peripheral to connect")
         bleCentralManagerProxy.connect(
             peripheral: peripheral,
@@ -117,6 +117,22 @@ class BlueConnectTests: XCTestCase {
             }
         wait(for: [expectation], timeout: 2.0)
         XCTAssertEqual(peripheral.state, .connected)
+    }
+    
+    func disconnect(peripheral: BlePeripheral) {
+        XCTAssertEqual(bleCentralManager.state, .poweredOn)
+        XCTAssertNotEqual(peripheral.state, .disconnected)
+        let expectation = expectation(description: "waiting for peripheral to disconnect")
+        bleCentralManagerProxy.disconnect(peripheral: peripheral) { result in
+            switch result {
+                case .success:
+                    expectation.fulfill()
+                case .failure(let error):
+                    XCTFail("peripheral disconnection failed with error: \(error)")
+            }
+        }
+        wait(for: [expectation], timeout: 2.0)
+        XCTAssertEqual(peripheral.state, .disconnected)
     }
     
 }

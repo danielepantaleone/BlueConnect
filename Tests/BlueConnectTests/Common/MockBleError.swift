@@ -30,11 +30,13 @@ import CoreBluetooth
 enum MockBleError: Error {
     /// BLE manager not powered on
     case bluetoothIsOff
-    /// BLE peripheral not connected
-    case peripheralNotConnected
-    /// Peripheral interaction (read/write/notify) not supported
-    case operationNotSupported
     /// Characteristic not found
     case characteristicNotFound
+    /// Error thrown manually from unit tests
+    case mockedError
+    /// Peripheral interaction (read/write/notify) not supported
+    case operationNotSupported
+    /// BLE peripheral not connected
+    case peripheralNotConnected
 }
 

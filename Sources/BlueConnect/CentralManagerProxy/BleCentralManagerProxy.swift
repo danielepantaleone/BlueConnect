@@ -49,11 +49,6 @@ public class BleCentralManagerProxy: NSObject {
         didConnectSubject.eraseToAnyPublisher()
     }()
     
-    /// A publisher that emits when the central manager will restore its state.
-    public lazy var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> = {
-        willRestoreStateSubject.eraseToAnyPublisher()
-    }()
-    
     /// A publisher that emits when a peripheral is discovered, including its advertisement data and signal strength (RSSI).
     public lazy var didDiscoverPublisher: AnyPublisher<(peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi: NSNumber), Never> = {
         didDiscoverSubject.eraseToAnyPublisher()
@@ -67,6 +62,11 @@ public class BleCentralManagerProxy: NSObject {
     /// A publisher that emits when the central manager fails to connect to a peripheral, optionally including the error that occurred.
     public lazy var didFailToConnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error?), Never> = {
         didFailToConnectSubject.eraseToAnyPublisher()
+    }()
+    
+    /// A publisher that emits when the central manager will restore its state.
+    public lazy var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> = {
+        willRestoreStateSubject.eraseToAnyPublisher()
     }()
     
     // MARK: - Internal properties
