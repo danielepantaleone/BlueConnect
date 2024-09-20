@@ -311,6 +311,26 @@ final class BleCentralManagerProxyTests: XCTestCase {
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
     
+    func testPeripheralDisconnectDueToBleManagerGoingOff() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Test disconnection
+        let expectation = expectation(description: "waiting for peripheral disconnection to be signaled by publisher")
+        // Test disconnection emit on publisher
+        bleCentralManagerProxy.didDisconnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _ in expectation.fulfill() }
+            .store(in: &subscriptions)
+        // Turn of ble central manager
+        centralManager(state: .poweredOff)
+        // Check final state
+        wait(for: [expectation], timeout: 2.0)
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+    }
+    
     // MARK: - Functions
     
     func centralManager(state: CBManagerState) {

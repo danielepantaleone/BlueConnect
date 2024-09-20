@@ -202,6 +202,7 @@ class MockBleCentralManager: BleCentralManager {
         guard state != .poweredOn else { return }
         for peripheral in discoveredPeripherals {
             guard let mockPeripheral = peripheral as? MockBlePeripheral else { continue }
+            guard mockPeripheral.state != .disconnected else { continue }
             mockPeripheral.state = .disconnected
             centraManagerDelegate?.bleCentralManager(
                 self,
