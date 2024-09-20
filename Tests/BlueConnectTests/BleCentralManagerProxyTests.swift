@@ -126,6 +126,40 @@ final class BleCentralManagerProxyTests: BlueConnectTests {
         XCTAssertEqual(try blePeripheral_1.state, .connected)
     }
     
+    func testPeripheralConnectWithPeripheralAlreadyConnecting() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Delay connection to mock connecting state
+        bleCentralManager.delayOnConnection = .seconds(4)
+        // Test single emission on connection publisher
+        let publisherExp = expectation(description: "waiting for peripheral connection to be signaled by publisher")
+        // Test connection not to be emitted on publisher because already connected
+        bleCentralManagerProxy.didConnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test connection
+        let connectExp = expectation(description: "waiting for peripheral to connect with multiple callbacks")
+        connectExp.expectedFulfillmentCount = 3
+        for _ in 0..<3 {
+            // Test connection on callback
+            bleCentralManagerProxy.connect(
+                peripheral: try blePeripheral_1,
+                options: nil,
+                timeout: .never) { result in
+                    switch result {
+                        case .success:
+                            connectExp.fulfill()
+                        case .failure(let error):
+                            XCTFail("peripheral connection failed with error: \(error)")
+                    }
+                }
+        }
+        wait(for: [connectExp, publisherExp], timeout: 6.0)
+        XCTAssertEqual(try blePeripheral_1.state, .connected)
+    }
+    
     func testPeripheralConnectFailDueToBleCentralManagerOff() throws {
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         let connectExp = expectation(description: "waiting for peripheral connection to fail")
