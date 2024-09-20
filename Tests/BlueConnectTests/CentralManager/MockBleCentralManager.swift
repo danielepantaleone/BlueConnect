@@ -37,6 +37,7 @@ class MockBleCentralManager: BleCentralManager {
     var errorOnConnection: Error?
     var errorOnDisconnection: Error?
     var delayOnConnection: DispatchTimeInterval?
+    var delayOnDisconnection: DispatchTimeInterval?
     var timeoutOnConnection: Bool = false
 
     // MARK: - Private properties
@@ -112,6 +113,10 @@ class MockBleCentralManager: BleCentralManager {
     }
     
     func cancelConnection(_ peripheral: BlePeripheral) {
+        guard let mockPeripheral = peripheral as? MockBlePeripheral else {
+            return
+        }
+        mockPeripheral.state = .disconnecting
         queue.async { [weak self] in
             guard let self else { return }
             mutex.lock()
@@ -132,14 +137,24 @@ class MockBleCentralManager: BleCentralManager {
                 errorOnDisconnection = nil
                 return
             }
-            guard let mockPeripheral = peripheral as? MockBlePeripheral else {
-                return
+            
+            if let delayOnDisconnection {
+                queue.asyncAfter(deadline: .now() + delayOnDisconnection) { [weak self] in
+                    guard let self else { return }
+                    mockPeripheral.state = .disconnected
+                    centraManagerDelegate?.bleCentralManager(
+                        self,
+                        didDisconnectPeripheral: mockPeripheral,
+                        error: nil)
+                }
+                self.delayOnDisconnection = nil
+            } else {
+                mockPeripheral.state = .disconnected
+                centraManagerDelegate?.bleCentralManager(
+                    self,
+                    didDisconnectPeripheral: mockPeripheral,
+                    error: nil)
             }
-            mockPeripheral.state = .disconnected
-            centraManagerDelegate?.bleCentralManager(
-                self,
-                didDisconnectPeripheral: mockPeripheral,
-                error: nil)
         }
     }
     

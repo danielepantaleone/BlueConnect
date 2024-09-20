@@ -62,4 +62,30 @@ extension BleCentralManagerProxy {
         }
     }
     
+    /// Disconnects from a specified BLE peripheral asynchronously.
+    ///
+    /// Example usage:
+    ///
+    /// ```swift
+    /// do {
+    ///     try await bleCentralManagerProxy.disconnect(peripheral: peripheral)
+    /// } catch {
+    ///     print("Failed to connect: \(error)")
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - peripheral: The `BlePeripheral` to disconnect.
+    ///   - callback: An optional closure that is called with a `Result<Void, Error>`, providing success or failure of the disconnection attempt.
+    ///
+    /// - Returns: The method returns asynchronously when the disconnection is successful or an error occurs.
+    /// - Throws: An error if the disconnection fails.
+    public func disconnect(peripheral: BlePeripheral) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            disconnect(peripheral: peripheral) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
+    
 }

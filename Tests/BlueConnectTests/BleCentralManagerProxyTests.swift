@@ -268,6 +268,49 @@ final class BleCentralManagerProxyTests: XCTestCase {
         XCTAssertEqual(try blePeripheral_1.state, .connecting)
     }
     
+    // MARK: - Test disconnection
+    
+    func testPeripheralDisconnect() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Test disconnection
+        let disconnectExp = expectation(description: "waiting for peripheral to disconnect")
+        let publisherExp = expectation(description: "waiting for peripheral disconnection to be signaled by publisher")
+        // Test disconnection emit on publisher
+        bleCentralManagerProxy.didDisconnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test connection on callback
+        bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1) { result in
+                switch result {
+                    case .success:
+                        disconnectExp.fulfill()
+                    case .failure(let error):
+                        XCTFail("peripheral disconnection failed with error: \(error)")
+                }
+            }
+        wait(for: [disconnectExp, publisherExp], timeout: 2.0)
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+    }
+    
+    func testPeripheralDisconnectAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Test disconnection
+        do {
+            try await bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1)
+        } catch {
+            XCTFail("peripheral disconnection failed with error: \(error)")
+        }
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+    }
+    
     // MARK: - Functions
     
     func centralManager(state: CBManagerState) {

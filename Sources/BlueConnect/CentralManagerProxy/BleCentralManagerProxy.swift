@@ -209,6 +209,66 @@ extension BleCentralManagerProxy {
     
 }
 
+// MARK: - Peripheral disconnection
+
+extension BleCentralManagerProxy {
+    
+    /// Disconnects a BLE peripheral and optionally notifies via a callback when the operation completes.
+    ///
+    /// Example usage:
+    ///
+    /// ```swift
+    /// bleCentralManagerProxy.disconnect(peripheral: peripheral) { result in
+    ///     switch result {
+    ///         case .success:
+    ///             print("Successfully disconnected")
+    ///         case .failure(let error):
+    ///             print("Failed to disconnect: \(error)")
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - peripheral: The `BlePeripheral` to disconnect.
+    ///   - callback: An optional closure that is called with a `Result<Void, Error>`, providing success or failure of the disconnection attempt.
+    ///     If the disconnection is successful, `.success(())` is passed. If the operation fails, `.failure(Error)` is passed with an appropriate error.
+    ///
+    /// - Note: If the peripheral is already in a `.disconnected` state, the callback is immediately called with success.
+    /// - Note: If the peripheral is already in the process of disconnecting (`.disconnecting` state), the method does not reinitiate the disconnection.
+    public func disconnect(peripheral: BlePeripheral, callback: ((Result<Void, Error>) -> Void)? = nil) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // Ensure central manager is in a powered-on state
+        guard centralManager.state == .poweredOn else {
+            callback?(.failure(BleCentralManagerProxyError(category: .invalidState(centralManager.state))))
+            return
+        }
+        
+        // If already disconnected, notify success
+        guard peripheral.state != .disconnected else {
+            callback?(.success(()))
+            return
+        }
+        
+        registerCallback(
+            store: &disconnectionCallbacks,
+            uuid: peripheral.identifier,
+            callback: callback)
+
+        // If already disconnecting, no need to reinitiate disconnection
+        guard peripheral.state != .disconnecting else {
+            return
+        }
+        
+        // Initiate disconnection
+        centralManager.cancelConnection(peripheral)
+        
+    }
+    
+}
+
 // MARK: - Timers
 
 extension BleCentralManagerProxy {
@@ -270,6 +330,22 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             store: &connectionCallbacks,
             uuid: peripheral.identifier,
             value: .success(()))
+        
+    }
+    
+    public func bleCentralManager(_ central: BleCentralManager, didDisconnectPeripheral peripheral: BlePeripheral, error: Error?) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // Notify publisher
+        didDisconnectSubject.send((peripheral, error))
+        // Notify registered callbacks (only if disconnection initiated by calling disconnect()
+        notifyCallbacks(
+            store: &disconnectionCallbacks,
+            uuid: peripheral.identifier,
+            value: .success(()))
+        
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didFailToConnect peripheral: BlePeripheral, error: Error?) {
