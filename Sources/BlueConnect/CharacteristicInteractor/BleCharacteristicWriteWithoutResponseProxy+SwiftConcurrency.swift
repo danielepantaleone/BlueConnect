@@ -1,5 +1,5 @@
 //
-//  BleCentralManagerInteractor+SwiftConcurrency.swift
+//  BleCharacteristicWriteWithoutResponseProxy+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,32 +25,24 @@
 //  THE SOFTWARE.
 //
 
-import Combine
 import CoreBluetooth
 import Foundation
 
-extension BleCentralManagerInteractor {
+public extension BleCharacteristicWriteWithoutResponseProxy {
     
-    /// Connects to a specified BLE peripheral asynchronously.
+    /// Write a value to a characteristic without waiting for a response from the BLE peripheral.
     ///
-    /// This method attempts to establish a connection to the given `BlePeripheral` using the provided options and within the specified timeout period.
-    /// If the peripheral is already connected, the method will succeed immediately. If a timeout is specified and the connection is not established within
-    /// that period, an error will be thrown.
+    /// This method first discovers the characteristic and then writes the provided value without expecting a response.
+    /// The encoded data is sent to the BLE peripheral for the characteristic identified by the interactor.
     ///
     /// - Parameters:
-    ///   - peripheral: The `BlePeripheral` to connect to.
-    ///   - options: An optional dictionary of connection options. Defaults to `nil`.
-    ///   - timeout: The maximum amount of time to wait for the connection. Defaults to `.never`, meaning no timeout.
+    ///   - value: The value to encode and write to the characteristic.
+    ///   - timeout: The timeout for the characteristic write operation. Defaults to 10 seconds.
     ///
-    /// - Returns: The method returns asynchronously when the connection is successfully established or an error occurs.
-    /// - Throws: An error if the connection fails or if the operation times out.
-    public func connect(
-        peripheral: BlePeripheral,
-        options: [String: Any]? = nil,
-        timeout: DispatchTimeInterval = .never
-    ) async throws {
+    /// - Throws: An error if the characteristic cannot be discovered or data encoding fails.
+    func writeWithoutResponse(value: ValueType, timeout: DispatchTimeInterval = .seconds(10)) async throws {
         try await withCheckedThrowingContinuation { continuation in
-            connect(peripheral: peripheral, options: options, timeout: timeout) { result in
+            writeWithoutResponse(value: value, timeout: timeout) { result in
                 continuation.resume(with: result)
             }
         }

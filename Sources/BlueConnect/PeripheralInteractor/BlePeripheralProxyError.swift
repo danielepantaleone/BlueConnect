@@ -1,5 +1,5 @@
 //
-//  BleCharacteristicWriteWithoutResponseInteractor+SwiftConcurrency.swift
+//  BlePeripheralProxy.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,27 +25,30 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
-import Foundation
-
-public extension BleCharacteristicWriteWithoutResponseInteractor {
+/// An enum representing various errors that can occur during interactions with a BLE peripheral.
+///
+/// `BlePeripheralProxyError` defines different types of errors encountered during BLE operations, such as missing characteristics, connectivity issues, or unsupported operations.
+public enum BlePeripheralProxyError: Error {
     
-    /// Write a value to a characteristic without waiting for a response from the BLE peripheral.
-    ///
-    /// This method first discovers the characteristic and then writes the provided value without expecting a response.
-    /// The encoded data is sent to the BLE peripheral for the characteristic identified by the interactor.
-    ///
-    /// - Parameters:
-    ///   - value: The value to encode and write to the characteristic.
-    ///   - timeout: The timeout for the characteristic write operation. Defaults to 10 seconds.
-    ///
-    /// - Throws: An error if the characteristic cannot be discovered or data encoding fails.
-    func writeWithoutResponse(value: ValueType, timeout: DispatchTimeInterval = .seconds(10)) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            writeWithoutResponse(value: value, timeout: timeout) { result in
-                continuation.resume(with: result)
-            }
-        }
-    }
+    /// The specified characteristic was not found on the peripheral.
+    case characteristicNotFound
+    
+    /// The specified characteristic does not contain any data.
+    case characteristicDataIsNil
+    
+    /// The peripheral interactor instance has been destroyed and is no longer usable.
+    case destroyed
+    
+    /// The requested operation (read/write/notify) is not supported by the characteristic or peripheral.
+    case operationNotSupported
+    
+    /// The BLE peripheral is not connected, and operations cannot be performed.
+    case peripheralNotConnected
+    
+    /// The specified service was not found on the peripheral.
+    case serviceNotFound
+
+    /// The operation timed out before it could complete.
+    case timeout
     
 }

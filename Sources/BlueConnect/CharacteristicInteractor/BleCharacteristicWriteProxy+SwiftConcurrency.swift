@@ -1,5 +1,5 @@
 //
-//  BleCharacteristicInteractorError.swift
+//  BleCharacteristicWriteProxy+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,15 +25,28 @@
 //  THE SOFTWARE.
 //
 
+import CoreBluetooth
 import Foundation
 
-/// An enum representing various errors that can occur during interactions with a BLE characteristic.
-public enum BleCharacteristicInteractorError: Error {
+public extension BleCharacteristicWriteProxy {
     
-    /// The characteristic interactor correctly retrieved characteristic data but data conversion towards characteristic managed type failed.
-    case decodingError
-    
-    /// The characteristic interactor didn't manage to encode characteristic value type into raw data to be written on the BLE peripheral.
-    case encodingError
+    /// Write characteristic value asynchronously.
+    ///
+    /// This method first discovers the characteristic and then attempts to write the provided value to it.
+    /// If the write operation fails or encounters an error, an error will be thrown.
+    /// If the operation succeeds, the method completes without returning a value.
+    ///
+    /// - Parameters:
+    ///   - value: The value to write to the characteristic. This value will be encoded before writing.
+    ///   - timeout: The timeout duration for the write operation. Defaults to 10 seconds.
+    ///
+    /// - Throws: An error if the characteristic cannot be discovered, the value cannot be encoded, or the write operation fails.
+    func write(value: ValueType, timeout: DispatchTimeInterval = .seconds(10)) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            write(value: value, timeout: timeout) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
     
 }

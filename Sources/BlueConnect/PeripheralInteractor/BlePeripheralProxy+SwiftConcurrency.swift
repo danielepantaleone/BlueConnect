@@ -1,5 +1,5 @@
 //
-//  BlePeripheralInteractor+SwiftConcurrency.swift
+//  BlePeripheralProxy+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -28,7 +28,7 @@
 import CoreBluetooth
 import Foundation
 
-public extension BlePeripheralInteractor {
+public extension BlePeripheralProxy {
     
     /// Initiates the discovery of a specific service by its UUID and returns the discovered service.
     ///

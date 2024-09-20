@@ -1,5 +1,5 @@
 //
-//  BleCharacteristicWriteInteractor+SwiftConcurrency.swift
+//  BleCharacteristicNotifyProxy+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -28,22 +28,23 @@
 import CoreBluetooth
 import Foundation
 
-public extension BleCharacteristicWriteInteractor {
+public extension BleCharacteristicNotifyProxy {
     
-    /// Write characteristic value asynchronously.
+    /// Enable or disable notifications for the characteristic.
     ///
-    /// This method first discovers the characteristic and then attempts to write the provided value to it.
-    /// If the write operation fails or encounters an error, an error will be thrown.
-    /// If the operation succeeds, the method completes without returning a value.
+    /// This method enables or disables notifications for the characteristic on the BLE peripheral.
+    /// If the characteristic has not yet been discovered, it will first be discovered and then have
+    /// its notification state modified.
     ///
     /// - Parameters:
-    ///   - value: The value to write to the characteristic. This value will be encoded before writing.
-    ///   - timeout: The timeout duration for the write operation. Defaults to 10 seconds.
+    ///   - enabled: A boolean indicating whether to enable (true) or disable (false) notifications.
+    ///   - timeout: The time interval to wait for the notify operation before it times out. Defaults to 10 seconds.
     ///
-    /// - Throws: An error if the characteristic cannot be discovered, the value cannot be encoded, or the write operation fails.
-    func write(value: ValueType, timeout: DispatchTimeInterval = .seconds(10)) async throws {
+    /// - Returns: A boolean indicating whether the notification was successfully enabled (true) or disabled (false).
+    /// - Throws: An error if the characteristic cannot be discovered or notify state changed within the specified timeout.
+    func setNotify(enabled: Bool, timeout: DispatchTimeInterval = .seconds(10)) async throws -> Bool {
         try await withCheckedThrowingContinuation { continuation in
-            write(value: value, timeout: timeout) { result in
+            setNotify(enabled: enabled, timeout: timeout) { result in
                 continuation.resume(with: result)
             }
         }

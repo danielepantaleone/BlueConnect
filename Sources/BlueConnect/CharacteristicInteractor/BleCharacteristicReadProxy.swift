@@ -1,5 +1,5 @@
 //
-//  BleCharacteristicReadInteractor.swift
+//  BleCharacteristicReadProxy.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -34,8 +34,8 @@ import Foundation
 /// This protocol provides the essential properties and methods needed to interact with a Bluetooth Low Energy (BLE) characteristic.
 /// It requires that conforming types define a specific `ValueType` for the characteristic, and provide access to the UUIDs of the characteristic and its associated service.
 ///
-/// Additionally, it allows access to the `BlePeripheralInteractor` managing the peripheral.
-public protocol BleCharacteristicReadInteractor: BleCharacteristicInteractor {
+/// Additionally, it allows access to the `BlePeripheralProxy` managing the peripheral.
+public protocol BleCharacteristicReadProxy: BleCharacteristicProxy {
     
     /// Decode the provided data into the interactor's value type.
     ///
@@ -50,7 +50,7 @@ public protocol BleCharacteristicReadInteractor: BleCharacteristicInteractor {
     
 }
 
-public extension BleCharacteristicReadInteractor {
+public extension BleCharacteristicReadProxy {
     
     /// A publisher that emits updates when the value of the characteristic changes.
     ///
@@ -58,7 +58,7 @@ public extension BleCharacteristicReadInteractor {
     ///
     /// - Note: This publisher filters events to only those corresponding to the current characteristic.
     var didUpdateValuePublisher: AnyPublisher<ValueType, Never>? {
-        peripheralInteractor?.didUpdateValuePublisher
+        peripheralProxy?.didUpdateValuePublisher
             .filter { $0.characteristic.uuid == characteristicUUID }
             .tryMap { _, data in try decode(data) }
             .catch { _ in Empty<ValueType, Never>() }
@@ -85,7 +85,7 @@ public extension BleCharacteristicReadInteractor {
         discover(timeout: timeout) { characteristicDiscoveryResult in
             characteristicDiscoveryResult.forwardError(to: callback)
             characteristicDiscoveryResult.onSuccess { characteristic in
-                peripheralInteractor?.read(
+                peripheralProxy?.read(
                     characteristicUUID: characteristic.uuid,
                     policy: policy,
                     timeout: timeout - start.distance(to: .now())
@@ -95,7 +95,7 @@ public extension BleCharacteristicReadInteractor {
                         do {
                             callback(.success(try decode(data)))
                         } catch {
-                            callback(.failure(BleCharacteristicInteractorError.decodingError))
+                            callback(.failure(BleCharacteristicProxyError.decodingError))
                         }
                     }
                 }
@@ -105,7 +105,7 @@ public extension BleCharacteristicReadInteractor {
     
 }
 
-public extension BleCharacteristicReadInteractor where ValueType == Data {
+public extension BleCharacteristicReadProxy where ValueType == Data {
     
     /// Bypass data decoding and return raw data.
     ///

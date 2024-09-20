@@ -1,5 +1,5 @@
 //
-//  BleCentralManagerInteractor.swift
+//  BleCentralManagerProxy.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -29,10 +29,10 @@ import Combine
 import CoreBluetooth
 import Foundation
 
-/// `BleCentralManagerInteractor` provides a higher-level abstraction for managing BLE peripherals via `BleCentralManager`.
+/// `BleCentralManagerProxy` provides a higher-level abstraction for managing BLE peripherals via `BleCentralManager`.
 ///
 /// This class uses Combine publishers to emit updates on BLE-related events, such as peripheral discovery, peripheral connection/disconnection and state updates.
-public class BleCentralManagerInteractor: NSObject {
+public class BleCentralManagerProxy: NSObject {
     
     // MARK: - Public properties
     
@@ -140,7 +140,7 @@ public class BleCentralManagerInteractor: NSObject {
 
 // MARK: - Peripheral connection
 
-extension BleCentralManagerInteractor {
+extension BleCentralManagerProxy {
     
     /// Attempts to connect to a BLE peripheral with an optional timeout and callback.
     ///
@@ -161,7 +161,7 @@ extension BleCentralManagerInteractor {
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
-            callback?(.failure(BleCentralManagerInteractorError.invalidState(centralManager.state)))
+            callback?(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
             return
         }
         
@@ -194,7 +194,7 @@ extension BleCentralManagerInteractor {
 
 // MARK: - Timers
 
-extension BleCentralManagerInteractor {
+extension BleCentralManagerProxy {
     
     func startConnectionTimer(peripheralIdentifier: UUID, timeout: DispatchTimeInterval) {
         mutex.lock()
@@ -217,7 +217,7 @@ extension BleCentralManagerInteractor {
                 return
             }
             connectionCallbacks[peripheralIdentifier] = []
-            callbacks.forEach { $0(.failure(BleCentralManagerInteractorError.timeout)) }
+            callbacks.forEach { $0(.failure(BleCentralManagerProxyError.timeout)) }
         }
         connectionTimers[peripheralIdentifier]?.resume()
     }
@@ -232,7 +232,7 @@ extension BleCentralManagerInteractor {
 
 // MARK: - BleCentralManagerDelegate conformance
 
-extension BleCentralManagerInteractor: BleCentralManagerDelegate {
+extension BleCentralManagerProxy: BleCentralManagerDelegate {
     
     public func bleCentralManagerDidUpdateState(_ central: BleCentralManager) {
         didUpdateStateSubject.send(central.state)
@@ -262,7 +262,7 @@ extension BleCentralManagerInteractor: BleCentralManagerDelegate {
         notifyCallbacks(
             store: &connectionCallbacks,
             uuid: peripheral.identifier,
-            value: .failure(error ?? BleCentralManagerInteractorError.unknown))
+            value: .failure(error ?? BleCentralManagerProxyError.unknown))
     }
     
     public func bleCentralManager(_ central: BleCentralManager, willRestoreState dict: [String: Any]) {

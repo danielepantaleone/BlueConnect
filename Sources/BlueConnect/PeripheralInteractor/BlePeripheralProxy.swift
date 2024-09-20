@@ -1,5 +1,5 @@
 //
-//  BlePeripheralInteractor.swift
+//  BlePeripheralProxy.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -29,11 +29,11 @@ import Combine
 import CoreBluetooth
 import Foundation
 
-/// `BlePeripheralInteractor` provides an interface for interacting with a BLE peripheral and managing BLE operations.
+/// `BlePeripheralProxy` provides an interface for interacting with a BLE peripheral and managing BLE operations.
 ///
 /// This class uses Combine publishers to emit updates on BLE-related events, such as service discovery, characteristic updates, and RSSI changes.
 /// It also manages caching of BLE characteristics and handles asynchronous BLE operations like read, write, and notifications.
-public class BlePeripheralInteractor: NSObject {
+public class BlePeripheralProxy: NSObject {
     
     // MARK: - Public properties
     
@@ -115,7 +115,7 @@ public class BlePeripheralInteractor: NSObject {
         fatalError("use init(peripheral:)")
     }
     
-    /// Initializes a new `BlePeripheralInteractor` with the provided peripheral.
+    /// Initializes a new `BlePeripheralProxy` with the provided peripheral.
     ///
     /// - Parameter peripheral: The `BlePeripheral` instance to interact with.
     public init(peripheral: BlePeripheral) {
@@ -124,7 +124,7 @@ public class BlePeripheralInteractor: NSObject {
         self.peripheral.peripheralDelegate = self
     }
     
-    /// Perform `BlePeripheralInteractor` graceful deinitialization.
+    /// Perform `BlePeripheralProxy` graceful deinitialization.
     deinit {
         mutex.lock()
         defer { mutex.unlock() }
@@ -145,23 +145,23 @@ public class BlePeripheralInteractor: NSObject {
         // Notify callbacks
         discoverServiceCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         discoverServiceCallbacks.removeAll()
         discoverCharacteristicCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         discoverCharacteristicCallbacks.removeAll()
         characteristicReadCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         characteristicReadCallbacks.removeAll()
         characteristicNotifyCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         characteristicNotifyCallbacks.removeAll()
         characteristicWriteCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralInteractorError.destroyed)) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         characteristicWriteCallbacks.removeAll()
         // Notify publishers
         didDiscoverCharacteristicsSubject.send(completion: .finished)
@@ -236,7 +236,7 @@ public class BlePeripheralInteractor: NSObject {
 
 // MARK: - Discovery of services
 
-extension BlePeripheralInteractor {
+extension BlePeripheralProxy {
     
     /// Initiates the discovery of a specific service by its UUID and registers a callback to be executed when the service is discovered.
     ///
@@ -291,7 +291,7 @@ extension BlePeripheralInteractor {
                 notifyCallbacks(
                     store: &discoverServiceCallbacks,
                     uuid: serviceUUID,
-                    value: .failure(BlePeripheralInteractorError.peripheralNotConnected))
+                    value: .failure(BlePeripheralProxyError.peripheralNotConnected))
             }
             return
         }
@@ -334,7 +334,7 @@ extension BlePeripheralInteractor {
 
 // MARK: - Discovery of characteristics
 
-extension BlePeripheralInteractor {
+extension BlePeripheralProxy {
     
     /// Discover a specific characteristic for the provided service and register a callback to be executed when the characteristic is discovered.
     /// The discovered characteristic will also be notified via the `didDiscoverCharacteristicsPublisher`.
@@ -391,7 +391,7 @@ extension BlePeripheralInteractor {
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
                     uuid: characteristicUUID,
-                    value: .failure(BlePeripheralInteractorError.peripheralNotConnected))
+                    value: .failure(BlePeripheralProxyError.peripheralNotConnected))
             }
             return
         }
@@ -401,7 +401,7 @@ extension BlePeripheralInteractor {
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
                     uuid: characteristicUUID,
-                    value: .failure(BlePeripheralInteractorError.serviceNotFound))
+                    value: .failure(BlePeripheralProxyError.serviceNotFound))
             }
             return
         }
@@ -445,7 +445,7 @@ extension BlePeripheralInteractor {
 
 // MARK: - Characteristic read
 
-extension BlePeripheralInteractor {
+extension BlePeripheralProxy {
     
     /// Reads the value of a characteristic and notifies the result through the provided callback.
     ///
@@ -475,15 +475,15 @@ extension BlePeripheralInteractor {
         }
         
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralInteractorError.peripheralNotConnected))
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
             return
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralInteractorError.characteristicNotFound))
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound))
             return
         }
         guard characteristic.properties.contains(.read) else {
-            callback(.failure(BlePeripheralInteractorError.operationNotSupported))
+            callback(.failure(BlePeripheralProxyError.operationNotSupported))
             return
         }
         
@@ -510,7 +510,7 @@ extension BlePeripheralInteractor {
 
 // MARK: - Characteristic write
 
-extension BlePeripheralInteractor {
+extension BlePeripheralProxy {
     
     /// Writes a value to a specific characteristic and notifies the result through the provided callback.
     ///
@@ -536,15 +536,15 @@ extension BlePeripheralInteractor {
         defer { mutex.unlock() }
         
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralInteractorError.peripheralNotConnected))
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
             return
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralInteractorError.characteristicNotFound))
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound))
             return
         }
         guard characteristic.properties.contains(.write) else {
-            callback(.failure(BlePeripheralInteractorError.operationNotSupported))
+            callback(.failure(BlePeripheralProxyError.operationNotSupported))
             return
         }
         
@@ -570,9 +570,9 @@ extension BlePeripheralInteractor {
     ///   - data: The data to write to the characteristic.
     ///   - characteristicUUID: The UUID of the characteristic to which the data should be written.
     ///
-    /// - Throws: `BlePeripheralInteractorError.peripheralNotConnected` if the peripheral is not connected.
-    /// - Throws: `BlePeripheralInteractorError.characteristicNotFound` if the characteristic with the specified UUID cannot be found.
-    /// - Throws: `BlePeripheralInteractorError.operationNotSupported` if the characteristic does not support writing without a response.
+    /// - Throws: `BlePeripheralProxyError.peripheralNotConnected` if the peripheral is not connected.
+    /// - Throws: `BlePeripheralProxyError.characteristicNotFound` if the characteristic with the specified UUID cannot be found.
+    /// - Throws: `BlePeripheralProxyError.operationNotSupported` if the characteristic does not support writing without a response.
     ///
     /// - Note: This method is useful for sending data where a response from the peripheral is not required, such as sending notifications or control commands.
     public func writeWithoutResponse(data: Data, to characteristicUUID: CBUUID) throws {
@@ -581,13 +581,13 @@ extension BlePeripheralInteractor {
         defer { mutex.unlock() }
         
         guard peripheral.state == .connected else {
-            throw BlePeripheralInteractorError.peripheralNotConnected
+            throw BlePeripheralProxyError.peripheralNotConnected
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            throw BlePeripheralInteractorError.characteristicNotFound
+            throw BlePeripheralProxyError.characteristicNotFound
         }
         guard characteristic.properties.contains(.writeWithoutResponse) else {
-            throw BlePeripheralInteractorError.operationNotSupported
+            throw BlePeripheralProxyError.operationNotSupported
         }
 
         peripheral.writeValue(data, for: characteristic, type: .withoutResponse)
@@ -598,7 +598,7 @@ extension BlePeripheralInteractor {
 
 // MARK: - Characteristic notify
 
-extension BlePeripheralInteractor {
+extension BlePeripheralProxy {
  
     /// Enables or disables notifications for a specific characteristic.
     ///
@@ -623,15 +623,15 @@ extension BlePeripheralInteractor {
         defer { mutex.unlock() }
         
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralInteractorError.peripheralNotConnected))
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
             return
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralInteractorError.characteristicNotFound))
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound))
             return
         }
         guard characteristic.properties.contains(.notify) else {
-            callback(.failure(BlePeripheralInteractorError.operationNotSupported))
+            callback(.failure(BlePeripheralProxyError.operationNotSupported))
             return
         }
         guard enabled != characteristic.isNotifying else {
@@ -656,7 +656,7 @@ extension BlePeripheralInteractor {
 
 // MARK: - Timers
 
-extension BlePeripheralInteractor {
+extension BlePeripheralProxy {
     
     func startDiscoverCharacteristicTimers(characteristicUUIDs: [CBUUID], timeout: DispatchTimeInterval) {
         guard timeout != .never else { return }
@@ -676,7 +676,7 @@ extension BlePeripheralInteractor {
                     return
                 }
                 discoverCharacteristicCallbacks[characteristicUUID] = []
-                callbacks.forEach { $0(.failure(BlePeripheralInteractorError.characteristicNotFound)) }
+                callbacks.forEach { $0(.failure(BlePeripheralProxyError.characteristicNotFound)) }
             }
             discoverCharacteristicTimers[characteristicUUID]?.resume()
         }
@@ -700,7 +700,7 @@ extension BlePeripheralInteractor {
                     return
                 }
                 discoverServiceCallbacks[serviceUUID] = []
-                callbacks.forEach { $0(.failure(BlePeripheralInteractorError.serviceNotFound)) }
+                callbacks.forEach { $0(.failure(BlePeripheralProxyError.serviceNotFound)) }
             }
             discoverServiceTimers[serviceUUID]?.resume()
         }
@@ -723,7 +723,7 @@ extension BlePeripheralInteractor {
                 return
             }
             characteristicReadCallbacks[characteristicUUID] = []
-            callbacks.forEach { $0(.failure(BlePeripheralInteractorError.timeout)) }
+            callbacks.forEach { $0(.failure(BlePeripheralProxyError.timeout)) }
         }
         characteristicReadTimers[characteristicUUID]?.resume()
     }
@@ -745,7 +745,7 @@ extension BlePeripheralInteractor {
                 return
             }
             characteristicNotifyCallbacks[characteristicUUID] = []
-            callbacks.forEach { $0(.failure(BlePeripheralInteractorError.timeout)) }
+            callbacks.forEach { $0(.failure(BlePeripheralProxyError.timeout)) }
         }
         characteristicNotifyTimers[characteristicUUID]?.resume()
     }
@@ -767,7 +767,7 @@ extension BlePeripheralInteractor {
                 return
             }
             characteristicWriteCallbacks[characteristicUUID] = []
-            callbacks.forEach { $0(.failure(BlePeripheralInteractorError.timeout)) }
+            callbacks.forEach { $0(.failure(BlePeripheralProxyError.timeout)) }
         }
         characteristicWriteTimers[characteristicUUID]?.resume()
     }
@@ -815,7 +815,7 @@ extension BlePeripheralInteractor {
 
 // MARK: - BlePeripheralDelegate conformance
 
-extension BlePeripheralInteractor: BlePeripheralDelegate {
+extension BlePeripheralProxy: BlePeripheralDelegate {
     
     public func blePeripheralDidUpdateName(_ peripheral: BlePeripheral) {
         didUpdateNameSubject.send(peripheral.name)
@@ -940,7 +940,7 @@ extension BlePeripheralInteractor: BlePeripheralDelegate {
             notifyCallbacks(
                 store: &characteristicReadCallbacks,
                 uuid: characteristic.uuid,
-                value: .failure(BlePeripheralInteractorError.characteristicDataIsNil))
+                value: .failure(BlePeripheralProxyError.characteristicDataIsNil))
             return
         }
         

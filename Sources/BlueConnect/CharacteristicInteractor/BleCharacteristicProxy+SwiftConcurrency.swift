@@ -1,5 +1,5 @@
 //
-//  BleCentralManagerInteractorError.swift
+//  BleCharacteristicProxy+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -26,13 +26,24 @@
 //
 
 import CoreBluetooth
+import Foundation
 
-public enum BleCentralManagerInteractorError: Error {
+public extension BleCharacteristicProxy {
     
-    case invalidState(CBManagerState)
-    
-    case timeout
-    
-    case unknown
+    /// Discover the service and then characteristic.
+    ///
+    /// - Parameters:
+    ///   - timeout: The timeout duration for the characteristic discovery operation. Defaults to 10 seconds.
+    ///
+    /// - Throws: An error if the discovery fails within the specified timeout.
+    /// - Returns: The discovered `CBCharacteristic`.
+    @discardableResult
+    func discover(timeout: DispatchTimeInterval = .seconds(10)) async throws -> CBCharacteristic {
+        try await withCheckedThrowingContinuation { continuation in
+            discover(timeout: timeout) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
     
 }

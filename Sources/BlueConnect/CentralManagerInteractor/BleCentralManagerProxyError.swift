@@ -1,5 +1,5 @@
 //
-//  BlePeripheralInteractor.swift
+//  BleCentralManagerProxyError.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,30 +25,14 @@
 //  THE SOFTWARE.
 //
 
-/// An enum representing various errors that can occur during interactions with a BLE peripheral.
-///
-/// `BlePeripheralInteractorError` defines different types of errors encountered during BLE operations, such as missing characteristics, connectivity issues, or unsupported operations.
-public enum BlePeripheralInteractorError: Error {
-    
-    /// The specified characteristic was not found on the peripheral.
-    case characteristicNotFound
-    
-    /// The specified characteristic does not contain any data.
-    case characteristicDataIsNil
-    
-    /// The peripheral interactor instance has been destroyed and is no longer usable.
-    case destroyed
-    
-    /// The requested operation (read/write/notify) is not supported by the characteristic or peripheral.
-    case operationNotSupported
-    
-    /// The BLE peripheral is not connected, and operations cannot be performed.
-    case peripheralNotConnected
-    
-    /// The specified service was not found on the peripheral.
-    case serviceNotFound
+import CoreBluetooth
 
-    /// The operation timed out before it could complete.
+public enum BleCentralManagerProxyError: Error {
+    
+    case invalidState(CBManagerState)
+    
     case timeout
+    
+    case unknown
     
 }

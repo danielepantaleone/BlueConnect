@@ -1,5 +1,5 @@
 //
-//  BleCharacteristicInteractor.swift
+//  BleCharacteristicProxy.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -33,8 +33,8 @@ import Foundation
 /// This protocol provides the essential properties and methods needed to interact with a Bluetooth Low Energy (BLE) characteristic.
 /// It requires that conforming types define a specific `ValueType` for the characteristic, and provide access to the UUIDs of the characteristic and its associated service.
 ///
-/// Additionally, it allows access to the `BlePeripheralInteractor` managing the peripheral.
-public protocol BleCharacteristicInteractor {
+/// Additionally, it allows access to the `BlePeripheralProxy` managing the peripheral.
+public protocol BleCharacteristicProxy {
     
     /// Associated type representing the value of the BLE characteristic.
     associatedtype ValueType
@@ -45,14 +45,14 @@ public protocol BleCharacteristicInteractor {
     /// The UUID of the service containing the characteristic.
     var serviceUUID: CBUUID { get }
     
-    /// A weak reference to the `BlePeripheralInteractor` managing the peripheral associated with this characteristic.
-    var peripheralInteractor: BlePeripheralInteractor? { get }
+    /// A weak reference to the `BlePeripheralProxy` managing the peripheral associated with this characteristic.
+    var peripheralProxy: BlePeripheralProxy? { get }
     
 }
 
 // MARK: - Characteristic discovery
 
-public extension BleCharacteristicInteractor {
+public extension BleCharacteristicProxy {
     
     /// Discover the service and then characteristic.
     ///
@@ -63,10 +63,10 @@ public extension BleCharacteristicInteractor {
     ///   - callback: A closure to execute when the characteristic is discovered. This closure receives a `Result<CBCharacteristic, Error>` where the success case contains the discovered characteristic and the failure case contains an error.
     func discover(timeout: DispatchTimeInterval = .seconds(10), callback: @escaping (Result<CBCharacteristic, Error>) -> Void) {
         let start: DispatchTime = .now()
-        peripheralInteractor?.discover(serviceUUID: serviceUUID, timeout: timeout) { serviceDiscoveryResult in
+        peripheralProxy?.discover(serviceUUID: serviceUUID, timeout: timeout) { serviceDiscoveryResult in
             serviceDiscoveryResult.forwardError(to: callback)
             serviceDiscoveryResult.onSuccess { _ in
-                peripheralInteractor?.discover(
+                peripheralProxy?.discover(
                     characteristicUUID: characteristicUUID,
                     in: serviceUUID,
                     timeout: timeout - start.distance(to: .now()),

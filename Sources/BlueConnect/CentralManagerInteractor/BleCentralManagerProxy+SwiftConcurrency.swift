@@ -1,5 +1,5 @@
 //
-//  BleCharacteristicInteractor+SwiftConcurrency.swift
+//  BleCentralManagerProxy+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,22 +25,32 @@
 //  THE SOFTWARE.
 //
 
+import Combine
 import CoreBluetooth
 import Foundation
 
-public extension BleCharacteristicInteractor {
+extension BleCentralManagerProxy {
     
-    /// Discover the service and then characteristic.
+    /// Connects to a specified BLE peripheral asynchronously.
+    ///
+    /// This method attempts to establish a connection to the given `BlePeripheral` using the provided options and within the specified timeout period.
+    /// If the peripheral is already connected, the method will succeed immediately. If a timeout is specified and the connection is not established within
+    /// that period, an error will be thrown.
     ///
     /// - Parameters:
-    ///   - timeout: The timeout duration for the characteristic discovery operation. Defaults to 10 seconds.
+    ///   - peripheral: The `BlePeripheral` to connect to.
+    ///   - options: An optional dictionary of connection options. Defaults to `nil`.
+    ///   - timeout: The maximum amount of time to wait for the connection. Defaults to `.never`, meaning no timeout.
     ///
-    /// - Throws: An error if the discovery fails within the specified timeout.
-    /// - Returns: The discovered `CBCharacteristic`.
-    @discardableResult
-    func discover(timeout: DispatchTimeInterval = .seconds(10)) async throws -> CBCharacteristic {
+    /// - Returns: The method returns asynchronously when the connection is successfully established or an error occurs.
+    /// - Throws: An error if the connection fails or if the operation times out.
+    public func connect(
+        peripheral: BlePeripheral,
+        options: [String: Any]? = nil,
+        timeout: DispatchTimeInterval = .never
+    ) async throws {
         try await withCheckedThrowingContinuation { continuation in
-            discover(timeout: timeout) { result in
+            connect(peripheral: peripheral, options: options, timeout: timeout) { result in
                 continuation.resume(with: result)
             }
         }

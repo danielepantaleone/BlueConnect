@@ -1,5 +1,5 @@
 //
-//  BlePeripheralInteractor+CBPeripheralDelegate.swift
+//  BlePeripheralProxy+CBPeripheralDelegate.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -27,7 +27,7 @@
 
 import CoreBluetooth
 
-extension BlePeripheralInteractor: CBPeripheralDelegate {
+extension BlePeripheralProxy: CBPeripheralDelegate {
     
     public func peripheralDidUpdateName(_ peripheral: CBPeripheral) {
         blePeripheralDidUpdateName(peripheral)

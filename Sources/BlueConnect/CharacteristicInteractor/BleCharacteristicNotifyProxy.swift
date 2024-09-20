@@ -1,5 +1,5 @@
 //
-//  BleCharacteristicNotifyInteractor+SwiftConcurrency.swift
+//  BleCharacteristicNotifyProxy.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,10 +25,28 @@
 //  THE SOFTWARE.
 //
 
+import Combine
 import CoreBluetooth
 import Foundation
 
-public extension BleCharacteristicNotifyInteractor {
+/// A protocol representing an interactor that handles notifications for a BLE characteristic.
+public protocol BleCharacteristicNotifyProxy: BleCharacteristicProxy {
+    
+}
+
+public extension BleCharacteristicNotifyProxy {
+    
+    /// A publisher that emits the notification state (enabled or disabled) of the characteristic.
+    ///
+    /// This publisher will emit values when the notification state of the characteristic changes.
+    ///
+    /// - Note: This publisher filters events to only those corresponding to the current characteristic.
+    var didUpdateNotificationStatePublisher: AnyPublisher<Bool, Never>? {
+        peripheralProxy?.didUpdateNotificationStatePublisher
+            .filter { $0.characteristic.uuid == characteristicUUID }
+            .map { _, enabled in enabled }
+            .eraseToAnyPublisher()
+    }
     
     /// Enable or disable notifications for the characteristic.
     ///
@@ -39,13 +57,25 @@ public extension BleCharacteristicNotifyInteractor {
     /// - Parameters:
     ///   - enabled: A boolean indicating whether to enable (true) or disable (false) notifications.
     ///   - timeout: The time interval to wait for the notify operation before it times out. Defaults to 10 seconds.
-    ///
-    /// - Returns: A boolean indicating whether the notification was successfully enabled (true) or disabled (false).
-    /// - Throws: An error if the characteristic cannot be discovered or notify state changed within the specified timeout.
-    func setNotify(enabled: Bool, timeout: DispatchTimeInterval = .seconds(10)) async throws -> Bool {
-        try await withCheckedThrowingContinuation { continuation in
-            setNotify(enabled: enabled, timeout: timeout) { result in
-                continuation.resume(with: result)
+    ///   - callback: A closure that will be executed once the notify operation completes. It provides a `Result` with either the updated notification state (enabled or disabled) or an error.
+    func setNotify(
+        enabled: Bool,
+        timeout: DispatchTimeInterval = .seconds(10),
+        callback: ((Result<Bool, Error>) -> Void)? = nil
+    ) {
+        let start: DispatchTime = .now()
+        discover(timeout: timeout) { characteristicDiscoveryResult in
+            characteristicDiscoveryResult.forwardError(to: callback)
+            characteristicDiscoveryResult.onSuccess { characteristic in
+                peripheralProxy?.setNotify(
+                    enabled: enabled,
+                    for: characteristic.uuid,
+                    timeout: timeout - start.distance(to: .now()),
+                    callback: { notifyResult in
+                        notifyResult.forwardError(to: callback)
+                        notifyResult.forwardSuccess(to: callback)
+                    }
+                )
             }
         }
     }

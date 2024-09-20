@@ -1,5 +1,5 @@
 //
-//  BleCentralManagerInteractor+BleCentralManagerInteractor+CBCentralManagerDelegate.swift
+//  BleCentralManagerProxy+BleCentralManagerProxy+CBCentralManagerDelegate.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -29,7 +29,7 @@ import Combine
 import CoreBluetooth
 import Foundation
 
-extension BleCentralManagerInteractor: CBCentralManagerDelegate {
+extension BleCentralManagerProxy: CBCentralManagerDelegate {
     
     public func centralManagerDidUpdateState(_ central: CBCentralManager) {
         bleCentralManagerDidUpdateState(central)

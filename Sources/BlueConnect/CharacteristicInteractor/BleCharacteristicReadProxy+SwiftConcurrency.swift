@@ -1,5 +1,5 @@
 //
-//  BleReadingCharacteristicInteractor+SwiftConcurrency.swift
+//  BleReadingCharacteristicProxy+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -28,7 +28,7 @@
 import CoreBluetooth
 import Foundation
 
-public extension BleCharacteristicReadInteractor {
+public extension BleCharacteristicReadProxy {
     
     /// Read the characteristic value according to the provided cache policy.
     ///
