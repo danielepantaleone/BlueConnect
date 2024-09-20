@@ -672,11 +672,10 @@ extension BlePeripheralProxy {
                 defer { mutex.unlock() }
                 discoverCharacteristicTimers[characteristicUUID]?.cancel()
                 discoverCharacteristicTimers[characteristicUUID] = nil
-                guard let callbacks = discoverCharacteristicCallbacks[characteristicUUID] else {
-                    return
-                }
-                discoverCharacteristicCallbacks[characteristicUUID] = []
-                callbacks.forEach { $0(.failure(BlePeripheralProxyError(category: .characteristicNotFound))) }
+                notifyCallbacks(
+                    store: &discoverCharacteristicCallbacks,
+                    uuid: characteristicUUID,
+                    value: .failure(BlePeripheralProxyError(category: .characteristicNotFound)))
             }
             discoverCharacteristicTimers[characteristicUUID]?.resume()
         }
@@ -696,11 +695,10 @@ extension BlePeripheralProxy {
                 defer { mutex.unlock() }
                 discoverServiceTimers[serviceUUID]?.cancel()
                 discoverServiceTimers[serviceUUID] = nil
-                guard let callbacks = discoverServiceCallbacks[serviceUUID] else {
-                    return
-                }
-                discoverServiceCallbacks[serviceUUID] = []
-                callbacks.forEach { $0(.failure(BlePeripheralProxyError(category: .serviceNotFound))) }
+                notifyCallbacks(
+                    store: &discoverServiceCallbacks,
+                    uuid: serviceUUID,
+                    value: .failure(BlePeripheralProxyError(category: .serviceNotFound)))
             }
             discoverServiceTimers[serviceUUID]?.resume()
         }
@@ -719,11 +717,10 @@ extension BlePeripheralProxy {
             defer { mutex.unlock() }
             characteristicReadTimers[characteristicUUID]?.cancel()
             characteristicReadTimers[characteristicUUID] = nil
-            guard let callbacks = characteristicReadCallbacks[characteristicUUID] else {
-                return
-            }
-            characteristicReadCallbacks[characteristicUUID] = []
-            callbacks.forEach { $0(.failure(BlePeripheralProxyError(category: .timeout))) }
+            notifyCallbacks(
+                store: &characteristicReadCallbacks,
+                uuid: characteristicUUID,
+                value: .failure(BlePeripheralProxyError(category: .timeout)))
         }
         characteristicReadTimers[characteristicUUID]?.resume()
     }
@@ -741,11 +738,10 @@ extension BlePeripheralProxy {
             defer { mutex.unlock() }
             characteristicNotifyTimers[characteristicUUID]?.cancel()
             characteristicNotifyTimers[characteristicUUID] = nil
-            guard let callbacks = characteristicNotifyCallbacks[characteristicUUID] else {
-                return
-            }
-            characteristicNotifyCallbacks[characteristicUUID] = []
-            callbacks.forEach { $0(.failure(BlePeripheralProxyError(category: .timeout))) }
+            notifyCallbacks(
+                store: &characteristicNotifyCallbacks,
+                uuid: characteristicUUID,
+                value: .failure(BlePeripheralProxyError(category: .timeout)))
         }
         characteristicNotifyTimers[characteristicUUID]?.resume()
     }
@@ -763,11 +759,10 @@ extension BlePeripheralProxy {
             defer { mutex.unlock() }
             characteristicWriteTimers[characteristicUUID]?.cancel()
             characteristicWriteTimers[characteristicUUID] = nil
-            guard let callbacks = characteristicWriteCallbacks[characteristicUUID] else {
-                return
-            }
-            characteristicWriteCallbacks[characteristicUUID] = []
-            callbacks.forEach { $0(.failure(BlePeripheralProxyError(category: .timeout))) }
+            notifyCallbacks(
+                store: &characteristicWriteCallbacks,
+                uuid: characteristicUUID,
+                value: .failure(BlePeripheralProxyError(category: .timeout)))
         }
         characteristicWriteTimers[characteristicUUID]?.resume()
     }
