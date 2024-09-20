@@ -36,29 +36,13 @@ class MockBleCentralManager: BleCentralManager {
     
     var errorOnConnection: Error?
     var errorOnDisconnection: Error?
+    var delayOnConnection: DispatchTimeInterval?
     var timeoutOnConnection: Bool = false
-    
+
     // MARK: - Private properties
     
-    private var discoveredPeripherals: [BlePeripheral] = [
-        MockBlePeripheral(
-            identifier: MockBleDescriptor.peripheralUUID_1,
-            name: nil,
-            serialNumber: "12345678",
-            batteryLevel: 77,
-            firmwareRevision: "1.0.7",
-            hardwareRevision: "2.0.4",
-            secret: "abcd"),
-        MockBlePeripheral(
-            identifier: MockBleDescriptor.peripheralUUID_1,
-            name: "PERIPHERAL_2",
-            serialNumber: "87654321",
-            batteryLevel: 43,
-            firmwareRevision: "1.0.2",
-            hardwareRevision: "2.0.1",
-            secret: "efgh")
-    ]
-    
+    private var discoveredPeripherals: [BlePeripheral] = []
+
     // MARK: - Protocol properties
     
     var authorization: CBManagerAuthorization { .allowedAlways }
@@ -67,8 +51,10 @@ class MockBleCentralManager: BleCentralManager {
     let mutex = RecursiveMutex()
     var state: CBManagerState = .poweredOff {
         didSet {
-            queue.async {
-                self.centraManagerDelegate?.bleCentralManagerDidUpdateState(self)
+            queue.async { [weak self] in
+                guard let self else { return }
+                centraManagerDelegate?.bleCentralManagerDidUpdateState(self)
+                disconnectAllPeripheralsIfNotPoweredOn()
             }
         }
     }
@@ -80,23 +66,30 @@ class MockBleCentralManager: BleCentralManager {
     // MARK: - Interface
     
     func connect(_ peripheral: BlePeripheral, options: [String: Any]?) {
+        guard let mockPeripheral = peripheral as? MockBlePeripheral else {
+            return
+        }
+        // move to connecting state before going async
+        mockPeripheral.state = .connecting
         queue.async { [weak self] in
             guard let self else { return }
             mutex.lock()
             defer { mutex.unlock() }
             guard state == .poweredOn else {
+                mockPeripheral.state = .disconnected
                 centraManagerDelegate?.bleCentralManager(
                     self,
                     didFailToConnect: peripheral,
                     error: MockBleError.bluetoothIsOff)
-                errorOnConnection = nil
                 return
             }
             guard !timeoutOnConnection else {
+                // Keep the peripheral in connecting state to simulate iOS behaviour
                 timeoutOnConnection = false
                 return
             }
             guard errorOnConnection == nil else {
+                mockPeripheral.state = .disconnected
                 centraManagerDelegate?.bleCentralManager(
                     self,
                     didFailToConnect: peripheral,
@@ -104,11 +97,17 @@ class MockBleCentralManager: BleCentralManager {
                 errorOnConnection = nil
                 return
             }
-            guard let mockPeripheral = peripheral as? MockBlePeripheral else {
-                return
+            if let delayOnConnection {
+                queue.asyncAfter(deadline: .now() + delayOnConnection) { [weak self] in
+                    guard let self else { return }
+                    mockPeripheral.state = .connected
+                    centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
+                }
+                self.delayOnConnection = nil
+            } else {
+                mockPeripheral.state = .connected
+                centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
             }
-            mockPeripheral.state = .connected
-            centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
         }
     }
     
@@ -169,6 +168,31 @@ class MockBleCentralManager: BleCentralManager {
     
     func stopScan() {
         
+    }
+    
+    // MARK: - Configuration
+    
+    func discoveredPeripherals(_ peripherals: [BlePeripheral]) {
+        mutex.lock()
+        defer { mutex.unlock() }
+        discoveredPeripherals.removeAll()
+        discoveredPeripherals.append(contentsOf: peripherals)
+    }
+    
+    // MARK: - Internals
+    
+    private func disconnectAllPeripheralsIfNotPoweredOn() {
+        mutex.lock()
+        defer { mutex.unlock() }
+        guard state != .poweredOn else { return }
+        for peripheral in discoveredPeripherals {
+            guard let mockPeripheral = peripheral as? MockBlePeripheral else { continue }
+            mockPeripheral.state = .disconnected
+            centraManagerDelegate?.bleCentralManager(
+                self,
+                didDisconnectPeripheral: mockPeripheral,
+                error: nil)
+        }
     }
     
 }
