@@ -228,6 +228,7 @@ extension BleCentralManagerProxy {
         connectionTimers[peripheralIdentifier]?.cancel()
         connectionTimers[peripheralIdentifier] = nil
     }
+    
 }
 
 // MARK: - BleCentralManagerDelegate conformance
@@ -243,9 +244,11 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
+        // Stop timer
         stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
+        // Notify publisher
         didConnectSubject.send(peripheral)
-        
+        // Notify registered callbacks
         notifyCallbacks(
             store: &connectionCallbacks,
             uuid: peripheral.identifier,
@@ -257,8 +260,11 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
+        // Stop timer
         stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
-        
+        // Notify publisher
+        didFailToConnectSubject.send((peripheral, error))
+        // Notify registered callbacks
         notifyCallbacks(
             store: &connectionCallbacks,
             uuid: peripheral.identifier,
