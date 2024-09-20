@@ -84,14 +84,14 @@ final class BleCentralManagerProxyTests: XCTestCase {
     // MARK: - Test state change
     
     func testCentralManagerPowerOn() throws {
-        try bleCentralManager(state: .poweredOn)
+        centralManager(state: .poweredOn)
         XCTAssertEqual(bleCentralManager.state, .poweredOn)
     }
     
     func testCentralManagerPowerOnAndThenOff() throws {
-        try bleCentralManager(state: .poweredOn)
+        centralManager(state: .poweredOn)
         XCTAssertEqual(bleCentralManager.state, .poweredOn)
-        try bleCentralManager(state: .poweredOff)
+        centralManager(state: .poweredOff)
         XCTAssertEqual(bleCentralManager.state, .poweredOff)
     }
 
@@ -99,7 +99,7 @@ final class BleCentralManagerProxyTests: XCTestCase {
     
     func testPeripheralConnect() throws {
         // Turn on ble central manager
-        try bleCentralManager(state: .poweredOn)
+        centralManager(state: .poweredOn)
         // Assert initial peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         let connectExp = expectation(description: "waiting for peripheral to connect")
@@ -128,7 +128,7 @@ final class BleCentralManagerProxyTests: XCTestCase {
     
     func testPeripheralConnectAsync() async throws {
         // Turn on ble central manager
-        try bleCentralManager(state: .poweredOn)
+        centralManager(state: .poweredOn)
         // Assert initial peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         do {
@@ -144,24 +144,10 @@ final class BleCentralManagerProxyTests: XCTestCase {
     
     func testPeripheralConnectWithPeripheralAlreadyConnected() throws {
         // Turn on ble central manager
-        try bleCentralManager(state: .poweredOn)
-        // Assert initial peripheral state
-        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
-        let exp = expectation(description: "waiting for peripheral to connect")
-        // Test connection on callback
-        bleCentralManagerProxy.connect(
-            peripheral: try blePeripheral_1,
-            options: nil,
-            timeout: .never) { result in
-                switch result {
-                    case .success:
-                        exp.fulfill()
-                    case .failure(let error):
-                        XCTFail("peripheral connection failed with error: \(error)")
-                }
-            }
-        wait(for: [exp], timeout: 2.0)
-        XCTAssertEqual(try blePeripheral_1.state, .connected)
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Test second connection
         let connectExp = expectation(description: "waiting for peripheral to connect even if already connected")
         let publisherExp = expectation(description: "waiting for peripheral connection NOT to be signaled by publisher")
         publisherExp.isInverted = true
@@ -243,7 +229,7 @@ final class BleCentralManagerProxyTests: XCTestCase {
     
     func testPeripheralConnectFailDueToTimeout() throws {
         // Turn on ble central manager
-        try bleCentralManager(state: .poweredOn)
+        centralManager(state: .poweredOn)
         // Assert initial peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         let connectExp = expectation(description: "waiting for peripheral connection to fail")
@@ -284,7 +270,7 @@ final class BleCentralManagerProxyTests: XCTestCase {
     
     // MARK: - Functions
     
-    func bleCentralManager(state: CBManagerState) throws {
+    func centralManager(state: CBManagerState) {
         XCTAssertNotEqual(bleCentralManager.state, state)
         let expectation = expectation(description: "waiting for bluetooth state to change to '\(state)'")
         bleCentralManagerProxy.didUpdateStatePublisher
@@ -294,6 +280,25 @@ final class BleCentralManagerProxyTests: XCTestCase {
             .store(in: &subscriptions)
         bleCentralManager.state = state
         wait(for: [expectation], timeout: 2.0)
+    }
+    
+    func connect(peripheral: BlePeripheral) {
+        XCTAssertEqual(bleCentralManager.state, .poweredOn)
+        XCTAssertEqual(peripheral.state, .disconnected)
+        let expectation = expectation(description: "waiting for peripheral to connect")
+        bleCentralManagerProxy.connect(
+            peripheral: peripheral,
+            options: nil,
+            timeout: .never) { result in
+                switch result {
+                    case .success:
+                        expectation.fulfill()
+                    case .failure(let error):
+                        XCTFail("peripheral connection failed with error: \(error)")
+                }
+            }
+        wait(for: [expectation], timeout: 2.0)
+        XCTAssertEqual(peripheral.state, .connected)
     }
     
 }
