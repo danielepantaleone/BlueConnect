@@ -288,13 +288,26 @@ extension BleCentralManagerProxy {
             guard let self else { return }
             mutex.lock()
             defer { mutex.unlock() }
+            // Kill the timer and reset
             connectionTimers[peripheralIdentifier]?.cancel()
             connectionTimers[peripheralIdentifier] = nil
-            guard let callbacks = connectionCallbacks[peripheralIdentifier] else {
-                return
+            // If the peripheral is not in disconnected state we disconnect it else it will connect at some point.
+            if let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first,
+                peripheral.state != .disconnected,
+                centralManager.state == .poweredOn {
+                disconnect(peripheral: peripheral) { [weak self] _ in
+                    guard let self else { return }
+                    notifyCallbacks(
+                        store: &connectionCallbacks,
+                        uuid: peripheralIdentifier,
+                        value: .failure(BleCentralManagerProxyError(category: .timeout)))
+                }
+            } else { // The peripheral could not be retrieved or it's already disconnected
+                notifyCallbacks(
+                    store: &connectionCallbacks,
+                    uuid: peripheralIdentifier,
+                    value: .failure(BleCentralManagerProxyError(category: .timeout)))
             }
-            connectionCallbacks[peripheralIdentifier] = []
-            callbacks.forEach { $0(.failure(BleCentralManagerProxyError(category: .timeout))) }
         }
         connectionTimers[peripheralIdentifier]?.resume()
     }

@@ -36,7 +36,7 @@ public struct BlePeripheralProxyError: Error {
     // MARK: - Category
 
     /// An enumeration defining different categories of errors that can occur during BLE peripheral interactions.
-    public enum Category {
+    public enum Category: Equatable {
         /// The specified characteristic was not found on the peripheral.
         case characteristicNotFound
         /// The specified characteristic does not contain any data.

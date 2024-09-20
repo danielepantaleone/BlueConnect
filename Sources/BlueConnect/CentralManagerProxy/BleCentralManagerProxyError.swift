@@ -36,7 +36,7 @@ public struct BleCentralManagerProxyError: Error {
     // MARK: - Category
 
     /// An enumeration defining different categories of errors that can occur with the BLE central manager proxy.
-    public enum Category {
+    public enum Category: Equatable {
         /// Indicates that the central manager is in an invalid state for the requested operation.
         case invalidState(CBManagerState)
         /// Indicates that a timeout occurred during an operation.
