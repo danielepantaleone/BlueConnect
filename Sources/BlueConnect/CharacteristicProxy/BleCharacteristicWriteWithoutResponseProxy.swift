@@ -1,5 +1,5 @@
 //
-//  BleCharacteristicWriteProxy.swift
+//  BleCharacteristicWriteWithoutResponseProxy.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,15 +25,14 @@
 //  THE SOFTWARE.
 //
 
-import Combine
 import CoreBluetooth
 import Foundation
 
-/// A protocol defining the interaction with a BLE characteristic having write capabilities.
+/// A protocol defining the ability to write data to a BLE characteristic without expecting a response.
 ///
 /// This protocol includes an `encode` method that allows for converting the interactor's `ValueType` into a raw `Data`
-/// representation to be written onto a BLE characteristic.
-public protocol BleCharacteristicWriteProxy: BleCharacteristicProxy {
+/// representation to be written onto a BLE characteristic without waiting for a confirmation response from the peripheral.
+public protocol BleCharacteristicWriteWithoutResponseProxy: BleCharacteristicProxy {
  
     /// Encode data using the interactor's information.
     ///
@@ -49,51 +48,31 @@ public protocol BleCharacteristicWriteProxy: BleCharacteristicProxy {
     
 }
 
-public extension BleCharacteristicWriteProxy {
+public extension BleCharacteristicWriteWithoutResponseProxy {
     
-    /// A publisher that emits a value when the characteristic's value is successfully written.
+    /// Write a value to a characteristic without waiting for a response from the BLE peripheral.
     ///
-    /// This publisher listens to write operations for characteristics and emits a signal when the write operation completes successfully.
-    ///
-    /// - Note: This publisher filters events to only those corresponding to the current characteristic.
-    var didWriteValuePublisher: AnyPublisher<Void, Never> {
-        peripheralProxy!.didWriteValuePublisher
-            .filter { $0.uuid == characteristicUUID }
-            .map { _ in () }
-            .eraseToAnyPublisher()
-    }
-    
-    /// Write a value to the characteristic and notify the result via the provided callback.
-    ///
-    /// This method discovers the characteristic and then attempts to write the provided value to it.
-    /// If the write operation fails, an error will be reported through the callback.
-    /// The callback will also be invoked if the write operation succeeds.
+    /// This method first discovers the characteristic and then writes the provided value without expecting a response.
+    /// The encoded data is sent to the BLE peripheral for the characteristic identified by the interactor.
     ///
     /// - Parameters:
-    ///   - value: The value to write to the characteristic. This value will be encoded before writing.
-    ///   - timeout: The timeout duration for the write operation. Defaults to 10 seconds.
-    ///   - callback: An optional closure to execute when the write operation completes. It will receive a `Result` indicating success or failure.
-    func write(
+    ///   - value: The value to encode and write to the characteristic.
+    ///   - timeout: The timeout for the characteristic write operation. Defaults to 10 seconds.
+    ///   - callback: An optional closure to call once the write operation is attempted. It returns either a success or failure.
+    func writeWithoutResponse(
         value: ValueType,
         timeout: DispatchTimeInterval = .seconds(10),
         callback: ((Result<Void, Error>) -> Void)? = nil
     ) {
-        let start: DispatchTime = .now()
         discover(timeout: timeout) { result in
             result.forwardError(to: callback)
             result.onSuccess { characteristic in
                 do {
-                    let data = try encode(value)
-                    peripheralProxy?.write(
-                        data: data,
-                        to: characteristic.uuid,
-                        timeout: timeout - start.distance(to: .now())
-                    ) { writeResult in
-                        writeResult.forwardError(to: callback)
-                        writeResult.forwardSuccess(to: callback)
-                    }
+                    try peripheralProxy?.writeWithoutResponse(
+                        data: try encode(value),
+                        to: characteristic.uuid)
                 } catch {
-                    callback?(.failure(BleCharacteristicProxyError.encodingError))
+                    callback?(.failure(BleCharacteristicProxyError(category: .encodingError, cause: error)))
                 }
             }
         }
@@ -101,7 +80,7 @@ public extension BleCharacteristicWriteProxy {
     
 }
 
-public extension BleCharacteristicWriteProxy where ValueType == Data {
+public extension BleCharacteristicWriteWithoutResponseProxy where ValueType == Data {
     
     /// Bypass data encoding and return raw data.
     ///

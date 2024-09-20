@@ -161,7 +161,7 @@ extension BleCentralManagerProxy {
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
-            callback?(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
+            callback?(.failure(BleCentralManagerProxyError(category: .invalidState(centralManager.state))))
             return
         }
         
@@ -217,7 +217,7 @@ extension BleCentralManagerProxy {
                 return
             }
             connectionCallbacks[peripheralIdentifier] = []
-            callbacks.forEach { $0(.failure(BleCentralManagerProxyError.timeout)) }
+            callbacks.forEach { $0(.failure(BleCentralManagerProxyError(category: .timeout))) }
         }
         connectionTimers[peripheralIdentifier]?.resume()
     }
@@ -262,7 +262,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         notifyCallbacks(
             store: &connectionCallbacks,
             uuid: peripheral.identifier,
-            value: .failure(error ?? BleCentralManagerProxyError.unknown))
+            value: .failure(error ?? BleCentralManagerProxyError(category: .unknown)))
+        
     }
     
     public func bleCentralManager(_ central: BleCentralManager, willRestoreState dict: [String: Any]) {

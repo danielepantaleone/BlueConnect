@@ -27,12 +27,32 @@
 
 import CoreBluetooth
 
-public enum BleCentralManagerProxyError: Error {
+public struct BleCentralManagerProxyError: Error {
     
-    case invalidState(CBManagerState)
+    // MARK: - Category
+
+    public enum Category {
+        case invalidState(CBManagerState)
+        case timeout
+        case unknown
+    }
     
-    case timeout
+    // MARK: - Properties
+
+    /// The category of the error, indicating the type of issue encountered.
+    public internal(set) var category: Category
+    /// An optional descriptive message providing additional context about the error.
+    public internal(set) var message: String?
+    /// The underlying error that caused this error, if any.
+    public internal(set) var cause: Error?
     
-    case unknown
+    // MARK: - Initialization
+    
+    public init(category: Category, message: String? = nil, cause: Error? = nil) {
+        self.category = category
+        self.cause = cause
+        self.message = message
+    }
     
 }
+
