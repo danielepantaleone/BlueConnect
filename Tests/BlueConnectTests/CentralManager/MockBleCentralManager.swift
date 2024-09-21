@@ -98,16 +98,20 @@ class MockBleCentralManager: BleCentralManager {
                 errorOnConnection = nil
                 return
             }
+            func _connectInternal() {
+                mutex.lock()
+                defer { mutex.unlock() }
+                guard mockPeripheral.state == .connecting else { return }
+                mockPeripheral.state = .connected
+                centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
+            }
             if let delayOnConnection {
-                queue.asyncAfter(deadline: .now() + delayOnConnection) { [weak self] in
-                    guard let self else { return }
-                    mockPeripheral.state = .connected
-                    centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
+                queue.asyncAfter(deadline: .now() + delayOnConnection) {
+                    _connectInternal()
                 }
                 self.delayOnConnection = nil
             } else {
-                mockPeripheral.state = .connected
-                centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
+                _connectInternal()
             }
         }
     }
@@ -137,23 +141,23 @@ class MockBleCentralManager: BleCentralManager {
                 errorOnDisconnection = nil
                 return
             }
-            
-            if let delayOnDisconnection {
-                queue.asyncAfter(deadline: .now() + delayOnDisconnection) { [weak self] in
-                    guard let self else { return }
-                    mockPeripheral.state = .disconnected
-                    centraManagerDelegate?.bleCentralManager(
-                        self,
-                        didDisconnectPeripheral: mockPeripheral,
-                        error: nil)
-                }
-                self.delayOnDisconnection = nil
-            } else {
+            func _disconnectInternal() {
+                mutex.lock()
+                defer { mutex.unlock() }
+                guard mockPeripheral.state == .disconnecting else { return }
                 mockPeripheral.state = .disconnected
                 centraManagerDelegate?.bleCentralManager(
                     self,
                     didDisconnectPeripheral: mockPeripheral,
                     error: nil)
+            }
+            if let delayOnDisconnection {
+                queue.asyncAfter(deadline: .now() + delayOnDisconnection) {
+                    _disconnectInternal()
+                }
+                self.delayOnDisconnection = nil
+            } else {
+                _disconnectInternal()
             }
         }
     }

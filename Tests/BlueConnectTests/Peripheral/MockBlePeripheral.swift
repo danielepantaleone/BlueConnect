@@ -76,7 +76,7 @@ class MockBlePeripheral: BlePeripheral {
     private let firmwareRevision: String
     private let hardwareRevision: String
     private let secret: String
-    private let mutex = RecursiveCondition()
+    private let mutex = RecursiveMutex()
     private var timer: DispatchSourceTimer?
     
     // MARK: - Services
@@ -126,32 +126,38 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnDiscoverServices = nil
                 return
             }
-            if let delayOnDiscoverServices {
-                self.mutex.wait(timeout: delayOnDiscoverServices)
-                self.delayOnDiscoverServices = nil
-            }
-            services = services.emptyIfNil
-            let allServices = [deviceInformationService, batteryService, heartRateService, customService]
-            if let serviceUUIDs {
-                allServices.forEach { service in
-                    if serviceUUIDs.contains(where: { $0.uuidString == service.uuid.uuidString }) {
+            func _discoverServicesInternal() {
+                mutex.lock()
+                defer { mutex.unlock() }
+                services = services.emptyIfNil
+                let allServices = [deviceInformationService, batteryService, heartRateService, customService]
+                if let serviceUUIDs {
+                    allServices.forEach { service in
+                        guard serviceUUIDs.contains(where: { $0.uuidString == service.uuid.uuidString }) else { return }
                         let service = service as CBService
-                        if !self.services!.contains(service) {
-                            self.services!.append(service)
+                        guard !self.services!.contains(service) else { return }
+                        self.services!.append(service)
+                    }
+                } else {
+                    allServices.forEach {
+                        if !self.services!.contains($0) {
+                            self.services?.append($0)
                         }
                     }
                 }
-            } else {
-                allServices.forEach {
-                    if !self.services!.contains($0) {
-                        self.services?.append($0)
-                    }
+                services?.compactMap { $0 as? CBMutableService }.forEach {
+                    $0.characteristics = $0.characteristics.emptyIfNil
                 }
+                peripheralDelegate?.blePeripheral(self, didDiscoverServices: nil)
             }
-            services?.compactMap { $0 as? CBMutableService }.forEach {
-                $0.characteristics = $0.characteristics.emptyIfNil
+            if let delayOnDiscoverServices {
+                queue.asyncAfter(deadline: .now() + delayOnDiscoverServices) {
+                    _discoverServicesInternal()
+                }
+                self.delayOnDiscoverServices = nil
+            } else {
+                _discoverServicesInternal()
             }
-            peripheralDelegate?.blePeripheral(self, didDiscoverServices: nil)
         }
     }
     
@@ -172,18 +178,24 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnDiscoverCharacteristics = nil
                 return
             }
-            if let delayOnDiscoverCharacteristics {
-                self.mutex.wait(timeout: delayOnDiscoverCharacteristics)
-                self.delayOnDiscoverCharacteristics = nil
+            func _discoverCharacteristicsInternal() {
+                if service == deviceInformationService {
+                    discoverDeviceInformationServiceCharacteristics()
+                } else if service == batteryService {
+                    discoverBatteryServiceCharacteristics()
+                } else if service == heartRateService {
+                    discoverHeartRateServiceCharacteristics()
+                } else if service == customService {
+                    discoverCustomServiceCharacteristics()
+                }
             }
-            if service == deviceInformationService {
-                discoverDeviceInformationServiceCharacteristics()
-            } else if service == batteryService {
-                discoverBatteryServiceCharacteristics()
-            } else if service == heartRateService {
-                discoverHeartRateServiceCharacteristics()
-            } else if service == customService {
-                discoverCustomServiceCharacteristics()
+            if let delayOnDiscoverCharacteristics {
+                queue.asyncAfter(deadline: .now() + delayOnDiscoverCharacteristics) {
+                    _discoverCharacteristicsInternal()
+                }
+                self.delayOnDiscoverCharacteristics = nil
+            } else {
+                _discoverCharacteristicsInternal()
             }
         }
     }
@@ -230,14 +242,22 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnRead = nil
                 return
             }
-            if let delayOnRead {
-                self.mutex.wait(timeout: delayOnRead)
-                self.delayOnRead = nil
+            func _readInternal() {
+                mutex.lock()
+                defer { mutex.unlock() }
+                peripheralDelegate?.blePeripheral(
+                    self,
+                    didUpdateValueFor: internalCharacteristic,
+                    error: nil)
             }
-            peripheralDelegate?.blePeripheral(
-                self,
-                didUpdateValueFor: internalCharacteristic,
-                error: nil)
+            if let delayOnRead {
+                queue.asyncAfter(deadline: .now() + delayOnRead) {
+                    _readInternal()
+                }
+                self.delayOnRead = nil
+            } else {
+                _readInternal()
+            }
             
         }
         
@@ -296,16 +316,24 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnWrite = nil
                 return
             }
-            if let delayOnWrite {
-                self.mutex.wait(timeout: delayOnWrite)
-                self.delayOnWrite = nil
+            func _writeInternal() {
+                mutex.lock()
+                defer { mutex.unlock() }
+                internalCharacteristic.value = data
+                peripheralDelegate?.blePeripheral(
+                    self,
+                    didWriteValueFor: internalCharacteristic,
+                    error: nil)
             }
-            internalCharacteristic.value = data
-            peripheralDelegate?.blePeripheral(
-                self,
-                didWriteValueFor: internalCharacteristic,
-                error: nil)
-            
+            if let delayOnWrite {
+                queue.asyncAfter(deadline: .now() + delayOnWrite) {
+                    _writeInternal()
+                }
+                self.delayOnWrite = nil
+            } else {
+                _writeInternal()
+            }
+        
         }
         
     }
@@ -349,15 +377,23 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnNotify = nil
                 return
             }
-            if let delayOnNotify {
-                self.mutex.wait(timeout: delayOnNotify)
-                self.delayOnNotify = nil
+            func _notifyInternal() {
+                mutex.lock()
+                defer { mutex.unlock() }
+                internalCharacteristic.internalIsNotifying = enabled
+                peripheralDelegate?.blePeripheral(
+                    self,
+                    didUpdateNotificationStateFor: internalCharacteristic,
+                    error: nil)
             }
-            internalCharacteristic.internalIsNotifying = enabled
-            peripheralDelegate?.blePeripheral(
-                self,
-                didUpdateNotificationStateFor: internalCharacteristic,
-                error: nil)
+            if let delayOnNotify {
+                queue.asyncAfter(deadline: .now() + delayOnNotify) {
+                    _notifyInternal()
+                }
+                self.delayOnNotify = nil
+            } else {
+                _notifyInternal()
+            }
         }
     }
     

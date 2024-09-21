@@ -143,7 +143,6 @@ final class BleCentralManagerProxyTests: BlueConnectTests {
         let connectExp = expectation(description: "waiting for peripheral to connect with multiple callbacks")
         connectExp.expectedFulfillmentCount = 3
         for _ in 0..<3 {
-            // Test connection on callback
             bleCentralManagerProxy.connect(
                 peripheral: try blePeripheral_1,
                 options: nil,
