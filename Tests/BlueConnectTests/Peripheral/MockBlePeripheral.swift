@@ -512,7 +512,7 @@ class MockBlePeripheral: BlePeripheral {
                 properties: [.read, .notify],
                 value: Data(with: heartRateProvider()),
                 permissions: .readable),
-            to: batteryService,
+            to: heartRateService,
             characteristicUUIDs: characteristicUUIDs)
         
         peripheralDelegate?.blePeripheral(
@@ -576,11 +576,11 @@ class MockBlePeripheral: BlePeripheral {
     private func findInternalMutableCharacteristic(_ characteristicUUID: CBUUID) -> MockCBCharacteristic? {
         let service = services?.first {
             $0.characteristics?.contains { characteristic in
-                characteristic.uuid.uuidString == characteristicUUID.uuidString
+                characteristic.uuid == characteristicUUID
             } ?? false
         }
         return service?.characteristics?.first {
-            $0.uuid.uuidString == characteristicUUID.uuidString
+            $0.uuid == characteristicUUID
         } as? MockCBCharacteristic
     }
     
