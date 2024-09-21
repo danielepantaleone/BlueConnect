@@ -413,8 +413,6 @@ extension BlePeripheralProxy {
         
         let alreadyDiscovered = service.characteristics.emptyIfNil .filter { UUIDs.contains($0.uuid) }
         if !alreadyDiscovered.isEmpty {
-            // Notify on the publisher
-            didDiscoverCharacteristicsSubject.send((service, alreadyDiscovered))
             // Notify on the callbacks (for each characteristic already discovered)
             alreadyDiscovered.forEach { characteristic in
                 notifyCallbacks(
