@@ -411,16 +411,15 @@ extension BlePeripheralProxy {
             return
         }
         
-        let alreadyDiscovered = service.characteristics.emptyIfNil .filter { UUIDs.contains($0.uuid) }
+        let alreadyDiscovered = service.characteristics.emptyIfNil.filter { UUIDs.contains($0.uuid) }
         if !alreadyDiscovered.isEmpty {
             // Notify on the callbacks (for each characteristic already discovered)
             alreadyDiscovered.forEach { characteristic in
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
-                    uuid: service.uuid,
+                    uuid: characteristic.uuid,
                     value: .success(characteristic))
             }
-            
         }
         
         // Discover the remaining ones
@@ -870,7 +869,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         characteristics.forEach { characteristic in
             notifyCallbacks(
                 store: &discoverCharacteristicCallbacks,
-                uuid: service.uuid,
+                uuid: characteristic.uuid,
                 value: .success(characteristic))
         }
         
