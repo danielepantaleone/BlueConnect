@@ -1,5 +1,5 @@
 //
-//  BleReadingCharacteristicProxy+SwiftConcurrency.swift
+//  BleCharacteristicReadProxy+SwiftConcurrency.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect

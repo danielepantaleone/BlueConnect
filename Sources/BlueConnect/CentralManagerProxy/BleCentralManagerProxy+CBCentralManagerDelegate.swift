@@ -1,5 +1,5 @@
 //
-//  BleCentralManagerProxy+BleCentralManagerProxy+CBCentralManagerDelegate.swift
+//  BleCentralManagerProxy+CBCentralManagerDelegate.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect

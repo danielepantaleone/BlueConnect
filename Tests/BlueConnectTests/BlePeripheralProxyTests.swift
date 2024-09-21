@@ -50,7 +50,7 @@ final class BlePeripheralProxyTests: BlueConnectTests {
         try super.tearDownWithError()
     }
     
-    // MARK: - Discover tests
+    // MARK: - Discover service tests
     
     func testDiscoverService() throws {
         // Turn on ble central manager
