@@ -135,4 +135,21 @@ class BlueConnectTests: XCTestCase {
         XCTAssertEqual(peripheral.state, .disconnected)
     }
     
+    func discover(serviceUUID: CBUUID, on proxy: BlePeripheralProxy) {
+        XCTAssertNil(proxy.peripheral.services?.first(where: { $0.uuid == serviceUUID }))
+        let expectation = expectation(description: "waiting for service to be discovered")
+        proxy.discover(serviceUUID: serviceUUID, timeout: .never) { result in
+            switch result {
+                case .success(let service):
+                    XCTAssertEqual(service.uuid, serviceUUID)
+                    XCTAssertNotNil(proxy.peripheral.services?.first(where: { $0.uuid == serviceUUID }))
+                    expectation.fulfill()
+                case .failure(let error):
+                    XCTFail("service discovery failed with error: \(error)")
+            }
+        }
+        // Await expectations
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
 }

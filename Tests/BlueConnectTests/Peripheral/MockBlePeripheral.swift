@@ -63,11 +63,11 @@ class MockBlePeripheral: BlePeripheral {
     var timeoutOnRead: Bool = false
     var timeoutOnWrite: Bool = false
     var timeoutOnNotify: Bool = false
-    var delayOnDiscoverServices: TimeInterval?
-    var delayOnDiscoverCharacteristics: TimeInterval?
-    var delayOnRead: TimeInterval?
-    var delayOnWrite: TimeInterval?
-    var delayOnNotify: TimeInterval?
+    var delayOnDiscoverServices: DispatchTimeInterval?
+    var delayOnDiscoverCharacteristics: DispatchTimeInterval?
+    var delayOnRead: DispatchTimeInterval?
+    var delayOnWrite: DispatchTimeInterval?
+    var delayOnNotify: DispatchTimeInterval?
     
     // MARK: - Private properties
     
