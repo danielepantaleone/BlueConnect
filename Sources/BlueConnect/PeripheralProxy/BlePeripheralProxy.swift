@@ -305,8 +305,6 @@ extension BlePeripheralProxy {
         
         let alreadyDiscovered = peripheral.services.emptyIfNil.filter { UUIDs.contains($0.uuid) }
         if !alreadyDiscovered.isEmpty {
-            // Notify on the publisher
-            didDiscoverServicesSubject.send(alreadyDiscovered)
             // Notify on the callbacks (for each service already discovered)
             alreadyDiscovered.forEach { service in
                 notifyCallbacks(
