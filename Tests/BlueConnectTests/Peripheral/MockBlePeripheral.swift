@@ -133,20 +133,15 @@ class MockBlePeripheral: BlePeripheral {
                 let allServices = [deviceInformationService, batteryService, heartRateService, customService]
                 if let serviceUUIDs {
                     allServices.forEach { service in
-                        guard serviceUUIDs.contains(where: { $0.uuidString == service.uuid.uuidString }) else { return }
-                        let service = service as CBService
+                        guard serviceUUIDs.contains(where: { $0 == service.uuid }) else { return }
                         guard !self.services!.contains(service) else { return }
                         self.services!.append(service)
                     }
                 } else {
-                    allServices.forEach {
-                        if !self.services!.contains($0) {
-                            self.services?.append($0)
-                        }
+                    allServices.forEach { service in
+                        guard !self.services!.contains(service) else { return }
+                        self.services!.append(service)
                     }
-                }
-                services?.compactMap { $0 as? CBMutableService }.forEach {
-                    $0.characteristics = $0.characteristics.emptyIfNil
                 }
                 peripheralDelegate?.blePeripheral(self, didDiscoverServices: nil)
             }
@@ -180,13 +175,13 @@ class MockBlePeripheral: BlePeripheral {
             }
             func _discoverCharacteristicsInternal() {
                 if service == deviceInformationService {
-                    discoverDeviceInformationServiceCharacteristics()
+                    discoverDeviceInformationServiceCharacteristics(characteristicUUIDs)
                 } else if service == batteryService {
-                    discoverBatteryServiceCharacteristics()
+                    discoverBatteryServiceCharacteristics(characteristicUUIDs)
                 } else if service == heartRateService {
-                    discoverHeartRateServiceCharacteristics()
+                    discoverHeartRateServiceCharacteristics(characteristicUUIDs)
                 } else if service == customService {
-                    discoverCustomServiceCharacteristics()
+                    discoverCustomServiceCharacteristics(characteristicUUIDs)
                 }
             }
             if let delayOnDiscoverCharacteristics {
@@ -422,7 +417,7 @@ class MockBlePeripheral: BlePeripheral {
     
     // MARK: - Characteristics discovery
     
-    private func discoverDeviceInformationServiceCharacteristics() {
+    private func discoverDeviceInformationServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
         mutex.lock()
         defer { mutex.unlock() }
@@ -435,27 +430,32 @@ class MockBlePeripheral: BlePeripheral {
             return
         }
         
-        addCharacteristicsIfNeeded([
-            
+        addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.serialNumberCharacteristicUUID,
                 properties: [.read],
                 value: Data(serialNumber.utf8),
                 permissions: .readable),
-            
+            to: deviceInformationService,
+            characteristicUUIDs: characteristicUUIDs)
+        
+        addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
                 properties: [.read],
                 value: Data(firmwareRevision.utf8),
                 permissions: .readable),
-            
+            to: deviceInformationService,
+            characteristicUUIDs: characteristicUUIDs)
+        
+        addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.hardwareRevisionCharacteristicUUID,
                 properties: [.read],
                 value: Data(hardwareRevision.utf8),
-                permissions: .readable)
-            
-        ], to: deviceInformationService)
+                permissions: .readable),
+            to: deviceInformationService,
+            characteristicUUIDs: characteristicUUIDs)
         
         peripheralDelegate?.blePeripheral(
             self,
@@ -464,7 +464,7 @@ class MockBlePeripheral: BlePeripheral {
         
     }
     
-    private func discoverBatteryServiceCharacteristics() {
+    private func discoverBatteryServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
         mutex.lock()
         defer { mutex.unlock() }
@@ -477,13 +477,14 @@ class MockBlePeripheral: BlePeripheral {
             return
         }
         
-        addCharacteristicsIfNeeded([
+        addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.batteryLevelCharacteristicUUID,
                 properties: [.read],
                 value: Data(with: batteryLevel),
-                permissions: .readable)
-        ], to: batteryService)
+                permissions: .readable),
+            to: batteryService,
+            characteristicUUIDs: characteristicUUIDs)
         
         peripheralDelegate?.blePeripheral(
             self,
@@ -492,7 +493,7 @@ class MockBlePeripheral: BlePeripheral {
         
     }
     
-    private func discoverHeartRateServiceCharacteristics() {
+    private func discoverHeartRateServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
         mutex.lock()
         defer { mutex.unlock() }
@@ -505,13 +506,14 @@ class MockBlePeripheral: BlePeripheral {
             return
         }
         
-        addCharacteristicsIfNeeded([
+        addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.heartRateCharacteristicUUID,
                 properties: [.read, .notify],
                 value: Data(with: heartRateProvider()),
-                permissions: .readable)
-        ], to: batteryService)
+                permissions: .readable),
+            to: batteryService,
+            characteristicUUIDs: characteristicUUIDs)
         
         peripheralDelegate?.blePeripheral(
             self,
@@ -520,7 +522,7 @@ class MockBlePeripheral: BlePeripheral {
         
     }
     
-    private func discoverCustomServiceCharacteristics() {
+    private func discoverCustomServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
         mutex.lock()
         defer { mutex.unlock() }
@@ -533,21 +535,23 @@ class MockBlePeripheral: BlePeripheral {
             return
         }
         
-        addCharacteristicsIfNeeded([
-            
+        addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.secretCharacteristicUUID,
                 properties: [.write],
                 value: Data(secret.utf8),
                 permissions: .writeable),
-            
+            to: customService,
+            characteristicUUIDs: characteristicUUIDs)
+        
+        addCharacteristicIfNeeded(
             MockCBCharacteristic(
-                type: MockBleDescriptor.bufferCharacteristicUUID,
-                properties: [.writeWithoutResponse],
-                value: Data([0x00]),
+                type: MockBleDescriptor.secretCharacteristicUUID,
+                properties: [.write],
+                value: Data(secret.utf8),
                 permissions: .writeable),
-            
-        ], to: customService)
+            to: customService,
+            characteristicUUIDs: characteristicUUIDs)
         
         peripheralDelegate?.blePeripheral(
             self,
@@ -558,13 +562,11 @@ class MockBlePeripheral: BlePeripheral {
     
     // MARK: - Internals
     
-    private func addCharacteristicsIfNeeded(_ characteristics: [MockCBCharacteristic], to service: CBMutableService) {
+    private func addCharacteristicIfNeeded(_ characteristic: MockCBCharacteristic, to service: CBMutableService, characteristicUUIDs: [CBUUID]?) {
         service.characteristics = service.characteristics.emptyIfNil
-        characteristics.forEach {
-            if findInternalMutableCharacteristic($0) == nil {
-                service.characteristics?.append($0)
-            }
-        }
+        guard characteristicUUIDs == nil || characteristicUUIDs!.contains(characteristic.uuid) else { return }
+        guard findInternalMutableCharacteristic(characteristic) == nil else { return }
+        service.characteristics?.append(characteristic)
     }
     
     private func findInternalMutableCharacteristic(_ characteristic: CBCharacteristic) -> MockCBCharacteristic? {
