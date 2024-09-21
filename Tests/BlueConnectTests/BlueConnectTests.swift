@@ -136,19 +136,39 @@ class BlueConnectTests: XCTestCase {
     }
     
     func discover(serviceUUID: CBUUID, on proxy: BlePeripheralProxy) {
-        XCTAssertNil(proxy.peripheral.services?.first(where: { $0.uuid == serviceUUID }))
+        XCTAssertEqual(bleCentralManager.state, .poweredOn)
+        XCTAssertEqual(proxy.peripheral.state, .connected)
+        XCTAssertNil(proxy.getService(serviceUUID))
         let expectation = expectation(description: "waiting for service to be discovered")
         proxy.discover(serviceUUID: serviceUUID, timeout: .never) { result in
             switch result {
                 case .success(let service):
                     XCTAssertEqual(service.uuid, serviceUUID)
-                    XCTAssertNotNil(proxy.peripheral.services?.first(where: { $0.uuid == serviceUUID }))
+                    XCTAssertNotNil(proxy.getService(serviceUUID))
                     expectation.fulfill()
                 case .failure(let error):
                     XCTFail("service discovery failed with error: \(error)")
             }
         }
-        // Await expectations
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+    func discover(characteristicUUID: CBUUID, in serviceUUID: CBUUID, on proxy: BlePeripheralProxy) {
+        XCTAssertEqual(bleCentralManager.state, .poweredOn)
+        XCTAssertEqual(proxy.peripheral.state, .connected)
+        XCTAssertNotNil(proxy.getService(serviceUUID))
+        XCTAssertNil(proxy.getCharacteristic(characteristicUUID))
+        let expectation = expectation(description: "waiting for characteristic to be discovered")
+        proxy.discover(characteristicUUID: characteristicUUID, in: serviceUUID, timeout: .never) { result in
+            switch result {
+                case .success(let characteristic):
+                    XCTAssertEqual(characteristic.uuid, characteristicUUID)
+                    XCTAssertNotNil(proxy.getCharacteristic(characteristicUUID))
+                    expectation.fulfill()
+                case .failure(let error):
+                    XCTFail("characteristic discovery failed with error: \(error)")
+            }
+        }
         wait(for: [expectation], timeout: 2.0)
     }
     
