@@ -964,6 +964,9 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
             return
         }
         
+        // Notify on the publisher
+        didWriteValueSubject.send(characteristic)
+        
         // Notify callbacks
         notifyCallbacks(
             store: &characteristicWriteCallbacks,
