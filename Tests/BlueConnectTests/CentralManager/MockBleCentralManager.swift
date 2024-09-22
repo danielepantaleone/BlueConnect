@@ -64,6 +64,12 @@ class MockBleCentralManager: BleCentralManager {
     
     lazy var queue: DispatchQueue = DispatchQueue.global(qos: .background)
 
+    // MARK: - Initialization
+    
+    init(peripherals: [BlePeripheral]) {
+        discoveredPeripherals = peripherals
+    }
+    
     // MARK: - Interface
     
     func connect(_ peripheral: BlePeripheral, options: [String: Any]?) {
@@ -187,15 +193,6 @@ class MockBleCentralManager: BleCentralManager {
     
     func stopScan() {
         
-    }
-    
-    // MARK: - Configuration
-    
-    func discoveredPeripherals(_ peripherals: [BlePeripheral]) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        discoveredPeripherals.removeAll()
-        discoveredPeripherals.append(contentsOf: peripherals)
     }
     
     // MARK: - Internals

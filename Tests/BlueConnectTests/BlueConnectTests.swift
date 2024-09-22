@@ -58,8 +58,7 @@ class BlueConnectTests: XCTestCase {
     
     override func setUpWithError() throws {
         try super.setUpWithError()
-        bleCentralManager = .init()
-        bleCentralManager.discoveredPeripherals([
+        bleCentralManager = .init(peripherals: [
             MockBlePeripheral(
                 identifier: MockBleDescriptor.peripheralUUID_1,
                 name: nil,
