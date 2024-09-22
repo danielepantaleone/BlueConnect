@@ -2023,6 +2023,49 @@ extension BlePeripheralProxyTests {
         }
     }
     
+    func testSetNotifyOnCharacteristicWithNotifyAlreadyEnabled() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Enable notify
+        setNotify(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, enabled: true, on: blePeripheralProxy_1)
+        // Test characteristic notify enabled
+        let notifyExp = expectation(description: "waiting for characteristic notify to be enabled")
+        let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher because already enabled")
+        publisherExp.isInverted = true
+        // Test set notify ack emitted on publisher
+        blePeripheralProxy_1.didUpdateNotificationStatePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.heartRateCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test set notify on callback
+        blePeripheralProxy_1.setNotify(
+            enabled: true,
+            for: MockBleDescriptor.heartRateCharacteristicUUID,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success(let enabled):
+                    let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
+                    XCTAssertTrue(enabled)
+                    XCTAssertEqual(enabled, characteristic?.isNotifying)
+                    XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+                    notifyExp.fulfill()
+                case .failure(let error):
+                    XCTFail("characteristic set notify failed with error: \(error)")
+            }
+        }
+        // Await expectations
+        wait(for: [notifyExp, publisherExp], timeout: 2.0)
+    }
+    
     func testSetNotifyOnCharacteristicFailDueToPeripheralDisconnected() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)

@@ -200,6 +200,29 @@ class BlueConnectTests: XCTestCase {
         return characteristicData
     }
     
+    func setNotify(characteristicUUID: CBUUID, enabled: Bool, on proxy: BlePeripheralProxy) {
+        XCTAssertEqual(bleCentralManager.state, .poweredOn)
+        XCTAssertEqual(proxy.peripheral.state, .connected)
+        XCTAssertNotNil(proxy.getCharacteristic(characteristicUUID))
+        let expectation = expectation(description: "waiting for characteristic notify to be enabled")
+        proxy.setNotify(
+            enabled: enabled,
+            for: characteristicUUID,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success(let enabled):
+                    XCTAssertTrue(enabled)
+                    expectation.fulfill()
+                case .failure(let error):
+                    XCTFail("characteristic set notify failed with error: \(error)")
+            }
+        }
+        // Await expectations
+        wait(for: [expectation], timeout: 12.0)
+    }
+    
     func wait(_ timeout: DispatchTimeInterval) {
         let expectation = expectation(description: "waiting")
         let queue = DispatchQueue.global(qos: .background)
