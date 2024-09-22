@@ -122,4 +122,29 @@ public extension BlePeripheralProxy {
         }
     }
     
+    /// Enables or disables notifications for a specific characteristic.
+    ///
+    /// This method updates the notification state for the given characteristic.
+    /// If notifications are already in the desired state this method does nothing.
+    ///
+    /// - Parameters:
+    ///   - enabled: `true` to enable notifications, `false` to disable notifications for the characteristic.
+    ///   - characteristicUUID: The UUID of the characteristic for which to set the notification state.
+    ///   - timeout: The timeout duration for the notification set operation. If the operation does not complete within this time, it will fail.
+    ///
+    /// - Note: If the desired notification state is already set, the method will immediately return the current state without performing any further operations.
+    /// - Returns: A boolean indicating if notification is enabled (`true`) on the characteristic, or `false` if notification is disabled.
+    /// - Throws: An error if the characteristic notify flag cannot be changed within the specified timeout.
+    func setNotify(
+        enabled: Bool,
+        for characteristicUUID: CBUUID,
+        timeout: DispatchTimeInterval = .seconds(10)
+    ) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            setNotify(enabled: enabled, for: characteristicUUID, timeout: timeout) { result in
+                continuation.resume(with: result)
+            }
+        }
+    }
+    
 }
