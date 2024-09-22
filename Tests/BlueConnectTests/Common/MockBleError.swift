@@ -32,6 +32,8 @@ enum MockBleError: Error {
     case bluetoothIsOff
     /// Characteristic not found
     case characteristicNotFound
+    /// Characteristic not read
+    case characteristicNotRead
     /// Error thrown manually from unit tests
     case mockedError
     /// Peripheral interaction (read/write/notify) not supported

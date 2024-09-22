@@ -171,4 +171,42 @@ class BlueConnectTests: XCTestCase {
         wait(for: [expectation], timeout: 2.0)
     }
     
+    @discardableResult
+    func read(characteristicUUID: CBUUID, on proxy: BlePeripheralProxy) throws -> Data {
+        XCTAssertEqual(bleCentralManager.state, .poweredOn)
+        XCTAssertEqual(proxy.peripheral.state, .connected)
+        XCTAssertNotNil(proxy.getCharacteristic(characteristicUUID))
+        let expectation = expectation(description: "waiting for characteristic to be read")
+        var characteristicData: Data? = nil
+        proxy.read(
+            characteristicUUID: characteristicUUID,
+            policy: .never,
+            timeout: .never
+        ) { result in
+            switch result {
+                case .success(let data):
+                    characteristicData = data
+                    expectation.fulfill()
+                case .failure(let error):
+                    XCTFail("characteristic read failed with error: \(error)")
+            }
+        }
+        // Await expectations
+        wait(for: [expectation], timeout: 2.0)
+        // Return read data
+        guard let characteristicData else {
+            throw MockBleError.characteristicNotRead
+        }
+        return characteristicData
+    }
+    
+    func wait(_ timeout: DispatchTimeInterval) {
+        let expectation = expectation(description: "waiting")
+        let queue = DispatchQueue.global(qos: .background)
+        queue.asyncAfter(deadline: .now() + timeout) {
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: (TimeInterval(timeout.nanoseconds) * 1_000_000_000.0) + 0.5)
+    }
+    
 }

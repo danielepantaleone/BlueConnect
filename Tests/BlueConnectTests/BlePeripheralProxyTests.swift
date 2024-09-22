@@ -881,7 +881,7 @@ extension BlePeripheralProxyTests {
         }
     }
     
-    func testReadCharacteristicWithMultipleRead() throws {
+    func testReadCharacteristicWithMultipleConcurrentRead() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Connect the peripheral
@@ -926,6 +926,159 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
+    }
+    
+    func testReadCharacteristicWithCacheAlwaysPolicy() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Read from the peripheral so the value gets cached
+        try read(characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID, on: blePeripheralProxy_1)
+        // Change characteristic value manually to assert read from cache
+        let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID)
+        let mutable = characteristic as? CBMutableCharacteristic
+        mutable?.value = "2.0.0".data(using: .utf8)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic to be read")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher due to cached value read")
+        publisherExp.isInverted = true
+        // Test read not emitted on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.firmwareRevisionCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test read on callback
+        blePeripheralProxy_1.read(
+            characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
+            policy: .always,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success(let data):
+                    let firmwareRevision = String(data: data, encoding: .utf8)
+                    let record = blePeripheralProxy_1.cache[MockBleDescriptor.firmwareRevisionCharacteristicUUID]
+                    XCTAssertEqual(firmwareRevision, "1.0.7")
+                    XCTAssertEqual(record?.data, data)
+                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.firmwareRevisionCharacteristicUUID])
+                    let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID)
+                    let firmwareRevisionOnCharacteristic = characteristic?.value.map { String(data: $0, encoding: .utf8) }
+                    XCTAssertEqual(firmwareRevisionOnCharacteristic, "2.0.0")
+                    readExp.fulfill()
+                case .failure(let error):
+                    XCTFail("characteristic read failed with error: \(error)")
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 2.0)
+    }
+    
+    func testReadCharacteristicWithCacheTimeSensitivePolicy() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Read from the peripheral so the value gets cached
+        try read(characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID, on: blePeripheralProxy_1)
+        // Change characteristic value manually to assert read from cache
+        let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID)
+        let mutable = characteristic as? CBMutableCharacteristic
+        mutable?.value = "2.0.0".data(using: .utf8)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic to be read")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher due to cached value read")
+        publisherExp.isInverted = true
+        // Test read not emitted on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.firmwareRevisionCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test read on callback
+        blePeripheralProxy_1.read(
+            characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
+            policy: .timeSensitive(.seconds(4)),
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success(let data):
+                    let firmwareRevision = String(data: data, encoding: .utf8)
+                    let record = blePeripheralProxy_1.cache[MockBleDescriptor.firmwareRevisionCharacteristicUUID]
+                    XCTAssertEqual(firmwareRevision, "1.0.7")
+                    XCTAssertEqual(record?.data, data)
+                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.firmwareRevisionCharacteristicUUID])
+                    let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID)
+                    let firmwareRevisionOnCharacteristic = characteristic?.value.map { String(data: $0, encoding: .utf8) }
+                    XCTAssertEqual(firmwareRevisionOnCharacteristic, "2.0.0")
+                    readExp.fulfill()
+                case .failure(let error):
+                    XCTFail("characteristic read failed with error: \(error)")
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 2.0)
+    }
+    
+    func testReadCharacteristicWithCacheTimeSensitivePolicyOverdue() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Read from the peripheral so the value gets cached
+        let data = try read(characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID, on: blePeripheralProxy_1)
+        let firmwareRevision = String(data: data, encoding: .utf8)
+        XCTAssertEqual(firmwareRevision, "1.0.7")
+        // Change characteristic value manually to assert read is not from cache
+        let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID)
+        let mutable = characteristic as? CBMutableCharacteristic
+        mutable?.value = "2.0.0".data(using: .utf8)
+        // Wait to let cache expire
+        wait(.seconds(3))
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic to be read")
+        let publisherExp = expectation(description: "waiting for characteristic update to be signaled by publisher due to cached value bypass")
+        // Test single read emit on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.firmwareRevisionCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test multiple read on callback
+        blePeripheralProxy_1.read(
+            characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
+            policy: .timeSensitive(.seconds(2)),
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success(let data):
+                    let firmwareRevision = String(data: data, encoding: .utf8)
+                    let record = blePeripheralProxy_1.cache[MockBleDescriptor.firmwareRevisionCharacteristicUUID]
+                    XCTAssertEqual(firmwareRevision, "2.0.0")
+                    XCTAssertEqual(record?.data, data)
+                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.firmwareRevisionCharacteristicUUID])
+                    readExp.fulfill()
+                case .failure(let error):
+                    XCTFail("characteristic read failed with error: \(error)")
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 6.0)
     }
     
     func testReadCharacteristicFailDueToPeripheralDisconnected() throws {
