@@ -2414,6 +2414,78 @@ extension BlePeripheralProxyTests {
         }
     }
     
+    func testSetNotifyOnCharacteristicFailDueToError() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Mock set notify error
+        try blePeripheral_1.errorOnNotify = MockBleError.mockedError
+        // Test characteristic set notify to fail
+        let notifyExp = expectation(description: "waiting for characteristic notify NOT to be enabled")
+        let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test notify enabled ack NOT emitted on publisher
+        blePeripheralProxy_1.didUpdateNotificationStatePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.heartRateCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test set notify to fail
+        blePeripheralProxy_1.setNotify(
+            enabled: true,
+            for: MockBleDescriptor.heartRateCharacteristicUUID,
+            timeout: .seconds(2)
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success:
+                    XCTFail("characteristic set notify was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let mockedError = error as? MockBleError else {
+                        XCTFail("characteristic set notify was expected to fail with MockBleError.mockedError, got '\(error)' instead")
+                        return
+                    }
+                    guard mockedError == MockBleError.mockedError else {
+                        XCTFail("characteristic set notify was expected to fail with MockBleError.mockedError, got '\(mockedError)' instead")
+                        return
+                    }
+                    XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+                    notifyExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [notifyExp, publisherExp], timeout: 4.0)
+    }
+    
+    func testSetNotifyOnCharacteristicFailDueToErrorAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Mock set notify error
+        try blePeripheral_1.errorOnNotify = MockBleError.mockedError
+        // Test characteristic set notify to fail
+        do {
+            _ = try await blePeripheralProxy_1.setNotify(
+                enabled: true,
+                for: MockBleDescriptor.heartRateCharacteristicUUID,
+                timeout: .seconds(2))
+        } catch MockBleError.mockedError {
+            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic set notify was expected to fail with MockBleError.mockedError, got '\(error)' instead")
+        }
+    }
+    
     func testSetNotifyOnCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
