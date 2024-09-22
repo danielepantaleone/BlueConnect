@@ -1616,7 +1616,7 @@ extension BlePeripheralProxyTests {
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
             XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -1680,7 +1680,7 @@ extension BlePeripheralProxyTests {
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
             XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
         }
     }
     
@@ -1748,7 +1748,7 @@ extension BlePeripheralProxyTests {
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
             XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
         }
     }
     
@@ -1820,7 +1820,7 @@ extension BlePeripheralProxyTests {
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
             XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
         }
     }
     
@@ -1862,6 +1862,86 @@ extension BlePeripheralProxyTests {
         // Await expectations
         wait(for: [expectation], timeout: 4.0)
 
+    }
+    
+}
+
+// MARK: - Write without response characteristic tests
+    
+extension BlePeripheralProxyTests {
+    
+    func testWriteCharacteristicWithoutResponse() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.bufferCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic write
+        do {
+            try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.bufferCharacteristicUUID)
+        } catch {
+            XCTFail("characteristic write without response failed with error: \(error)")
+        }
+    }
+    
+    func testWriteCharacteristicWithoutResponseFailDueToPeripheralDisconnected() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.bufferCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Disconnect the peripheral
+        disconnect(peripheral: try blePeripheral_1)
+        // Test characteristic write
+        do {
+            try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.bufferCharacteristicUUID)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+
+        } catch {
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+        }
+    }
+    
+    func testWriteCharacteristicWithoutResponseFailDueToCharacteristicNotFound() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic write
+        do {
+            try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.bufferCharacteristicUUID)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+
+        } catch {
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+        }
+    }
+    
+    func testWriteCharacteristicWithoutResponseFailDueToOperationNotSupported() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic write
+        do {
+            try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.secretCharacteristicUUID)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
+
+        } catch {
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
+        }
     }
     
 }
