@@ -546,9 +546,9 @@ class MockBlePeripheral: BlePeripheral {
         
         addCharacteristicIfNeeded(
             MockCBCharacteristic(
-                type: MockBleDescriptor.secretCharacteristicUUID,
+                type: MockBleDescriptor.bufferCharacteristicUUID,
                 properties: [.write],
-                value: Data(secret.utf8),
+                value: Data(),
                 permissions: .writeable),
             to: customService,
             characteristicUUIDs: characteristicUUIDs)
