@@ -497,6 +497,7 @@ extension BlePeripheralProxy {
         }
         
         // Read from the peripheral
+        readingCharacteristics.insert(characteristicUUID)
         peripheral.readValue(for: characteristic)
         
     }
