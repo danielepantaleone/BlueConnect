@@ -32,9 +32,11 @@ import XCTest
 
 @testable import BlueConnect
 
-final class BleCentralManagerProxyTests: BlueConnectTests {
+final class BleCentralManagerProxyTests: BlueConnectTests { }
+
+// MARK: - Test state change
     
-    // MARK: - Test state change
+extension BleCentralManagerProxyTests {
     
     func testCentralManagerPowerOn() throws {
         centralManager(state: .poweredOn)
@@ -47,8 +49,12 @@ final class BleCentralManagerProxyTests: BlueConnectTests {
         centralManager(state: .poweredOff)
         XCTAssertEqual(bleCentralManager.state, .poweredOff)
     }
+    
+}
 
-    // MARK: - Test connection
+// MARK: - Test connection
+
+extension BleCentralManagerProxyTests {
     
     func testPeripheralConnect() throws {
         // Turn on ble central manager
@@ -341,7 +347,11 @@ final class BleCentralManagerProxyTests: BlueConnectTests {
         }
     }
     
-    // MARK: - Test disconnection
+}
+
+// MARK: - Test disconnection
+
+extension BleCentralManagerProxyTests {
     
     func testPeripheralDisconnect() throws {
         // Turn on ble central manager

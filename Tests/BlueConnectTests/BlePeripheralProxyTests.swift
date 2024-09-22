@@ -50,7 +50,11 @@ final class BlePeripheralProxyTests: BlueConnectTests {
         try super.tearDownWithError()
     }
     
-    // MARK: - Discover service tests
+}
+
+// MARK: - Discover service tests
+
+extension BlePeripheralProxyTests {
     
     func testDiscoverService() throws {
         // Turn on ble central manager
@@ -225,7 +229,7 @@ final class BlePeripheralProxyTests: BlueConnectTests {
         // Test publisher not called
         blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
-            //.filter { services in services.contains(where: { $0.uuid == MockBleDescriptor.heartRateServiceUUID })}
+        //.filter { services in services.contains(where: { $0.uuid == MockBleDescriptor.heartRateServiceUUID })}
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
         // Test discovery on callback
@@ -285,7 +289,7 @@ final class BlePeripheralProxyTests: BlueConnectTests {
         // Test publisher not called
         blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
-            //.filter { services in services.contains(where: { $0.uuid == MockBleDescriptor.heartRateServiceUUID })}
+        //.filter { services in services.contains(where: { $0.uuid == MockBleDescriptor.heartRateServiceUUID })}
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
         // Test discovery on callback
@@ -370,7 +374,11 @@ final class BlePeripheralProxyTests: BlueConnectTests {
         wait(for: [expectation], timeout: 4.0)
     }
     
-    // MARK: - Discover characteristic tests
+}
+
+// MARK: - Discover characteristic tests
+
+extension BlePeripheralProxyTests {
     
     func testDiscoverCharacteristic() throws {
         // Turn on ble central manager
@@ -533,7 +541,7 @@ final class BlePeripheralProxyTests: BlueConnectTests {
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID))
         XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.hardwareRevisionCharacteristicUUID))
     }
-
+    
     func testDiscoverCharacteristicsWithNoArguments() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -802,8 +810,12 @@ final class BlePeripheralProxyTests: BlueConnectTests {
         wait(for: [expectation], timeout: 4.0)
     }
     
-    // MARK: - Read characteristic tests
+}
+
+// MARK: - Read characteristic tests
     
+extension BlePeripheralProxyTests {
+        
     func testReadCharacteristic() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
