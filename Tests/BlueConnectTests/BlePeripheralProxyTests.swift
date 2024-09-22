@@ -1824,6 +1824,78 @@ extension BlePeripheralProxyTests {
         }
     }
     
+    func testWriteCharacteristicFailDueToError() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Mock write error
+        try blePeripheral_1.errorOnWrite = MockBleError.mockedError
+        // Test characteristic write
+        let writeExp = expectation(description: "waiting for characteristic write to fail")
+        let publisherExp = expectation(description: "waiting for characteristic write NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test write ack NOT emitted on publisher
+        blePeripheralProxy_1.didWriteValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.uuid == MockBleDescriptor.secretCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test write to fail
+        blePeripheralProxy_1.write(
+            data: "ABCD".data(using: .utf8)!,
+            to: MockBleDescriptor.secretCharacteristicUUID,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success:
+                    XCTFail("characteristic write was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let mockedError = error as? MockBleError else {
+                        XCTFail("characteristic write was expected to fail with MockBleError.mockedError, got '\(error)' instead")
+                        return
+                    }
+                    guard mockedError == MockBleError.mockedError else {
+                        XCTFail("characteristic write was expected to fail with MockBleError.mockedError, got '\(mockedError)' instead")
+                        return
+                    }
+                    XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+                    writeExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [writeExp, publisherExp], timeout: 4.0)
+    }
+    
+    func testWriteCharacteristicFailDueToErrorAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Mock write error
+        try blePeripheral_1.errorOnWrite = MockBleError.mockedError
+        // Test characteristic write to fail
+        do {
+            try await blePeripheralProxy_1.write(
+                data: "ABCD".data(using: .utf8)!,
+                to: MockBleDescriptor.secretCharacteristicUUID,
+                timeout: .never)
+        } catch MockBleError.mockedError {
+            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic write was expected to fail with MockBleError.mockedError, got '\(error)' instead")
+        }
+    }
+    
     func testWriteCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
