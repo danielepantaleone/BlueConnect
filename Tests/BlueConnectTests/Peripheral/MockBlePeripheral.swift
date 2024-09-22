@@ -434,7 +434,7 @@ class MockBlePeripheral: BlePeripheral {
             MockCBCharacteristic(
                 type: MockBleDescriptor.serialNumberCharacteristicUUID,
                 properties: [.read],
-                value: Data(serialNumber.utf8),
+                value: serialNumber.data(using: .utf8),
                 permissions: .readable),
             to: deviceInformationService,
             characteristicUUIDs: characteristicUUIDs)
@@ -443,7 +443,7 @@ class MockBlePeripheral: BlePeripheral {
             MockCBCharacteristic(
                 type: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
                 properties: [.read],
-                value: Data(firmwareRevision.utf8),
+                value: firmwareRevision.data(using: .utf8),
                 permissions: .readable),
             to: deviceInformationService,
             characteristicUUIDs: characteristicUUIDs)
@@ -452,7 +452,7 @@ class MockBlePeripheral: BlePeripheral {
             MockCBCharacteristic(
                 type: MockBleDescriptor.hardwareRevisionCharacteristicUUID,
                 properties: [.read],
-                value: Data(hardwareRevision.utf8),
+                value: hardwareRevision.data(using: .utf8),
                 permissions: .readable),
             to: deviceInformationService,
             characteristicUUIDs: characteristicUUIDs)
@@ -539,7 +539,7 @@ class MockBlePeripheral: BlePeripheral {
             MockCBCharacteristic(
                 type: MockBleDescriptor.secretCharacteristicUUID,
                 properties: [.write],
-                value: Data(secret.utf8),
+                value: secret.data(using: .utf8),
                 permissions: .writeable),
             to: customService,
             characteristicUUIDs: characteristicUUIDs)
