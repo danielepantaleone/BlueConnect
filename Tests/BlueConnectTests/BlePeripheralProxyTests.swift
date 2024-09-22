@@ -802,4 +802,478 @@ final class BlePeripheralProxyTests: BlueConnectTests {
         wait(for: [expectation], timeout: 4.0)
     }
     
+    // MARK: - Read characteristic tests
+    
+    func testReadCharacteristic() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic to be read")
+        let publisherExp = expectation(description: "waiting for characteristic update to be signaled by publisher")
+        // Test read emit on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
+            .filter { String(data: $0.data, encoding: .utf8) == "12345678" }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test read on callback
+        blePeripheralProxy_1.read(
+            characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+            policy: .never,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success(let data):
+                    let serialNumber = String(data: data, encoding: .utf8)
+                    let record = blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID]
+                    XCTAssertEqual(serialNumber, "12345678")
+                    XCTAssertEqual(record?.data, data)
+                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    readExp.fulfill()
+                case .failure(let error):
+                    XCTFail("characteristic read failed with error: \(error)")
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 2.0)
+    }
+    
+    func testReadCharacteristicAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic read
+        do {
+            let data = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+            let serialNumber = String(data: data, encoding: .utf8)
+            let record = blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID]
+            XCTAssertEqual(serialNumber, "12345678")
+            XCTAssertEqual(record?.data, data)
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read failed with error: \(error)")
+        }
+    }
+    
+    func testReadCharacteristicWithMultipleRead() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock read delay
+        try blePeripheral_1.delayOnRead = .seconds(2)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic to be read")
+        readExp.expectedFulfillmentCount = 2
+        let publisherExp = expectation(description: "waiting for characteristic update to be signaled by publisher")
+        // Test single read emit on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
+            .filter { String(data: $0.data, encoding: .utf8) == "12345678" }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test multiple read on callback
+        for _ in 0..<2 {
+            blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .never
+            ) { [weak self] result in
+                guard let self else { return }
+                switch result {
+                    case .success(let data):
+                        let serialNumber = String(data: data, encoding: .utf8)
+                        let record = blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID]
+                        XCTAssertEqual(serialNumber, "12345678")
+                        XCTAssertEqual(record?.data, data)
+                        XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                        readExp.fulfill()
+                    case .failure(let error):
+                        XCTFail("characteristic read failed with error: \(error)")
+                }
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 4.0)
+    }
+    
+    func testReadCharacteristicFailDueToPeripheralDisconnected() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Disconnect the peripheral
+        disconnect(peripheral: try blePeripheral_1)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic read to fail")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test read NOT emitted on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test read to fail
+        blePeripheralProxy_1.read(
+            characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+            policy: .never,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success:
+                    XCTFail("characteristic read was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralProxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .peripheralNotConnected = proxyError.category else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                        return
+                    }
+                    XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    readExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 2.0)
+    }
+    
+    func testReadCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Disconnect the peripheral
+        disconnect(peripheral: try blePeripheral_1)
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToCharacteristicNotFound() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic read to fail")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test read NOT emitted on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test read to fail
+        blePeripheralProxy_1.read(
+            characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+            policy: .never,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success:
+                    XCTFail("characteristic read was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralProxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .characteristicNotFound = proxyError.category else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                        return
+                    }
+                    XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    readExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 2.0)
+    }
+    
+    func testReadCharacteristicFailDueToCharacteristicNotFoundAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToOperationNotSupported() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic read to fail")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test read NOT emitted on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.secretCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test read to fail
+        blePeripheralProxy_1.read(
+            characteristicUUID: MockBleDescriptor.secretCharacteristicUUID,
+            policy: .never,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success:
+                    XCTFail("characteristic read was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralProxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .operationNotSupported = proxyError.category else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(proxyError.category)' instead")
+                        return
+                    }
+                    XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.secretCharacteristicUUID])
+                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.secretCharacteristicUUID])
+                    readExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 2.0)
+    }
+    
+    func testReadCharacteristicFailDueToOperationNotSupportedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.secretCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.secretCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.secretCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToTimeout() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock read timeout
+        try blePeripheral_1.timeoutOnRead = true
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic read to fail")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test read NOT emitted on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test read to fail
+        blePeripheralProxy_1.read(
+            characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+            policy: .never,
+            timeout: .seconds(2)
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success:
+                    XCTFail("characteristic read was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralProxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .timeout = proxyError.category else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'timeout', got '\(proxyError.category)' instead")
+                        return
+                    }
+                    XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    readExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 4.0)
+    }
+    
+    func testReadCharacteristicFailDueToTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock read timeout
+        try blePeripheral_1.timeoutOnRead = true
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToError() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock read error
+        try blePeripheral_1.errorOnRead = MockBleError.mockedError
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic read to fail")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test read NOT emitted on publisher
+        blePeripheralProxy_1.didUpdateValuePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test read to fail
+        blePeripheralProxy_1.read(
+            characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+            policy: .never,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success:
+                    XCTFail("characteristic read was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let mockedError = error as? MockBleError else {
+                        XCTFail("characteristic read was expected to fail with MockBleError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .mockedError = mockedError else {
+                        XCTFail("characteristic read was expected to fail with MockBleError category 'mockedError', got '\(mockedError)' instead")
+                        return
+                    }
+                    XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    readExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 4.0)
+    }
+    
+    func testReadCharacteristicFailDueToErrorAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock read error
+        try blePeripheral_1.errorOnRead = MockBleError.mockedError
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+        } catch MockBleError.mockedError {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with MockBleError category 'mockedError', got '\(error)' instead")
+        }
+    }
+    
 }
