@@ -36,6 +36,7 @@ struct MockCharacteristicSecretProxy: BleCharacteristicWriteProxy {
     
     var characteristicUUID: CBUUID = MockBleDescriptor.secretCharacteristicUUID
     var serviceUUID: CBUUID = MockBleDescriptor.customServiceUUID
+    var encodingError: Error?
     
     weak var peripheralProxy: BlePeripheralProxy?
     
@@ -44,6 +45,9 @@ struct MockCharacteristicSecretProxy: BleCharacteristicWriteProxy {
     }
     
     func encode(_ value: String) throws -> Data {
+        if let encodingError {
+            throw encodingError
+        }
         return value.data(using: .utf8) ?? Data()
     }
         
