@@ -449,14 +449,14 @@ extension BlePeripheralProxy {
     ///
     /// - Parameters:
     ///   - characteristicUUID: The UUID of the characteristic to read.
-    ///   - policy: The cache policy that dictates whether the value should be fetched from the peripheral or retrieved from the cache. Defaults to `.never`, meaning fresh data is read directly from the peripheral unless specified otherwise.
+    ///   - cachePolicy: The cache policy that dictates whether the value should be fetched from the peripheral or retrieved from the cache. Defaults to `.never`, meaning fresh data is read directly from the peripheral unless specified otherwise.
     ///   - timeout: The timeout for the characteristic read operation. This is ignored if the value is fetched from the cache. Defaults to 10 seconds.
     ///   - callback: A closure that is executed when the read operation completes. The closure is passed a `Result` containing the characteristic's data or an error if the read fails.
     ///
     /// - Note: The read operation will only occur if no other read for the same characteristic is already in progress. Multiple simultaneous read requests for the same characteristic will not trigger multiple read operations.
     public func read(
         characteristicUUID: CBUUID,
-        policy: BlePeripheralCachePolicy = .never,
+        cachePolicy: BlePeripheralCachePolicy = .never,
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<Data, Error>) -> Void
     ) {
@@ -464,7 +464,7 @@ extension BlePeripheralProxy {
         mutex.lock()
         defer { mutex.unlock() }
         
-        if let record = cache[characteristicUUID], policy.isValid(time: record.time) {
+        if let record = cache[characteristicUUID], cachePolicy.isValid(time: record.time) {
             callback(.success(record.data))
             return
         }

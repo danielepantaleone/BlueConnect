@@ -180,7 +180,7 @@ class BlueConnectTests: XCTestCase {
         var characteristicData: Data? = nil
         proxy.read(
             characteristicUUID: characteristicUUID,
-            policy: .never,
+            cachePolicy: .never,
             timeout: .never
         ) { result in
             switch result {

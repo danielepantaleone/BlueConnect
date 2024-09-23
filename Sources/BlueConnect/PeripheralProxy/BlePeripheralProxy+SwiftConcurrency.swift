@@ -83,18 +83,18 @@ public extension BlePeripheralProxy {
     ///
     /// - Parameters:
     ///   - characteristicUUID: The UUID of the characteristic to read.
-    ///   - policy: The cache policy dictating whether to fetch the value from the peripheral or use cached data. Defaults to `.never`, meaning fresh data is read directly from the peripheral.
+    ///   - cachePolicy: The cache policy dictating whether to fetch the value from the peripheral or use cached data. Defaults to `.never`, meaning fresh data is read directly from the peripheral.
     ///   - timeout: The timeout duration for the read operation. Ignored if fetching from cache. Defaults to 10 seconds.
     ///
     /// - Returns: The characteristic data as `Data`.
     /// - Throws: An error if the characteristic cannot be read within the specified timeout or contains no data.
     func read(
         characteristicUUID: CBUUID,
-        policy: BlePeripheralCachePolicy,
+        cachePolicy: BlePeripheralCachePolicy,
         timeout: DispatchTimeInterval = .seconds(10)
     ) async throws -> Data {
         try await withCheckedThrowingContinuation { continuation in
-            read(characteristicUUID: characteristicUUID, policy: policy, timeout: timeout) { result in
+            read(characteristicUUID: characteristicUUID, cachePolicy: cachePolicy, timeout: timeout) { result in
                 continuation.resume(with: result)
             }
         }

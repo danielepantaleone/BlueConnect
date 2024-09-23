@@ -1029,7 +1029,7 @@ extension BlePeripheralProxyTests {
         // Test read on callback
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-            policy: .never,
+            cachePolicy: .never,
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -1075,7 +1075,7 @@ extension BlePeripheralProxyTests {
         for _ in 0..<2 {
             blePeripheralProxy_1.read(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
+                cachePolicy: .never,
                 timeout: .never
             ) { [weak self] result in
                 guard let self else { return }
@@ -1124,7 +1124,7 @@ extension BlePeripheralProxyTests {
         // Test read on callback
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
-            policy: .always,
+            cachePolicy: .always,
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -1175,7 +1175,7 @@ extension BlePeripheralProxyTests {
         // Test read on callback
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
-            policy: .timeSensitive(.seconds(4)),
+            cachePolicy: .timeSensitive(.seconds(4)),
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -1229,7 +1229,7 @@ extension BlePeripheralProxyTests {
         // Test multiple read on callback
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
-            policy: .timeSensitive(.seconds(2)),
+            cachePolicy: .timeSensitive(.seconds(2)),
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -1273,7 +1273,7 @@ extension BlePeripheralProxyTests {
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-            policy: .never,
+            cachePolicy: .never,
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -1318,7 +1318,7 @@ extension BlePeripheralProxyTests {
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-            policy: .never,
+            cachePolicy: .never,
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -1365,7 +1365,7 @@ extension BlePeripheralProxyTests {
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.secretCharacteristicUUID,
-            policy: .never,
+            cachePolicy: .never,
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -1414,7 +1414,7 @@ extension BlePeripheralProxyTests {
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-            policy: .never,
+            cachePolicy: .never,
             timeout: .seconds(2)
         ) { [weak self] result in
             guard let self else { return }
@@ -1463,7 +1463,7 @@ extension BlePeripheralProxyTests {
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-            policy: .never,
+            cachePolicy: .never,
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -1514,7 +1514,7 @@ extension BlePeripheralProxyTests {
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-            policy: .never,
+            cachePolicy: .never,
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -1554,7 +1554,7 @@ extension BlePeripheralProxyTests {
         let expectation = expectation(description: "waiting for characteristic read to fail")
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-            policy: .never,
+            cachePolicy: .never,
             timeout: .never
         ) { result in
             switch result {
@@ -1597,7 +1597,7 @@ extension BlePeripheralProxyTests {
         do {
             let data = try await blePeripheralProxy_1.read(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
+                cachePolicy: .never,
                 timeout: .never)
             let serialNumber = String(data: data, encoding: .utf8)
             let record = blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID]
@@ -1624,7 +1624,7 @@ extension BlePeripheralProxyTests {
         do {
             _ = try await blePeripheralProxy_1.read(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
+                cachePolicy: .never,
                 timeout: .never)
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
@@ -1645,7 +1645,7 @@ extension BlePeripheralProxyTests {
         do {
             _ = try await blePeripheralProxy_1.read(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
+                cachePolicy: .never,
                 timeout: .never)
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
@@ -1668,7 +1668,7 @@ extension BlePeripheralProxyTests {
         do {
             _ = try await blePeripheralProxy_1.read(
                 characteristicUUID: MockBleDescriptor.secretCharacteristicUUID,
-                policy: .never,
+                cachePolicy: .never,
                 timeout: .never)
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.secretCharacteristicUUID])
@@ -1693,7 +1693,7 @@ extension BlePeripheralProxyTests {
         do {
             _ = try await blePeripheralProxy_1.read(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
+                cachePolicy: .never,
                 timeout: .seconds(2))
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
@@ -1718,7 +1718,7 @@ extension BlePeripheralProxyTests {
         do {
             _ = try await blePeripheralProxy_1.read(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
+                cachePolicy: .never,
                 timeout: .never)
         } catch MockBleError.mockedError {
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
@@ -1745,7 +1745,7 @@ extension BlePeripheralProxyTests {
         do {
             _ = try await blePeripheralProxy_1.read(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
+                cachePolicy: .never,
                 timeout: .seconds(2))
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicDataIsNil {
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])

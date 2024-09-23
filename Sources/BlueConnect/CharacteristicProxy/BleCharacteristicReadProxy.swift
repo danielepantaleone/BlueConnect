@@ -73,11 +73,11 @@ public extension BleCharacteristicReadProxy {
     /// The provided callback is invoked with the result.
     ///
     /// - Parameters:
-    ///   - policy: The cache policy that determines whether the value should be fetched from the peripheral or retrieved from the cache. Defaults to `.never`, meaning the value is always read from the peripheral.
+    ///   - cachePolicy: The cache policy that determines whether the value should be fetched from the peripheral or retrieved from the cache. Defaults to `.never`, meaning the value is always read from the peripheral.
     ///   - timeout: The duration to wait for the characteristic read operation to complete. Defaults to 10 seconds.
     ///   - callback: The closure to execute when the characteristic is read. The closure receives a `Result` containing either the decoded value of type `ValueType` or an `Error`.
     func read(
-        policy: BlePeripheralCachePolicy = .never,
+        cachePolicy: BlePeripheralCachePolicy = .never,
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<ValueType, Error>) -> Void
     ) {
@@ -87,7 +87,7 @@ public extension BleCharacteristicReadProxy {
             characteristicDiscoveryResult.onSuccess { characteristic in
                 peripheralProxy?.read(
                     characteristicUUID: characteristic.uuid,
-                    policy: policy,
+                    cachePolicy: cachePolicy,
                     timeout: timeout - start.distance(to: .now())
                 ) { readResult in
                     readResult.forwardError(to: callback)
