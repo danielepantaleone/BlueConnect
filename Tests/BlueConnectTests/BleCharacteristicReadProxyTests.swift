@@ -92,6 +92,41 @@ extension BleCharacteristicReadProxyTests {
         wait(for: [readExp, publisherExp], timeout: 2.0)
     }
     
+    func testReadFailDueToPeripheralDisconnected() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic read to fail")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test read not emitted on publisher
+        bleSerialNumberProxy.didUpdateValuePublisher?
+            .receive(on: DispatchQueue.main)
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        bleSerialNumberProxy.read(
+            cachePolicy: .never,
+            timeout: .never
+        ) { result in
+            switch result {
+                case .success:
+                    XCTFail("characteristic read was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralProxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .peripheralNotConnected = proxyError.category else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                        return
+                    }
+                    readExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 2.0)
+    }
+    
     func testReadFailDueToDecodingError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -265,6 +300,20 @@ extension BleCharacteristicReadProxyTests {
             XCTAssertEqual(serialNumber, "12345678")
         } catch {
             XCTFail("characteristic read failed with error: \(error)")
+        }
+    }
+    
+    func testReadFailDueToPeripheralDisconnectedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test characteristic read
+        do {
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .never)
+            XCTFail("characteristic read was expected to fail but succeeded instead")
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+            // NO OP
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     

@@ -88,6 +88,41 @@ extension BleCharacteristicWriteProxyTests {
         wait(for: [writeExp, publisherExp], timeout: 2.0)
     }
     
+    func testWriteFailDueToPeripheralDisconnected() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test characteristic write
+        let writeExp = expectation(description: "waiting for characteristic write to fail")
+        let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test write ack not emitted on publisher
+        bleSecretProxy.didWriteValuePublisher?
+            .receive(on: DispatchQueue.main)
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        bleSecretProxy.write(
+            value: "AAAA",
+            timeout: .never
+        ) { result in
+            switch result {
+                case .success:
+                    XCTFail("characteristic write was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralProxyError else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .peripheralNotConnected = proxyError.category else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                        return
+                    }
+                    writeExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [writeExp, publisherExp], timeout: 6.0)
+    }
+    
     func testWriteFailDueToEncodingError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -260,6 +295,20 @@ extension BleCharacteristicWriteProxyTests {
             try await bleSecretProxy.write(value: "AAAA", timeout: .never)
         } catch {
             XCTFail("characteristic write failed with error: \(error)")
+        }
+    }
+    
+    func testWriteFailDueToPeripheralDisconnectedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test characteristic write
+        do {
+            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(4))
+            XCTFail("characteristic write was expected to fail but succeeded instead")
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+            // NO OP
+        } catch {
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     

@@ -79,7 +79,7 @@ extension BleCharacteristicProxyTests {
         wait(for: [expectation], timeout: 2.0)
     }
     
-    func testDiscoverFailDueToDisconnectedPeripheral() throws {
+    func testDiscoverFailDueToPeripheralDisconnected() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Test characteristic discovery failure
@@ -182,7 +182,7 @@ extension BleCharacteristicProxyTests {
         }
     }
     
-    func testDiscoverFailDueToDisconnectedPeripheralAsync() async throws {
+    func testDiscoverFailDueToPeripheralDisconnectedAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Test characteristic discovery failure
