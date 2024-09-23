@@ -139,23 +139,6 @@ extension BlePeripheralProxyTests {
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
     }
     
-    func testDiscoverServiceAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Test service discovery
-        do {
-            let service = try await blePeripheralProxy_1.discover(
-                serviceUUID: MockBleDescriptor.deviceInformationServiceUUID,
-                timeout: .never)
-            XCTAssertEqual(service.uuid, MockBleDescriptor.deviceInformationServiceUUID)
-            XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.deviceInformationServiceUUID])
-        } catch {
-            XCTFail("service discovery failed with error: \(error)")
-        }
-    }
-    
     func testDiscoverServiceWithServiceAlreadyDiscovered() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -307,22 +290,6 @@ extension BlePeripheralProxyTests {
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
     }
     
-    func testDiscoverServiceFailDueToPeripheralDisconnectedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Test discovery to fail
-        do {
-            try await blePeripheralProxy_1.discover(
-                serviceUUID: MockBleDescriptor.heartRateServiceUUID,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
-            XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
-        } catch {
-            XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
-        }
-    }
-    
     func testDiscoverServiceFailDueToTimeout() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -364,26 +331,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 4.0)
-    }
-    
-    func testDiscoverServiceFailDueToTimeoutAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Mock discovery timeout
-        try blePeripheral_1.timeoutOnDiscoverServices = true
-        // Test timeout
-        do {
-            try await blePeripheralProxy_1.discover(
-                serviceUUID: MockBleDescriptor.heartRateServiceUUID,
-                timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
-            XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
-        } catch {
-            XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
-        }
     }
     
     func testDiscoverServiceFailDueToError() throws {
@@ -429,26 +376,6 @@ extension BlePeripheralProxyTests {
         wait(for: [discoveryExp, publisherExp], timeout: 4.0)
     }
     
-    func testDiscoverServiceFailDueToErrorAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Mock discovery error
-        try blePeripheral_1.errorOnDiscoverServices = MockBleError.mockedError
-        // Test discovery fail
-        do {
-            try await blePeripheralProxy_1.discover(
-                serviceUUID: MockBleDescriptor.heartRateServiceUUID,
-                timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
-            XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
-        } catch {
-            XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
-        }
-    }
-    
     func testDiscoverServiceFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -481,6 +408,85 @@ extension BlePeripheralProxyTests {
         blePeripheralProxy_1 = nil
         // Await expectations
         wait(for: [expectation], timeout: 4.0)
+    }
+    
+}
+
+// MARK: - Discover service tests (async)
+
+extension BlePeripheralProxyTests {
+    
+    func testDiscoverServiceAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Test service discovery
+        do {
+            let service = try await blePeripheralProxy_1.discover(
+                serviceUUID: MockBleDescriptor.deviceInformationServiceUUID,
+                timeout: .never)
+            XCTAssertEqual(service.uuid, MockBleDescriptor.deviceInformationServiceUUID)
+            XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.deviceInformationServiceUUID])
+        } catch {
+            XCTFail("service discovery failed with error: \(error)")
+        }
+    }
+    
+    func testDiscoverServiceFailDueToPeripheralDisconnectedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test discovery to fail
+        do {
+            try await blePeripheralProxy_1.discover(
+                serviceUUID: MockBleDescriptor.heartRateServiceUUID,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+            XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
+            XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
+        } catch {
+            XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+        }
+    }
+    
+    func testDiscoverServiceFailDueToTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Mock discovery timeout
+        try blePeripheral_1.timeoutOnDiscoverServices = true
+        // Test timeout
+        do {
+            try await blePeripheralProxy_1.discover(
+                serviceUUID: MockBleDescriptor.heartRateServiceUUID,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+            XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
+            XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
+        } catch {
+            XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+        }
+    }
+    
+    func testDiscoverServiceFailDueToErrorAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Mock discovery error
+        try blePeripheral_1.errorOnDiscoverServices = MockBleError.mockedError
+        // Test discovery fail
+        do {
+            try await blePeripheralProxy_1.discover(
+                serviceUUID: MockBleDescriptor.heartRateServiceUUID,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+            XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
+            XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
+        } catch {
+            XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+        }
     }
     
 }
@@ -523,26 +529,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testDiscoverCharacteristicAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Test characteristic discovery
-        do {
-            let characteristic = try await blePeripheralProxy_1.discover(
-                characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
-                in: MockBleDescriptor.heartRateServiceUUID,
-                timeout: .never)
-            XCTAssertEqual(characteristic.uuid, MockBleDescriptor.heartRateCharacteristicUUID)
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.heartRateCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic discovery failed with error: \(error)")
-        }
     }
     
     func testDiscoverCharacteristicWithCharacteristicAlreadyDiscovered() throws {
@@ -723,30 +709,6 @@ extension BlePeripheralProxyTests {
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
     }
     
-    func testDiscoverCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Disconnect the peripheral
-        disconnect(peripheral: try blePeripheral_1)
-        // Test discovery to fail
-        do {
-            try await blePeripheralProxy_1.discover(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                in: MockBleDescriptor.deviceInformationServiceUUID,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
-            XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
-            XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
-        }
-    }
-    
     func testDiscoverCharacteristicFailDueToServiceNotFound() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -788,26 +750,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testDiscoverCharacteristicFailDueToServiceNotFoundAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Test discovery to fail
-        do {
-            try await blePeripheralProxy_1.discover(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                in: MockBleDescriptor.deviceInformationServiceUUID,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
-            XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
-            XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
-        }
     }
     
     func testDiscoverCharacteristicFailDueToTimeout() throws {
@@ -857,30 +799,6 @@ extension BlePeripheralProxyTests {
         wait(for: [discoveryExp, publisherExp], timeout: 4.0)
     }
     
-    func testDiscoverCharacteristicFailDueToTimeoutAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Mock characteristic discovery timeout
-        try blePeripheral_1.timeoutOnDiscoverCharacteristics = true
-        // Test discovery to fail
-        do {
-            try await blePeripheralProxy_1.discover(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                in: MockBleDescriptor.deviceInformationServiceUUID,
-                timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
-            XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
-            XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
-        }
-    }
-    
     func testDiscoverCharacteristicFailDueToError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -928,30 +846,6 @@ extension BlePeripheralProxyTests {
         wait(for: [discoveryExp, publisherExp], timeout: 4.0)
     }
     
-    func testDiscoverCharacteristicFailDueToErrorAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Mock discovery error
-        try blePeripheral_1.errorOnDiscoverCharacteristics = MockBleError.mockedError
-        // Test discovery to fail
-        do {
-            try await blePeripheralProxy_1.discover(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                in: MockBleDescriptor.deviceInformationServiceUUID,
-                timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
-            XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
-            XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
-        }
-    }
-    
     func testDiscoverCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -987,6 +881,124 @@ extension BlePeripheralProxyTests {
         blePeripheralProxy_1 = nil
         // Await expectations
         wait(for: [expectation], timeout: 4.0)
+    }
+    
+}
+
+// MARK: - Discover characteristic tests (async)
+
+extension BlePeripheralProxyTests {
+    
+    func testDiscoverCharacteristicAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic discovery
+        do {
+            let characteristic = try await blePeripheralProxy_1.discover(
+                characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
+                in: MockBleDescriptor.heartRateServiceUUID,
+                timeout: .never)
+            XCTAssertEqual(characteristic.uuid, MockBleDescriptor.heartRateCharacteristicUUID)
+            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic discovery failed with error: \(error)")
+        }
+    }
+    
+    func testDiscoverCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Disconnect the peripheral
+        disconnect(peripheral: try blePeripheral_1)
+        // Test discovery to fail
+        do {
+            try await blePeripheralProxy_1.discover(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                in: MockBleDescriptor.deviceInformationServiceUUID,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+            XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
+            XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
+            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+        }
+    }
+    
+    func testDiscoverCharacteristicFailDueToServiceNotFoundAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Test discovery to fail
+        do {
+            try await blePeripheralProxy_1.discover(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                in: MockBleDescriptor.deviceInformationServiceUUID,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+            XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
+            XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
+            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+        }
+    }
+    
+    func testDiscoverCharacteristicFailDueToTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock characteristic discovery timeout
+        try blePeripheral_1.timeoutOnDiscoverCharacteristics = true
+        // Test discovery to fail
+        do {
+            try await blePeripheralProxy_1.discover(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                in: MockBleDescriptor.deviceInformationServiceUUID,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+            XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
+            XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
+            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+        }
+    }
+    
+    func testDiscoverCharacteristicFailDueToErrorAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock discovery error
+        try blePeripheral_1.errorOnDiscoverCharacteristics = MockBleError.mockedError
+        // Test discovery to fail
+        do {
+            try await blePeripheralProxy_1.discover(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                in: MockBleDescriptor.deviceInformationServiceUUID,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+            XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
+            XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
+            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+        }
     }
     
 }
@@ -1035,31 +1047,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testReadCharacteristicAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Test characteristic read
-        do {
-            let data = try await blePeripheralProxy_1.read(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
-                timeout: .never)
-            let serialNumber = String(data: data, encoding: .utf8)
-            let record = blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID]
-            XCTAssertEqual(serialNumber, "12345678")
-            XCTAssertEqual(record?.data, data)
-            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic read failed with error: \(error)")
-        }
     }
     
     func testReadCharacteristicWithMultipleConcurrentRead() throws {
@@ -1311,31 +1298,6 @@ extension BlePeripheralProxyTests {
         wait(for: [readExp, publisherExp], timeout: 2.0)
     }
     
-    func testReadCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Disconnect the peripheral
-        disconnect(peripheral: try blePeripheral_1)
-        // Test read to fail
-        do {
-            _ = try await blePeripheralProxy_1.read(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
-            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
-            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
-        }
-    }
-    
     func testReadCharacteristicFailDueToCharacteristicNotFound() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -1379,27 +1341,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testReadCharacteristicFailDueToCharacteristicNotFoundAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Test read to fail
-        do {
-            _ = try await blePeripheralProxy_1.read(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
-            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
-            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
-        }
     }
     
     func testReadCharacteristicFailDueToOperationNotSupported() throws {
@@ -1447,29 +1388,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testReadCharacteristicFailDueToOperationNotSupportedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Test read to fail
-        do {
-            _ = try await blePeripheralProxy_1.read(
-                characteristicUUID: MockBleDescriptor.secretCharacteristicUUID,
-                policy: .never,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
-            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.secretCharacteristicUUID])
-            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.secretCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
-        }
     }
     
     func testReadCharacteristicFailDueToTimeout() throws {
@@ -1521,31 +1439,6 @@ extension BlePeripheralProxyTests {
         wait(for: [readExp, publisherExp], timeout: 4.0)
     }
     
-    func testReadCharacteristicFailDueToTimeoutAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Mock read timeout
-        try blePeripheral_1.timeoutOnRead = true
-        // Test read to fail
-        do {
-            _ = try await blePeripheralProxy_1.read(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
-                timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
-            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
-            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
-        }
-    }
-    
     func testReadCharacteristicFailDueToError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -1593,31 +1486,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
-    }
-    
-    func testReadCharacteristicFailDueToErrorAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Mock read error
-        try blePeripheral_1.errorOnRead = MockBleError.mockedError
-        // Test read to fail
-        do {
-            _ = try await blePeripheralProxy_1.read(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
-                timeout: .never)
-        } catch MockBleError.mockedError {
-            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
-            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic read was expected to fail with MockBleError category 'mockedError', got '\(error)' instead")
-        }
     }
     
     func testReadCharacteristicFailDueToNilData() throws {
@@ -1671,33 +1539,6 @@ extension BlePeripheralProxyTests {
         wait(for: [readExp, publisherExp], timeout: 4.0)
     }
     
-    func testReadCharacteristicFailDueToNilDataAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Change characteristic value manually to nil
-        let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID)
-        let mutable = characteristic as? CBMutableCharacteristic
-        mutable?.value = nil
-        // Test read to fail
-        do {
-            _ = try await blePeripheralProxy_1.read(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                policy: .never,
-                timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicDataIsNil {
-            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
-            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicDataIsNil', got '\(error)' instead")
-        }
-    }
-    
     func testReadCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -1735,6 +1576,183 @@ extension BlePeripheralProxyTests {
         blePeripheralProxy_1 = nil
         // Await expectations
         wait(for: [expectation], timeout: 4.0)
+    }
+    
+}
+
+// MARK: - Read characteristic tests (async)
+    
+extension BlePeripheralProxyTests {
+    
+    func testReadCharacteristicAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic read
+        do {
+            let data = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+            let serialNumber = String(data: data, encoding: .utf8)
+            let record = blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID]
+            XCTAssertEqual(serialNumber, "12345678")
+            XCTAssertEqual(record?.data, data)
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read failed with error: \(error)")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Disconnect the peripheral
+        disconnect(peripheral: try blePeripheral_1)
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToCharacteristicNotFoundAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToOperationNotSupportedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.secretCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.secretCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.secretCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock read timeout
+        try blePeripheral_1.timeoutOnRead = true
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToErrorAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock read error
+        try blePeripheral_1.errorOnRead = MockBleError.mockedError
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .never)
+        } catch MockBleError.mockedError {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with MockBleError category 'mockedError', got '\(error)' instead")
+        }
+    }
+    
+    func testReadCharacteristicFailDueToNilDataAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Change characteristic value manually to nil
+        let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID)
+        let mutable = characteristic as? CBMutableCharacteristic
+        mutable?.value = nil
+        // Test read to fail
+        do {
+            _ = try await blePeripheralProxy_1.read(
+                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                policy: .never,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicDataIsNil {
+            XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicDataIsNil', got '\(error)' instead")
+        }
     }
     
 }
@@ -1781,30 +1799,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testWriteCharacteristicAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Test characteristic write
-        do {
-            try await blePeripheralProxy_1.write(
-                data: "ABCD".data(using: .utf8)!,
-                to: MockBleDescriptor.secretCharacteristicUUID,
-                timeout: .never)
-            let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.secretCharacteristicUUID)
-            let secret = characteristic?.value.map { String(data: $0, encoding: .utf8) }
-            XCTAssertEqual(secret, "ABCD")
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic write failed with error: \(error)")
-        }
     }
     
     func testWriteCharacteristicFailDueToPeripheralDisconnected() throws {
@@ -1855,30 +1849,6 @@ extension BlePeripheralProxyTests {
         wait(for: [writeExp, publisherExp], timeout: 2.0)
     }
     
-    func testWriteCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Disconnect the peripheral
-        disconnect(peripheral: try blePeripheral_1)
-        // Test characteristic write to fail
-        do {
-            try await blePeripheralProxy_1.write(
-                data: "ABCD".data(using: .utf8)!,
-                to: MockBleDescriptor.secretCharacteristicUUID,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
-        }
-    }
-    
     func testWriteCharacteristicFailDueToCharacteristicNotFound() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -1921,26 +1891,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testWriteCharacteristicFailDueToCharacteristicNotFoundAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Test characteristic write to fail
-        do {
-            try await blePeripheralProxy_1.write(
-                data: "ABCD".data(using: .utf8)!,
-                to: MockBleDescriptor.secretCharacteristicUUID,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
-        }
     }
     
     func testWriteCharacteristicFailDueToOperationNotSupported() throws {
@@ -1987,28 +1937,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testWriteCharacteristicFailDueToOperationNotSupportedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Test characteristic write to fail
-        do {
-            try await blePeripheralProxy_1.write(
-                data: "ABCD".data(using: .utf8)!,
-                to: MockBleDescriptor.serialNumberCharacteristicUUID,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
-        }
     }
     
     func testWriteCharacteristicFailDueToTimeout() throws {
@@ -2059,30 +1987,6 @@ extension BlePeripheralProxyTests {
         wait(for: [writeExp, publisherExp], timeout: 4.0)
     }
     
-    func testWriteCharacteristicFailDueToTimeoutAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Mock write timeout
-        try blePeripheral_1.timeoutOnWrite = true
-        // Test characteristic write to fail
-        do {
-            try await blePeripheralProxy_1.write(
-                data: "ABCD".data(using: .utf8)!,
-                to: MockBleDescriptor.secretCharacteristicUUID,
-                timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
-        }
-    }
-    
     func testWriteCharacteristicFailDueToError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -2131,30 +2035,6 @@ extension BlePeripheralProxyTests {
         wait(for: [writeExp, publisherExp], timeout: 4.0)
     }
     
-    func testWriteCharacteristicFailDueToErrorAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
-        // Mock write error
-        try blePeripheral_1.errorOnWrite = MockBleError.mockedError
-        // Test characteristic write to fail
-        do {
-            try await blePeripheralProxy_1.write(
-                data: "ABCD".data(using: .utf8)!,
-                to: MockBleDescriptor.secretCharacteristicUUID,
-                timeout: .never)
-        } catch MockBleError.mockedError {
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic write was expected to fail with MockBleError.mockedError, got '\(error)' instead")
-        }
-    }
-    
     func testWriteCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -2193,6 +2073,150 @@ extension BlePeripheralProxyTests {
         // Await expectations
         wait(for: [expectation], timeout: 4.0)
 
+    }
+    
+}
+
+// MARK: - Write characteristic tests (async)
+    
+extension BlePeripheralProxyTests {
+    
+    func testWriteCharacteristicAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic write
+        do {
+            try await blePeripheralProxy_1.write(
+                data: "ABCD".data(using: .utf8)!,
+                to: MockBleDescriptor.secretCharacteristicUUID,
+                timeout: .never)
+            let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.secretCharacteristicUUID)
+            let secret = characteristic?.value.map { String(data: $0, encoding: .utf8) }
+            XCTAssertEqual(secret, "ABCD")
+            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic write failed with error: \(error)")
+        }
+    }
+    
+    func testWriteCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Disconnect the peripheral
+        disconnect(peripheral: try blePeripheral_1)
+        // Test characteristic write to fail
+        do {
+            try await blePeripheralProxy_1.write(
+                data: "ABCD".data(using: .utf8)!,
+                to: MockBleDescriptor.secretCharacteristicUUID,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+        }
+    }
+    
+    func testWriteCharacteristicFailDueToCharacteristicNotFoundAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic write to fail
+        do {
+            try await blePeripheralProxy_1.write(
+                data: "ABCD".data(using: .utf8)!,
+                to: MockBleDescriptor.secretCharacteristicUUID,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+        }
+    }
+    
+    func testWriteCharacteristicFailDueToOperationNotSupportedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic write to fail
+        do {
+            try await blePeripheralProxy_1.write(
+                data: "ABCD".data(using: .utf8)!,
+                to: MockBleDescriptor.serialNumberCharacteristicUUID,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
+            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
+        }
+    }
+    
+    func testWriteCharacteristicFailDueToTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Mock write timeout
+        try blePeripheral_1.timeoutOnWrite = true
+        // Test characteristic write to fail
+        do {
+            try await blePeripheralProxy_1.write(
+                data: "ABCD".data(using: .utf8)!,
+                to: MockBleDescriptor.secretCharacteristicUUID,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
+            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+        }
+    }
+    
+    func testWriteCharacteristicFailDueToErrorAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
+        // Mock write error
+        try blePeripheral_1.errorOnWrite = MockBleError.mockedError
+        // Test characteristic write to fail
+        do {
+            try await blePeripheralProxy_1.write(
+                data: "ABCD".data(using: .utf8)!,
+                to: MockBleDescriptor.secretCharacteristicUUID,
+                timeout: .never)
+        } catch MockBleError.mockedError {
+            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic write was expected to fail with MockBleError.mockedError, got '\(error)' instead")
+        }
     }
     
 }
@@ -2330,30 +2354,6 @@ extension BlePeripheralProxyTests {
         wait(for: [notifyExp, publisherExp, valuePublisherExp], timeout: 12.0)
     }
     
-    func testSetNotifyOnCharacteristicAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Test characteristic notify enabled
-        do {
-            let enabled = try await blePeripheralProxy_1.setNotify(
-                enabled: true,
-                for: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .never)
-            let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
-            XCTAssertTrue(enabled)
-            XCTAssertEqual(enabled, characteristic?.isNotifying)
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic set notify failed with error: \(error)")
-        }
-    }
-    
     func testSetNotifyOnCharacteristicWithNotifyAlreadyEnabled() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -2445,30 +2445,6 @@ extension BlePeripheralProxyTests {
         wait(for: [notifyExp, publisherExp], timeout: 2.0)
     }
     
-    func testSetNotifyOnCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Disconnect the peripheral
-        disconnect(peripheral: try blePeripheral_1)
-        // Test characteristic set notify to fail
-        do {
-            _ = try await blePeripheralProxy_1.setNotify(
-                enabled: true,
-                for: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
-        }
-    }
-    
     func testSetNotifyOnCharacteristicFailDueToCharacteristicNotFound() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -2511,26 +2487,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testSetNotifyOnCharacteristicFailDueToCharacteristicNotFoundAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Test characteristic set notify to fail
-        do {
-            _ = try await blePeripheralProxy_1.setNotify(
-                enabled: true,
-                for: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
-        }
     }
     
     func testSetNotifyOnCharacteristicFailDueToOperationNotSupported() throws {
@@ -2577,28 +2533,6 @@ extension BlePeripheralProxyTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 2.0)
-    }
-    
-    func testSetNotifyOnCharacteristicFailDueToOperationNotSupportedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Test characteristic set notify to fail
-        do {
-            _ = try await blePeripheralProxy_1.setNotify(
-                enabled: true,
-                for: MockBleDescriptor.serialNumberCharacteristicUUID,
-                timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
-        }
     }
     
     func testSetNotifyOnCharacteristicFailDueToTimeout() throws {
@@ -2649,30 +2583,6 @@ extension BlePeripheralProxyTests {
         wait(for: [notifyExp, publisherExp], timeout: 4.0)
     }
     
-    func testSetNotifyOnCharacteristicFailDueToTimeoutAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Mock set notify timeout
-        try blePeripheral_1.timeoutOnNotify = true
-        // Test characteristic set notify to fail
-        do {
-            _ = try await blePeripheralProxy_1.setNotify(
-                enabled: true,
-                for: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
-        }
-    }
-    
     func testSetNotifyOnCharacteristicFailDueToError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -2721,30 +2631,6 @@ extension BlePeripheralProxyTests {
         wait(for: [notifyExp, publisherExp], timeout: 4.0)
     }
     
-    func testSetNotifyOnCharacteristicFailDueToErrorAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Mock set notify error
-        try blePeripheral_1.errorOnNotify = MockBleError.mockedError
-        // Test characteristic set notify to fail
-        do {
-            _ = try await blePeripheralProxy_1.setNotify(
-                enabled: true,
-                for: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .seconds(2))
-        } catch MockBleError.mockedError {
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
-        } catch {
-            XCTFail("characteristic set notify was expected to fail with MockBleError.mockedError, got '\(error)' instead")
-        }
-    }
-    
     func testSetNotifyOnCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -2783,6 +2669,150 @@ extension BlePeripheralProxyTests {
         // Await expectations
         wait(for: [expectation], timeout: 4.0)
 
+    }
+    
+}
+
+// MARK: - Notify characteristic tests (async)
+
+extension BlePeripheralProxyTests {
+    
+    func testSetNotifyOnCharacteristicAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic notify enabled
+        do {
+            let enabled = try await blePeripheralProxy_1.setNotify(
+                enabled: true,
+                for: MockBleDescriptor.heartRateCharacteristicUUID,
+                timeout: .never)
+            let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
+            XCTAssertTrue(enabled)
+            XCTAssertEqual(enabled, characteristic?.isNotifying)
+            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic set notify failed with error: \(error)")
+        }
+    }
+    
+    func testSetNotifyOnCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Disconnect the peripheral
+        disconnect(peripheral: try blePeripheral_1)
+        // Test characteristic set notify to fail
+        do {
+            _ = try await blePeripheralProxy_1.setNotify(
+                enabled: true,
+                for: MockBleDescriptor.heartRateCharacteristicUUID,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+        }
+    }
+    
+    func testSetNotifyOnCharacteristicFailDueToCharacteristicNotFoundAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic set notify to fail
+        do {
+            _ = try await blePeripheralProxy_1.setNotify(
+                enabled: true,
+                for: MockBleDescriptor.heartRateCharacteristicUUID,
+                timeout: .never)
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+        }
+    }
+    
+    func testSetNotifyOnCharacteristicFailDueToOperationNotSupportedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Test characteristic set notify to fail
+        do {
+            _ = try await blePeripheralProxy_1.setNotify(
+                enabled: true,
+                for: MockBleDescriptor.serialNumberCharacteristicUUID,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
+            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
+        }
+    }
+    
+    func testSetNotifyOnCharacteristicFailDueToTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Mock set notify timeout
+        try blePeripheral_1.timeoutOnNotify = true
+        // Test characteristic set notify to fail
+        do {
+            _ = try await blePeripheralProxy_1.setNotify(
+                enabled: true,
+                for: MockBleDescriptor.heartRateCharacteristicUUID,
+                timeout: .seconds(2))
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
+            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+        }
+    }
+    
+    func testSetNotifyOnCharacteristicFailDueToErrorAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Mock set notify error
+        try blePeripheral_1.errorOnNotify = MockBleError.mockedError
+        // Test characteristic set notify to fail
+        do {
+            _ = try await blePeripheralProxy_1.setNotify(
+                enabled: true,
+                for: MockBleDescriptor.heartRateCharacteristicUUID,
+                timeout: .seconds(2))
+        } catch MockBleError.mockedError {
+            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+        } catch {
+            XCTFail("characteristic set notify was expected to fail with MockBleError.mockedError, got '\(error)' instead")
+        }
     }
     
 }
