@@ -209,8 +209,7 @@ class BlueConnectTests: XCTestCase {
             enabled: enabled,
             for: characteristicUUID,
             timeout: .never
-        ) { [weak self] result in
-            guard let self else { return }
+        ) { result in
             switch result {
                 case .success(let enabled):
                     XCTAssertTrue(enabled)
