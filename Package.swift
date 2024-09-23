@@ -7,7 +7,7 @@ let package = Package(
     name: "BlueConnect",
     platforms: [
         .iOS(.v13),
-        .macOS(.v10_13),
+        .macOS(.v12),
         .tvOS(.v12),
         .watchOS(.v4),
         .visionOS(.v1)
