@@ -152,7 +152,7 @@ extension BleCharacteristicNotifyProxyTests {
             .store(in: &subscriptions)
         bleHeartRateProxy.setNotify(
             enabled: true,
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -170,7 +170,7 @@ extension BleCharacteristicNotifyProxyTests {
             }
         }
         // Await expectations
-        wait(for: [notifyExp, publisherExp], timeout: 6.0)
+        wait(for: [notifyExp, publisherExp], timeout: 4.0)
     }
     
     func testSetNotifyFailDueToDiscoverServiceTimeout() throws {
@@ -192,7 +192,7 @@ extension BleCharacteristicNotifyProxyTests {
             .store(in: &subscriptions)
         bleHeartRateProxy.setNotify(
             enabled: true,
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -210,7 +210,7 @@ extension BleCharacteristicNotifyProxyTests {
             }
         }
         // Await expectations
-        wait(for: [notifyExp, publisherExp], timeout: 6.0)
+        wait(for: [notifyExp, publisherExp], timeout: 4.0)
     }
     
     func testSetNotifyFailDueToDiscoverCharacteristicTimeout() throws {
@@ -232,7 +232,7 @@ extension BleCharacteristicNotifyProxyTests {
             .store(in: &subscriptions)
         bleHeartRateProxy.setNotify(
             enabled: true,
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -250,7 +250,7 @@ extension BleCharacteristicNotifyProxyTests {
             }
         }
         // Await expectations
-        wait(for: [notifyExp, publisherExp], timeout: 6.0)
+        wait(for: [notifyExp, publisherExp], timeout: 4.0)
     }
     
 }
@@ -298,7 +298,7 @@ extension BleCharacteristicNotifyProxyTests {
         try blePeripheral_1.delayOnNotify = .seconds(10)
         // Test characteristic notify enabled
         do {
-            _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .seconds(4))
+            _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .seconds(2))
             XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
             // NO OP
@@ -316,7 +316,7 @@ extension BleCharacteristicNotifyProxyTests {
         try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
         // Test characteristic notify enabled
         do {
-            _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .seconds(4))
+            _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .seconds(2))
             XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
             // NO OP
@@ -334,7 +334,7 @@ extension BleCharacteristicNotifyProxyTests {
         try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
         // Test characteristic notify enabled
         do {
-            _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .seconds(4))
+            _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .seconds(2))
             XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
             // NO OP

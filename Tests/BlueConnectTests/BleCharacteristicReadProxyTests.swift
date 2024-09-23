@@ -184,7 +184,7 @@ extension BleCharacteristicReadProxyTests {
             .store(in: &subscriptions)
         bleSerialNumberProxy.read(
             cachePolicy: .never,
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -202,7 +202,7 @@ extension BleCharacteristicReadProxyTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 6.0)
+        wait(for: [readExp, publisherExp], timeout: 4.0)
     }
     
     func testReadFailDueToDiscoverServiceTimeout() throws {
@@ -223,7 +223,7 @@ extension BleCharacteristicReadProxyTests {
             .store(in: &subscriptions)
         bleSerialNumberProxy.read(
             cachePolicy: .never,
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -241,7 +241,7 @@ extension BleCharacteristicReadProxyTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 6.0)
+        wait(for: [readExp, publisherExp], timeout: 4.0)
     }
     
     func testReadFailDueToDiscoverCharacteristicTimeout() throws {
@@ -262,7 +262,7 @@ extension BleCharacteristicReadProxyTests {
             .store(in: &subscriptions)
         bleSerialNumberProxy.read(
             cachePolicy: .never,
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -280,7 +280,7 @@ extension BleCharacteristicReadProxyTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 6.0)
+        wait(for: [readExp, publisherExp], timeout: 4.0)
     }
     
 }
@@ -344,7 +344,7 @@ extension BleCharacteristicReadProxyTests {
         try blePeripheral_1.delayOnRead = .seconds(10)
         // Test characteristic read
         do {
-            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(4))
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
             XCTFail("characteristic read was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
             // NO OP
@@ -362,7 +362,7 @@ extension BleCharacteristicReadProxyTests {
         try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
         // Test characteristic read
         do {
-            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(4))
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
             XCTFail("characteristic read was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
             // NO OP
@@ -380,7 +380,7 @@ extension BleCharacteristicReadProxyTests {
         try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
         // Test characteristic read
         do {
-            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(4))
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
             XCTFail("characteristic read was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
             // NO OP

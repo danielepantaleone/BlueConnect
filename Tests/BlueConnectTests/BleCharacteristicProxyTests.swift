@@ -84,7 +84,7 @@ extension BleCharacteristicProxyTests {
         centralManager(state: .poweredOn)
         // Test characteristic discovery failure
         let expectation = expectation(description: "waiting for characteristic NOT to be discovered")
-        bleSerialNumberProxy.discover(timeout: .seconds(4)) { result in
+        bleSerialNumberProxy.discover(timeout: .seconds(2)) { result in
             switch result {
                 case .success:
                     XCTFail("characteristic discovery was expected to fail but succeeded instead")
@@ -101,7 +101,7 @@ extension BleCharacteristicProxyTests {
             }
         }
         // Await expectations
-        wait(for: [expectation], timeout: 6.0)
+        wait(for: [expectation], timeout: 4.0)
     }
 
     func testDiscoverFailDueToDiscoverServiceTimeout() throws {
@@ -113,7 +113,7 @@ extension BleCharacteristicProxyTests {
         try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
         // Test characteristic discovery failure
         let expectation = expectation(description: "waiting for characteristic NOT to be discovered")
-        bleSerialNumberProxy.discover(timeout: .seconds(4)) { result in
+        bleSerialNumberProxy.discover(timeout: .seconds(2)) { result in
             switch result {
                 case .success:
                     XCTFail("characteristic discovery was expected to fail but succeeded instead")
@@ -130,7 +130,7 @@ extension BleCharacteristicProxyTests {
             }
         }
         // Await expectations
-        wait(for: [expectation], timeout: 6.0)
+        wait(for: [expectation], timeout: 4.0)
     }
     
     func testDiscoverFailDueToDiscoverCharacteristicTimeout() throws {
@@ -142,7 +142,7 @@ extension BleCharacteristicProxyTests {
         try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
         // Test characteristic discovery failure
         let expectation = expectation(description: "waiting for characteristic NOT to be discovered")
-        bleSerialNumberProxy.discover(timeout: .seconds(4)) { result in
+        bleSerialNumberProxy.discover(timeout: .seconds(2)) { result in
             switch result {
                 case .success:
                     XCTFail("characteristic discovery was expected to fail but succeeded instead")
@@ -159,7 +159,7 @@ extension BleCharacteristicProxyTests {
             }
         }
         // Await expectations
-        wait(for: [expectation], timeout: 6.0)
+        wait(for: [expectation], timeout: 4.0)
     }
     
 }
@@ -187,7 +187,7 @@ extension BleCharacteristicProxyTests {
         centralManager(state: .poweredOn)
         // Test characteristic discovery failure
         do {
-            try await bleSerialNumberProxy.discover(timeout: .seconds(4))
+            try await bleSerialNumberProxy.discover(timeout: .seconds(2))
             XCTFail("characteristic discovery was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
             // NO OP
@@ -205,7 +205,7 @@ extension BleCharacteristicProxyTests {
         try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
         // Test characteristic discovery failure
         do {
-            try await bleSerialNumberProxy.discover(timeout: .seconds(4))
+            try await bleSerialNumberProxy.discover(timeout: .seconds(2))
             XCTFail("characteristic discovery was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
             // NO OP
@@ -223,7 +223,7 @@ extension BleCharacteristicProxyTests {
         try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
         // Test characteristic discovery failure
         do {
-            try await bleSerialNumberProxy.discover(timeout: .seconds(4))
+            try await bleSerialNumberProxy.discover(timeout: .seconds(2))
             XCTFail("characteristic discovery was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
             // NO OP

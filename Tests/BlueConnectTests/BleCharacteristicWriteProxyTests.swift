@@ -180,7 +180,7 @@ extension BleCharacteristicWriteProxyTests {
             .store(in: &subscriptions)
         bleSecretProxy.write(
             value: "AAAA",
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -198,7 +198,7 @@ extension BleCharacteristicWriteProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp, publisherExp], timeout: 6.0)
+        wait(for: [writeExp, publisherExp], timeout: 4.0)
     }
     
     func testWriteFailDueToDiscoverServiceTimeout() throws {
@@ -219,7 +219,7 @@ extension BleCharacteristicWriteProxyTests {
             .store(in: &subscriptions)
         bleSecretProxy.write(
             value: "AAAA",
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -237,7 +237,7 @@ extension BleCharacteristicWriteProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp, publisherExp], timeout: 6.0)
+        wait(for: [writeExp, publisherExp], timeout: 4.0)
     }
     
     func testWriteFailDueToDiscoverCharacteristicTimeout() throws {
@@ -258,7 +258,7 @@ extension BleCharacteristicWriteProxyTests {
             .store(in: &subscriptions)
         bleSecretProxy.write(
             value: "AAAA",
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -276,7 +276,7 @@ extension BleCharacteristicWriteProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp, publisherExp], timeout: 6.0)
+        wait(for: [writeExp, publisherExp], timeout: 4.0)
     }
     
 }
@@ -339,7 +339,7 @@ extension BleCharacteristicWriteProxyTests {
         try blePeripheral_1.delayOnWrite = .seconds(10)
         // Test characteristic write
         do {
-            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(4))
+            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(2))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
             // NO OP
@@ -357,7 +357,7 @@ extension BleCharacteristicWriteProxyTests {
         try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
         // Test characteristic write
         do {
-            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(4))
+            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(2))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
             // NO OP
@@ -375,7 +375,7 @@ extension BleCharacteristicWriteProxyTests {
         try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
         // Test characteristic write
         do {
-            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(4))
+            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(2))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
             // NO OP

@@ -122,7 +122,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         let writeExp = expectation(description: "waiting for characteristic write to fail")
         bleBufferProxy.writeWithoutResponse (
             value: Data([0x00, 0x01, 0x02, 0x03]),
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -140,7 +140,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp,], timeout: 6.0)
+        wait(for: [writeExp,], timeout: 4.0)
     }
     
     func testWriteWithoutResponseFailDueToDiscoverCharacteristicTimeout() throws {
@@ -154,7 +154,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         let writeExp = expectation(description: "waiting for characteristic write to fail")
         bleBufferProxy.writeWithoutResponse (
             value: Data([0x00, 0x01, 0x02, 0x03]),
-            timeout: .seconds(4)
+            timeout: .seconds(2)
         ) { result in
             switch result {
                 case .success:
@@ -172,7 +172,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp], timeout: 6.0)
+        wait(for: [writeExp], timeout: 4.0)
     }
     
 }
@@ -223,7 +223,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         do {
             try await bleBufferProxy.writeWithoutResponse (
                 value: Data([0x00, 0x01, 0x02, 0x03]),
-                timeout: .seconds(4))
+                timeout: .seconds(2))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
             // NO OP
@@ -243,7 +243,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         do {
             try await bleBufferProxy.writeWithoutResponse (
                 value: Data([0x00, 0x01, 0x02, 0x03]),
-                timeout: .seconds(4))
+                timeout: .seconds(2))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
             // NO OP
