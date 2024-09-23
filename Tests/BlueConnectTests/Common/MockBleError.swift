@@ -34,6 +34,10 @@ enum MockBleError: Error {
     case characteristicNotFound
     /// Characteristic not read
     case characteristicNotRead
+    /// Data conversion towards characteristic managed type failed.
+    case decodingError
+    /// Characteristic value type conversion into raw data failed.
+    case encodingError
     /// Error thrown manually from unit tests
     case mockedError
     /// Peripheral interaction (read/write/notify) not supported

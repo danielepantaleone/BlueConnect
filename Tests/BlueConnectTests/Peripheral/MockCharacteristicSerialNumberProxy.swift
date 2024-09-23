@@ -36,6 +36,7 @@ struct MockCharacteristicSerialNumberProxy: BleCharacteristicReadProxy {
     
     var characteristicUUID: CBUUID = MockBleDescriptor.serialNumberCharacteristicUUID
     var serviceUUID: CBUUID = MockBleDescriptor.deviceInformationServiceUUID
+    var decodingError: Error?
     
     weak var peripheralProxy: BlePeripheralProxy?
     
@@ -44,6 +45,9 @@ struct MockCharacteristicSerialNumberProxy: BleCharacteristicReadProxy {
     }
     
     func decode(_ data: Data) throws -> String {
+        if let decodingError {
+            throw decodingError
+        }
         return String(data: data, encoding: .utf8) ?? ""
     }
         

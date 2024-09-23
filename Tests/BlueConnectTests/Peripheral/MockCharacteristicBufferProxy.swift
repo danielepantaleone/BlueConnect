@@ -32,7 +32,7 @@ import Foundation
 
 struct MockCharacteristicBufferProxy: BleCharacteristicWriteWithoutResponseProxy {
     
-    typealias ValueType = String
+    typealias ValueType = Data
     
     var characteristicUUID: CBUUID = MockBleDescriptor.bufferCharacteristicUUID
     var serviceUUID: CBUUID = MockBleDescriptor.customServiceUUID
@@ -41,10 +41,6 @@ struct MockCharacteristicBufferProxy: BleCharacteristicWriteWithoutResponseProxy
     
     init(peripheralProxy: BlePeripheralProxy) {
         self.peripheralProxy = peripheralProxy
-    }
-    
-    func encode(_ value: String) throws -> Data {
-        return value.data(using: .utf8) ?? Data()
     }
         
 }
