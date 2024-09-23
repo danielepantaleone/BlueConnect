@@ -131,6 +131,123 @@ extension BleCharacteristicReadProxyTests {
         wait(for: [readExp, publisherExp], timeout: 2.0)
     }
     
+    func testReadFailDueToTimeout() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Mock read timeout
+        try blePeripheral_1.delayOnRead = .seconds(10)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic read to fail")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test read not emitted on publisher
+        bleSerialNumberProxy.didUpdateValuePublisher?
+            .receive(on: DispatchQueue.main)
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        bleSerialNumberProxy.read(
+            cachePolicy: .never,
+            timeout: .seconds(4)
+        ) { result in
+            switch result {
+                case .success:
+                    XCTFail("characteristic read was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralProxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .timeout = proxyError.category else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'timeout', got '\(proxyError.category)' instead")
+                        return
+                    }
+                    readExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 6.0)
+    }
+    
+    func testReadFailDueToDiscoverServiceTimeout() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Mock discover service timeout
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic read to fail")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test read not emitted on publisher
+        bleSerialNumberProxy.didUpdateValuePublisher?
+            .receive(on: DispatchQueue.main)
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        bleSerialNumberProxy.read(
+            cachePolicy: .never,
+            timeout: .seconds(4)
+        ) { result in
+            switch result {
+                case .success:
+                    XCTFail("characteristic read was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralProxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .serviceNotFound = proxyError.category else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(proxyError.category)' instead")
+                        return
+                    }
+                    readExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 6.0)
+    }
+    
+    func testReadFailDueToDiscoverCharacteristicTimeout() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Mock discover characteristic timeout
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
+        // Test characteristic read
+        let readExp = expectation(description: "waiting for characteristic read to fail")
+        let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        // Test read not emitted on publisher
+        bleSerialNumberProxy.didUpdateValuePublisher?
+            .receive(on: DispatchQueue.main)
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        bleSerialNumberProxy.read(
+            cachePolicy: .never,
+            timeout: .seconds(4)
+        ) { result in
+            switch result {
+                case .success:
+                    XCTFail("characteristic read was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralProxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .characteristicNotFound = proxyError.category else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                        return
+                    }
+                    readExp.fulfill()
+            }
+        }
+        // Await expectations
+        wait(for: [readExp, publisherExp], timeout: 6.0)
+    }
+    
 }
 
 // MARK: - Read tests (async)
@@ -166,6 +283,60 @@ extension BleCharacteristicReadProxyTests {
             // NO OP
         } catch {
             XCTFail("characteristic read was expected to fail with BleCharacteristicProxyError category 'decodingError', got '\(error)' instead")
+        }
+    }
+    
+    func testReadFailDueToTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Mock read timeout
+        try blePeripheral_1.delayOnRead = .seconds(10)
+        // Test characteristic read
+        do {
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(4))
+            XCTFail("characteristic read was expected to fail but succeeded instead")
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
+            // NO OP
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+        }
+    }
+    
+    func testReadFailDueToDiscoverServiceTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Mock discover service timeout
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        // Test characteristic read
+        do {
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(4))
+            XCTFail("characteristic read was expected to fail but succeeded instead")
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+            // NO OP
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+        }
+    }
+    
+    func testReadFailDueToDiscoverCharacteristicTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Mock discover characteristic timeout
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
+        // Test characteristic read
+        do {
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(4))
+            XCTFail("characteristic read was expected to fail but succeeded instead")
+        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+            // NO OP
+        } catch {
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
         }
     }
     
