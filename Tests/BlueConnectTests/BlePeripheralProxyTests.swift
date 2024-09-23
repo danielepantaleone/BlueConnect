@@ -37,17 +37,43 @@ final class BlePeripheralProxyTests: BlueConnectTests {
     // MARK: - Properties
     
     var blePeripheralProxy_1: BlePeripheralProxy!
+    var blePeripheralProxy_2: BlePeripheralProxy!
     
     // MARK: - Setup & tear down
     
     override func setUpWithError() throws {
         try super.setUpWithError()
         blePeripheralProxy_1 = .init(peripheral: try blePeripheral_1)
+        blePeripheralProxy_2 = .init(peripheral: try blePeripheral_2)
     }
     
     override func tearDownWithError() throws {
         blePeripheralProxy_1 = nil
         try super.tearDownWithError()
+    }
+    
+}
+
+// MARK: - Name update tests
+
+extension BlePeripheralProxyTests {
+    
+    func testPeripheralNameUpdate() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_2)
+        // Test name update
+        let expectation = expectation(description: "waiting for peripheral name update to be signaled by publisher")
+        blePeripheralProxy_2.didUpdateNamePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == "YODA" }
+            .sink { _ in expectation.fulfill() }
+            .store(in: &subscriptions)
+        // Change the name
+        try blePeripheral_2.setName("YODA", after: .seconds(2))
+        // Await expectations
+        wait(for: [expectation], timeout: 4.0)
     }
     
 }

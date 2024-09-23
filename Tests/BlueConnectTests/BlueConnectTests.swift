@@ -68,7 +68,7 @@ class BlueConnectTests: XCTestCase {
                 hardwareRevision: "2.0.4",
                 secret: "abcd"),
             MockBlePeripheral(
-                identifier: MockBleDescriptor.peripheralUUID_1,
+                identifier: MockBleDescriptor.peripheralUUID_2,
                 name: "PERIPHERAL_2",
                 serialNumber: "87654321",
                 batteryLevel: 43,

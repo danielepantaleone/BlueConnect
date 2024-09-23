@@ -34,8 +34,15 @@ class MockBlePeripheral: BlePeripheral {
         
     // MARK: - Protocol properties
     
-    let identifier: UUID
-    let name: String?
+    var identifier: UUID
+    var name: String? {
+        didSet {
+            queue.async { [weak self] in
+                guard let self else { return }
+                peripheralDelegate?.blePeripheralDidUpdateName(self)
+            }
+        }
+    }
     var services: [CBService]? = nil
     var state: CBPeripheralState = .disconnected {
         didSet {
@@ -415,7 +422,7 @@ class MockBlePeripheral: BlePeripheral {
         return 180
     }
     
-    // MARK: - Characteristics discovery
+    // MARK: - Internal characteristics discovery
     
     private func discoverDeviceInformationServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
@@ -584,7 +591,7 @@ class MockBlePeripheral: BlePeripheral {
         } as? MockCBCharacteristic
     }
     
-    // MARK: - Notify
+    // MARK: - Internal notify
     
     private func startNotify() {
         timer?.cancel()
@@ -616,6 +623,17 @@ class MockBlePeripheral: BlePeripheral {
                         error: nil)
                 }
             }
+        }
+    }
+    
+    // MARK: - Utils
+    
+    func setName(_ name: String?, after timeout: DispatchTimeInterval) {
+        queue.asyncAfter(deadline: .now() + timeout) { [weak self] in
+            guard let self else { return }
+            mutex.lock()
+            defer { mutex.unlock() }
+            self.name = name
         }
     }
     
