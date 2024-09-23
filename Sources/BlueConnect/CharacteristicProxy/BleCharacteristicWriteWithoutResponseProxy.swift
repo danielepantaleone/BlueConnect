@@ -71,6 +71,7 @@ public extension BleCharacteristicWriteWithoutResponseProxy {
                     try peripheralProxy?.writeWithoutResponse(
                         data: try encode(value),
                         to: characteristic.uuid)
+                    callback?(.success(()))
                 } catch {
                     callback?(.failure(BleCharacteristicProxyError(category: .encodingError, cause: error)))
                 }
