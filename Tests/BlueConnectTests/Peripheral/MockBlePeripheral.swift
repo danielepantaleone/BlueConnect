@@ -65,11 +65,6 @@ class MockBlePeripheral: BlePeripheral {
     var errorOnRead: Error?
     var errorOnWrite: Error?
     var errorOnNotify: Error?
-    var timeoutOnDiscoverServices: Bool = false
-    var timeoutOnDiscoverCharacteristics: Bool = false
-    var timeoutOnRead: Bool = false
-    var timeoutOnWrite: Bool = false
-    var timeoutOnNotify: Bool = false
     var delayOnDiscoverServices: DispatchTimeInterval?
     var delayOnDiscoverCharacteristics: DispatchTimeInterval?
     var delayOnRead: DispatchTimeInterval?
@@ -124,10 +119,6 @@ class MockBlePeripheral: BlePeripheral {
                 peripheralDelegate?.blePeripheral(self, didDiscoverServices: MockBleError.peripheralNotConnected)
                 return
             }
-            guard !timeoutOnDiscoverServices else {
-                timeoutOnDiscoverServices = false
-                return
-            }
             guard errorOnDiscoverServices == nil else {
                 peripheralDelegate?.blePeripheral(self, didDiscoverServices: errorOnDiscoverServices)
                 errorOnDiscoverServices = nil
@@ -168,10 +159,6 @@ class MockBlePeripheral: BlePeripheral {
             guard let self else { return }
             mutex.lock()
             defer { mutex.unlock() }
-            guard !timeoutOnDiscoverCharacteristics else {
-                timeoutOnDiscoverCharacteristics = false
-                return
-            }
             guard errorOnDiscoverCharacteristics == nil else {
                 peripheralDelegate?.blePeripheral(
                     self,
@@ -230,10 +217,6 @@ class MockBlePeripheral: BlePeripheral {
                     self,
                     didUpdateValueFor: characteristic,
                     error: MockBleError.characteristicNotFound)
-                return
-            }
-            guard !timeoutOnRead else {
-                timeoutOnRead = false
                 return
             }
             guard errorOnRead == nil else {
@@ -305,10 +288,6 @@ class MockBlePeripheral: BlePeripheral {
                     error: MockBleError.characteristicNotFound)
                 return
             }
-            guard !timeoutOnWrite else {
-                timeoutOnWrite = false
-                return
-            }
             guard errorOnWrite == nil else {
                 peripheralDelegate?.blePeripheral(
                     self,
@@ -364,10 +343,6 @@ class MockBlePeripheral: BlePeripheral {
                     self,
                     didUpdateValueFor: characteristic,
                     error: MockBleError.characteristicNotFound)
-                return
-            }
-            guard !timeoutOnNotify else {
-                timeoutOnNotify = false
                 return
             }
             guard errorOnNotify == nil else {

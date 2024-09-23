@@ -38,7 +38,6 @@ class MockBleCentralManager: BleCentralManager {
     var errorOnDisconnection: Error?
     var delayOnConnection: DispatchTimeInterval?
     var delayOnDisconnection: DispatchTimeInterval?
-    var timeoutOnConnection: Bool = false
 
     // MARK: - Private properties
     
@@ -88,11 +87,6 @@ class MockBleCentralManager: BleCentralManager {
                     self,
                     didFailToConnect: peripheral,
                     error: MockBleError.bluetoothIsOff)
-                return
-            }
-            guard !timeoutOnConnection else {
-                // Keep the peripheral in connecting state to simulate iOS behaviour
-                timeoutOnConnection = false
                 return
             }
             guard errorOnConnection == nil else {

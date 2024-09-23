@@ -300,7 +300,7 @@ extension BlePeripheralProxyTests {
         let publisherExp = expectation(description: "waiting for service discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Mock discovery timeout
-        try blePeripheral_1.timeoutOnDiscoverServices = true
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
         // Test publisher not called
         blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
@@ -455,7 +455,7 @@ extension BlePeripheralProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discovery timeout
-        try blePeripheral_1.timeoutOnDiscoverServices = true
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
         // Test timeout
         do {
             try await blePeripheralProxy_1.discover(
@@ -760,7 +760,7 @@ extension BlePeripheralProxyTests {
         // Discover the service
         discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock characteristic discovery timeout
-        try blePeripheral_1.timeoutOnDiscoverCharacteristics = true
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
         // Test characteristic discovery
         let discoveryExp = expectation(description: "waiting for characteristic discovery to fail")
         let publisherExp = expectation(description: "waiting for characteristic discovery NOT to be signaled by publisher")
@@ -961,7 +961,7 @@ extension BlePeripheralProxyTests {
         // Discover the service
         discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock characteristic discovery timeout
-        try blePeripheral_1.timeoutOnDiscoverCharacteristics = true
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
         // Test discovery to fail
         do {
             try await blePeripheralProxy_1.discover(
@@ -1400,7 +1400,7 @@ extension BlePeripheralProxyTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock read timeout
-        try blePeripheral_1.timeoutOnRead = true
+        try blePeripheral_1.delayOnRead = .seconds(10)
         // Test characteristic read
         let readExp = expectation(description: "waiting for characteristic read to fail")
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
@@ -1688,7 +1688,7 @@ extension BlePeripheralProxyTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock read timeout
-        try blePeripheral_1.timeoutOnRead = true
+        try blePeripheral_1.delayOnRead = .seconds(10)
         // Test read to fail
         do {
             _ = try await blePeripheralProxy_1.read(
@@ -1949,7 +1949,7 @@ extension BlePeripheralProxyTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
         // Mock write timeout
-        try blePeripheral_1.timeoutOnWrite = true
+        try blePeripheral_1.delayOnWrite = .seconds(10)
         // Test characteristic write
         let writeExp = expectation(description: "waiting for characteristic write to fail")
         let publisherExp = expectation(description: "waiting for characteristic write NOT to be signaled by publisher")
@@ -2181,7 +2181,7 @@ extension BlePeripheralProxyTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
         // Mock write timeout
-        try blePeripheral_1.timeoutOnWrite = true
+        try blePeripheral_1.delayOnWrite = .seconds(10)
         // Test characteristic write to fail
         do {
             try await blePeripheralProxy_1.write(
@@ -2545,7 +2545,7 @@ extension BlePeripheralProxyTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Mock set notify timeout
-        try blePeripheral_1.timeoutOnNotify = true
+        try blePeripheral_1.delayOnNotify = .seconds(10)
         // Test characteristic set notify to fail
         let notifyExp = expectation(description: "waiting for characteristic notify NOT to be enabled")
         let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher")
@@ -2777,7 +2777,7 @@ extension BlePeripheralProxyTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Mock set notify timeout
-        try blePeripheral_1.timeoutOnNotify = true
+        try blePeripheral_1.delayOnNotify = .seconds(10)
         // Test characteristic set notify to fail
         do {
             _ = try await blePeripheralProxy_1.setNotify(

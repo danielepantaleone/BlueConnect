@@ -228,7 +228,7 @@ extension BleCentralManagerProxyTests {
         let publisherExp = expectation(description: "waiting for publisher not to be called")
         publisherExp.isInverted = true
         // Mock connection timeout
-        bleCentralManager.timeoutOnConnection = true
+        bleCentralManager.delayOnConnection = .seconds(10)
         // Test publisher not called
         bleCentralManagerProxy.didConnectPublisher
             .receive(on: DispatchQueue.main)
@@ -266,7 +266,7 @@ extension BleCentralManagerProxyTests {
         // Assert initial peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         // Mock connection timeout
-        bleCentralManager.timeoutOnConnection = true
+        bleCentralManager.delayOnConnection = .seconds(10)
         // Test timeout
         do {
             try await bleCentralManagerProxy.connect(
