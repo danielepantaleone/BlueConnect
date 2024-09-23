@@ -303,7 +303,7 @@ extension BleCharacteristicWriteProxyTests {
         centralManager(state: .poweredOn)
         // Test characteristic write
         do {
-            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(4))
+            try await bleSecretProxy.write(value: "AAAA", timeout: .never)
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
             // NO OP
