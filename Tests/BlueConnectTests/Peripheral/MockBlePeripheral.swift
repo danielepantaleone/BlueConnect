@@ -58,7 +58,7 @@ class MockBlePeripheral: BlePeripheral {
     
     // MARK: - Properties
     
-    var rssi: Int32 = -80
+    var rssi: Int = -80
     var heartRateProvider: () -> Int = { 90 }
     var errorOnDiscoverServices: Error?
     var errorOnDiscoverCharacteristics: Error?
@@ -411,6 +411,7 @@ class MockBlePeripheral: BlePeripheral {
                     error: MockBleError.peripheralNotConnected)
                 return
             }
+            rssi = Int.random(in: (-90)...(-50))
             peripheralDelegate?.blePeripheral(
                 self,
                 didReadRSSI: NSNumber(value: rssi),
@@ -627,6 +628,15 @@ class MockBlePeripheral: BlePeripheral {
     }
     
     // MARK: - Utils
+    
+    func readRSSI(after timeout: DispatchTimeInterval) {
+        queue.asyncAfter(deadline: .now() + timeout) { [weak self] in
+            guard let self else { return }
+            mutex.lock()
+            defer { mutex.unlock() }
+            self.readRSSI()
+        }
+    }
     
     func setName(_ name: String?, after timeout: DispatchTimeInterval) {
         queue.asyncAfter(deadline: .now() + timeout) { [weak self] in

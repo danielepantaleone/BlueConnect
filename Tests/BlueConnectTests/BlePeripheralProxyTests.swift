@@ -78,6 +78,29 @@ extension BlePeripheralProxyTests {
     
 }
 
+// MARK: - RSSI update tests
+
+extension BlePeripheralProxyTests {
+    
+    func testPeripheralRSSIUpdate() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Test name update
+        let expectation = expectation(description: "waiting for peripheral RSSI update to be signaled by publisher")
+        blePeripheralProxy_1.didUpdateRSSIPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { _ in expectation.fulfill() }
+            .store(in: &subscriptions)
+        // Change the name
+        try blePeripheral_1.readRSSI(after: .seconds(2))
+        // Await expectations
+        wait(for: [expectation], timeout: 4.0)
+    }
+    
+}
+
 // MARK: - Discover service tests
 
 extension BlePeripheralProxyTests {
