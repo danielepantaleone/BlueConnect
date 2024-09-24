@@ -384,6 +384,7 @@ extension BleCentralManagerProxy {
                   centralManager.state == .poweredOn,
                   peripheral.state != .disconnected else {
                 // The peripheral could not be retrieved or it's already disconnected
+                // We should never end here since peripherals are disconnected when central manager goes off.
                 notifyCallbacks(
                     store: &connectionCallbacks,
                     uuid: peripheralIdentifier,
