@@ -373,22 +373,30 @@ extension BleCentralManagerProxy {
             connectionTimers[peripheralIdentifier]?.cancel()
             connectionTimers[peripheralIdentifier] = nil
             // If the peripheral is not in disconnected state we disconnect it else it will connect at some point.
-            if let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first,
-                peripheral.state != .disconnected,
-                centralManager.state == .poweredOn {
-                disconnect(peripheral: peripheral) { [weak self] _ in
-                    guard let self else { return }
-                    notifyCallbacks(
-                        store: &connectionCallbacks,
-                        uuid: peripheralIdentifier,
-                        value: .failure(BleCentralManagerProxyError(category: .timeout)))
-                }
-            } else { // The peripheral could not be retrieved or it's already disconnected
+            guard let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first,
+                  centralManager.state == .poweredOn,
+                  peripheral.state != .disconnected else {
+                // The peripheral could not be retrieved or it's already disconnected
                 notifyCallbacks(
                     store: &connectionCallbacks,
                     uuid: peripheralIdentifier,
                     value: .failure(BleCentralManagerProxyError(category: .timeout)))
+                return
             }
+            // We attempt to disconnect the peripheral.
+            // Before doing so we remove all the connection callbacks so that the didDisconnectPeripheral
+            // won't trigger them with it's own provided error (we notify a timeout in this case).
+            // We also kill connection timers here (even if it should be expired at this point).
+            let callbacks = connectionCallbacks[peripheralIdentifier]
+            connectionCallbacks[peripheralIdentifier] = nil
+            connectionTimers[peripheralIdentifier]?.cancel()
+            connectionTimers[peripheralIdentifier] = nil
+            disconnect(peripheral: peripheral) { [weak self] _ in
+                guard let self else { return }
+                guard let callbacks else { return }
+                callbacks.forEach { $0(.failure(BleCentralManagerProxyError(category: .timeout))) }
+            }
+          
         }
         connectionTimers[peripheralIdentifier]?.resume()
     }
