@@ -391,8 +391,7 @@ extension BleCentralManagerProxy {
             connectionCallbacks[peripheralIdentifier] = nil
             connectionTimers[peripheralIdentifier]?.cancel()
             connectionTimers[peripheralIdentifier] = nil
-            disconnect(peripheral: peripheral) { [weak self] _ in
-                guard let self else { return }
+            disconnect(peripheral: peripheral) { _ in
                 guard let callbacks else { return }
                 callbacks.forEach { $0(.failure(BleCentralManagerProxyError(category: .timeout))) }
             }
