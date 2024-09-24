@@ -47,8 +47,9 @@ class MockBleCentralManager: BleCentralManager {
     
     // MARK: - Protocol properties
     
+    weak var centraManagerDelegate: BleCentralManagerDelegate?
+
     var authorization: CBManagerAuthorization { .allowedAlways }
-    var centraManagerDelegate: BleCentralManagerDelegate?
     let isScanning: Bool = false
     let mutex = RecursiveMutex()
     var state: CBManagerState = .poweredOff {
