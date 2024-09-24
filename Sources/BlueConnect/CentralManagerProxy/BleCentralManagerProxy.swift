@@ -36,7 +36,7 @@ public class BleCentralManagerProxy: NSObject {
     
     // MARK: - Public properties
     
-    /// The instance of the `BleCentralManager` that this interactor manages.
+    /// The instance of the `BleCentralManager` that this proxy manages.
     public private(set) var centralManager: BleCentralManager!
     
     /// A publisher that emits the updated state of the BLE central manager.
@@ -90,9 +90,9 @@ public class BleCentralManagerProxy: NSObject {
         fatalError("use init(centralManager:)")
     }
     
-    /// Initializes the interactor with the provided `BleCentralManager`.
+    /// Initializes the proxy with the provided `BleCentralManager`.
     ///
-    /// - Parameter centralManager: The `BleCentralManager` instance that this interactor will manage.
+    /// - Parameter centralManager: The `BleCentralManager` instance that this proxy will manage.
     public init(centralManager: BleCentralManager) {
         super.init()
         self.centralManager = centralManager

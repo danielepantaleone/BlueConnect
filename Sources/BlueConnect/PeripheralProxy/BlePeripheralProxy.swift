@@ -37,7 +37,7 @@ public class BlePeripheralProxy: NSObject {
     
     // MARK: - Public properties
     
-    /// The `BlePeripheral` instance this interactor manages.
+    /// The `BlePeripheral` instance this proxy manages.
     public let peripheral: BlePeripheral
     
     /// A publisher that emits when characteristics are discovered for a service.

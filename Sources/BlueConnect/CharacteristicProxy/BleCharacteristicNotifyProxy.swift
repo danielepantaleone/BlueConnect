@@ -29,7 +29,7 @@ import Combine
 import CoreBluetooth
 import Foundation
 
-/// A protocol representing an interactor that handles notifications for a BLE characteristic.
+/// A protocol representing a proxy that handles notifications for a BLE characteristic.
 public protocol BleCharacteristicNotifyProxy: BleCharacteristicProxy {
     
 }

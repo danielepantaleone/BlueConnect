@@ -35,13 +35,13 @@ public extension BleCharacteristicReadProxy {
     /// This asynchronous method first ensures that the characteristic is discovered.
     /// Once discovered, it reads the characteristic's value based on the specified cache policy.
     /// If the value is cached, it is returned from the cache; otherwise, the method reads it from the BLE peripheral.
-    /// The method returns the value decoded into the interactor's `ValueType`.
+    /// The method returns the value decoded into the proxy's `ValueType`.
     ///
     /// - Parameters:
     ///   - cachePolicy: The cache policy determining whether the value should be read from the peripheral or retrieved from the cache. Defaults to `.never`, which means that the value is always read directly from the peripheral.
     ///   - timeout: The duration to wait for the characteristic read operation to complete. Defaults to 10 seconds.
     ///
-    /// - Returns: The characteristic value decoded into the interactor's `ValueType`.
+    /// - Returns: The characteristic value decoded into the proxy's `ValueType`.
     /// - Throws: An error if the characteristic cannot be discovered or read within the specified timeout, or if decoding the data fails.
     func read(cachePolicy: BlePeripheralCachePolicy = .never, timeout: DispatchTimeInterval = .seconds(10)) async throws -> ValueType {
         try await withCheckedThrowingContinuation { continuation in

@@ -37,9 +37,9 @@ public struct BleCharacteristicProxyError: Error {
 
     /// An enumeration defining different categories of errors that can occur during BLE peripheral interactions.
     public enum Category: Equatable {
-        /// The characteristic interactor correctly retrieved characteristic data but data conversion towards characteristic managed type failed.
+        /// The characteristic proxy correctly retrieved characteristic data but data conversion towards characteristic managed type failed.
         case decodingError
-        /// The characteristic interactor didn't manage to encode characteristic value type into raw data to be written on the BLE peripheral.
+        /// The characteristic proxy didn't manage to encode characteristic value type into raw data to be written on the BLE peripheral.
         case encodingError
     }
     

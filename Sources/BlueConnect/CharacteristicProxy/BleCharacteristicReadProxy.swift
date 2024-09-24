@@ -37,15 +37,15 @@ import Foundation
 /// Additionally, it allows access to the `BlePeripheralProxy` managing the peripheral.
 public protocol BleCharacteristicReadProxy: BleCharacteristicProxy {
     
-    /// Decode the provided data into the interactor's value type.
+    /// Decode the provided data into the proxy's value type.
     ///
-    /// This method takes the raw data received from a characteristic and converts it into the value type used by the interactor.
+    /// This method takes the raw data received from a characteristic and converts it into the value type used by the proxy.
     ///
     /// - Parameters:
-    ///   - data: The data received from the characteristic. This is expected to be in a format that can be converted to the interactor's value type.
+    ///   - data: The data received from the characteristic. This is expected to be in a format that can be converted to the proxy's value type.
     ///
     /// - Returns: The decoded value of type `ValueType`, which represents the converted data.
-    /// - Throws: An error if the data cannot be decoded into the interactor's value type. The specific error thrown depends on the implementation of the `decode` method.
+    /// - Throws: An error if the data cannot be decoded into the proxy's value type. The specific error thrown depends on the implementation of the `decode` method.
     func decode(_ data: Data) throws -> ValueType
     
 }
@@ -54,7 +54,7 @@ public extension BleCharacteristicReadProxy {
     
     /// A publisher that emits updates when the value of the characteristic changes.
     ///
-    /// This publisher listens to characteristic value changes and emits a signal with data decoded into the interactor's value type.
+    /// This publisher listens to characteristic value changes and emits a signal with data decoded into the proxy's value type.
     ///
     /// - Note: This publisher filters events to only those corresponding to the current characteristic.
     var didUpdateValuePublisher: AnyPublisher<ValueType, Never>? {
@@ -69,7 +69,7 @@ public extension BleCharacteristicReadProxy {
     ///
     /// This method first attempts to discover the characteristic. If the characteristic is successfully discovered, it proceeds to read its value.
     /// If the characteristic value is not found in the cache, the method triggers a read operation.
-    /// Upon successfully reading the data, it is decoded into the interactor's value type.
+    /// Upon successfully reading the data, it is decoded into the proxy's value type.
     /// The provided callback is invoked with the result.
     ///
     /// - Parameters:

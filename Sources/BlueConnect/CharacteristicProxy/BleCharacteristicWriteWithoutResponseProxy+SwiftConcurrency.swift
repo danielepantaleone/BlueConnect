@@ -33,7 +33,7 @@ public extension BleCharacteristicWriteWithoutResponseProxy {
     /// Write a value to a characteristic without waiting for a response from the BLE peripheral.
     ///
     /// This method first discovers the characteristic and then writes the provided value without expecting a response.
-    /// The encoded data is sent to the BLE peripheral for the characteristic identified by the interactor.
+    /// The encoded data is sent to the BLE peripheral for the characteristic identified by the proxy.
     ///
     /// - Parameters:
     ///   - value: The value to encode and write to the characteristic.

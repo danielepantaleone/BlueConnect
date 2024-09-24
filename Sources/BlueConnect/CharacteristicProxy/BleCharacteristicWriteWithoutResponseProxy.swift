@@ -30,17 +30,17 @@ import Foundation
 
 /// A protocol defining the ability to write data to a BLE characteristic without expecting a response.
 ///
-/// This protocol includes an `encode` method that allows for converting the interactor's `ValueType` into a raw `Data`
+/// This protocol includes an `encode` method that allows for converting the proxy's `ValueType` into a raw `Data`
 /// representation to be written onto a BLE characteristic without waiting for a confirmation response from the peripheral.
 public protocol BleCharacteristicWriteWithoutResponseProxy: BleCharacteristicProxy {
  
-    /// Encode data using the interactor's information.
+    /// Encode data using the proxy's information.
     ///
-    /// This method converts the `ValueType` of the interactor into a raw `Data` representation suitable for writing to the BLE characteristic.
+    /// This method converts the `ValueType` of the proxy into a raw `Data` representation suitable for writing to the BLE characteristic.
     /// The encoded data will be written to the characteristic on the BLE peripheral.
     ///
     /// - Parameters:
-    ///   - value: The value of the interactor's `ValueType` to encode.
+    ///   - value: The value of the proxy's `ValueType` to encode.
     ///
     /// - Returns: The raw data representation of the provided value, ready to be written onto the characteristic.
     /// - Throws: An error if encoding the value fails.
@@ -53,7 +53,7 @@ public extension BleCharacteristicWriteWithoutResponseProxy {
     /// Write a value to a characteristic without waiting for a response from the BLE peripheral.
     ///
     /// This method first discovers the characteristic and then writes the provided value without expecting a response.
-    /// The encoded data is sent to the BLE peripheral for the characteristic identified by the interactor.
+    /// The encoded data is sent to the BLE peripheral for the characteristic identified by the proxy.
     ///
     /// - Parameters:
     ///   - value: The value to encode and write to the characteristic.

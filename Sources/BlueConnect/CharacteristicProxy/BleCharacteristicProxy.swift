@@ -39,7 +39,7 @@ public protocol BleCharacteristicProxy {
     /// Associated type representing the value of the BLE characteristic.
     associatedtype ValueType
     
-    /// The UUID of the characteristic this interactor works with.
+    /// The UUID of the characteristic this proxy works with.
     var characteristicUUID: CBUUID { get }
     
     /// The UUID of the service containing the characteristic.
