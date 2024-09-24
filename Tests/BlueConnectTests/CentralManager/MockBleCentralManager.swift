@@ -75,9 +75,8 @@ class MockBleCentralManager: BleCentralManager {
     // MARK: - Interface
     
     func connect(_ peripheral: BlePeripheral, options: [String: Any]?) {
-        guard let mockPeripheral = peripheral as? MockBlePeripheral else {
-            return
-        }
+        guard peripheral.state != .connecting else { return }
+        guard let mockPeripheral = peripheral as? MockBlePeripheral else { return }
         // move to connecting state before going async
         mockPeripheral.state = .connecting
         queue.async { [weak self] in
@@ -121,9 +120,8 @@ class MockBleCentralManager: BleCentralManager {
     }
     
     func cancelConnection(_ peripheral: BlePeripheral) {
-        guard let mockPeripheral = peripheral as? MockBlePeripheral else {
-            return
-        }
+        guard peripheral.state != .disconnecting else { return }
+        guard let mockPeripheral = peripheral as? MockBlePeripheral else { return }
         mockPeripheral.state = .disconnecting
         queue.async { [weak self] in
             guard let self else { return }

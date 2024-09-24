@@ -93,6 +93,72 @@ extension BleCentralManagerProxyDisconnectionTests {
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
     
+    func testPeripheralDisconnectWithPeripheralAlreadyDisconnecting() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Delay connection to mock connecting state
+        bleCentralManager.delayOnDisconnection = .seconds(4)
+        // Test disconnection or disconnected peripheral
+        let disconnectExp = expectation(description: "waiting for peripheral to disconnect")
+        disconnectExp.expectedFulfillmentCount = 3
+        let publisherExp = expectation(description: "waiting for peripheral disconnection to be signaled by publisher")
+        // Test disconnection not to be emitted on publisher because already connected
+        bleCentralManagerProxy.didDisconnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test connection on callback
+        for _ in 0..<3 {
+            bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1) { result in
+                switch result {
+                    case .success:
+                        disconnectExp.fulfill()
+                    case .failure(let error):
+                        XCTFail("peripheral disconnection failed with error: \(error)")
+                }
+            }
+        }
+        wait(for: [disconnectExp, publisherExp], timeout: 6.0)
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+    }
+    
+    func testPeripheralConnectWithPeripheralAlreadyConnecting() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Delay connection to mock connecting state
+        bleCentralManager.delayOnConnection = .seconds(4)
+        // Test single emission on connection publisher
+        let publisherExp = expectation(description: "waiting for peripheral connection to be signaled by publisher")
+        // Test connection not to be emitted on publisher because already connected
+        bleCentralManagerProxy.didConnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test connection
+        let connectExp = expectation(description: "waiting for peripheral to connect with multiple callbacks")
+        connectExp.expectedFulfillmentCount = 3
+        for _ in 0..<3 {
+            bleCentralManagerProxy.connect(
+                peripheral: try blePeripheral_1,
+                options: nil,
+                timeout: .never) { result in
+                    switch result {
+                        case .success:
+                            connectExp.fulfill()
+                        case .failure(let error):
+                            XCTFail("peripheral connection failed with error: \(error)")
+                    }
+                }
+        }
+        wait(for: [connectExp, publisherExp], timeout: 6.0)
+        XCTAssertEqual(try blePeripheral_1.state, .connected)
+    }
+    
+    
     func testPeripheralDisconnectDueToBleManagerGoingOff() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
