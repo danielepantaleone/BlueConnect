@@ -1,0 +1,26 @@
+name: Swift Tests
+on:
+  push:
+    branches: [ "master" ]
+    paths-ignore:
+      - 'Documentation/**'
+      - 'README.md'
+      - 'BlueConnect.podspec'
+      - 'README.md'
+      - 'LICENSE'
+      - 'swift-generate-documentation.sh'
+  pull_request:
+    branches: [ "master" ]
+jobs:
+  tests:
+    name: Swift ${{ matrix.swift }} on ${{ matrix.platform }}
+    strategy:
+      matrix:
+        platform: ['macOS', 'iOS']
+        swift: ["5.9"]
+    runs-on: macos-latest
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v4
+      - name: Run swift tests
+        run: swift test
