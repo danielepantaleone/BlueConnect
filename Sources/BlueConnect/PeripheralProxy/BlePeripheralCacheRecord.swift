@@ -45,7 +45,7 @@ public struct BlePeripheralCacheRecord {
     /// - Parameters:
     ///   - data: The data to be cached.
     ///   - time: The time when the data is cached. Defaults to the current time (`DispatchTime.now()`).
-    public init(data: Data, time: DispatchTime = .now()) {
+    init(data: Data, time: DispatchTime = .now()) {
         self.data = data
         self.time = time
     }
