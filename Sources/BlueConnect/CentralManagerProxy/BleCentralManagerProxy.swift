@@ -442,8 +442,22 @@ extension BleCentralManagerProxy {
 extension BleCentralManagerProxy: BleCentralManagerDelegate {
     
     public func bleCentralManagerDidUpdateState(_ central: BleCentralManager) {
-        // TODO: STOP SCAN TIMER
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // Notify publisher.
         didUpdateStateSubject.send(central.state)
+        
+        // Notify scan termination (if scanning)
+        if central.state != .poweredOn {
+            // Stop discover timer.
+            stopDiscoverTimer()
+            // Send publisher failure.
+            discoverSubject?.send(completion: .failure(BleCentralManagerProxyError(category: .invalidState(central.state))))
+            discoverSubject = nil
+        }
+        
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didConnect peripheral: BlePeripheral) {
@@ -451,11 +465,11 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
-        // Stop timer
+        // Stop timer.
         stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
-        // Notify publisher
+        // Notify publisher.
         didConnectSubject.send(peripheral)
-        // Notify registered callbacks
+        // Notify registered callbacks.
         notifyCallbacks(
             store: &connectionCallbacks,
             uuid: peripheral.identifier,
