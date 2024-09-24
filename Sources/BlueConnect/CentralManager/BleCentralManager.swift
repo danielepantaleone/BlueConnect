@@ -105,7 +105,7 @@ public protocol BleCentralManager: AnyObject {
     /// - Parameters:
     ///   - serviceUUIDs: A list of `CBUUID` objects representing the services to scan for.
     ///   - options: An optional dictionary specifying options for the scan.
-    func scanForPeripherals(withServices: [CBUUID]?, options: [String: Any]?)
+    func scanForPeripherals(withServices serviceUUIDs: [CBUUID]?, options: [String: Any]?)
     
     /// Stops scanning for peripherals.
     ///
@@ -136,8 +136,8 @@ public extension BleCentralManager {
     /// - Parameters:
     ///   - serviceUUIDs: A list of `CBUUID` objects representing the services to scan for, defaults to `nil`.
     ///   - options: An optional dictionary specifying options for the scan, defaults to `nil`.
-    func scanForPeripherals(withServices: [CBUUID]? = nil, options: [String: Any]? = nil) {
-        scanForPeripherals(withServices: withServices, options: options)
+    func scanForPeripherals(withServices serviceUUIDs: [CBUUID]? = nil, options: [String: Any]? = nil) {
+        scanForPeripherals(withServices: serviceUUIDs, options: options)
     }
     
 }

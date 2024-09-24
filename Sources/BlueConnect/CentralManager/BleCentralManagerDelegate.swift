@@ -60,8 +60,8 @@ public protocol BleCentralManagerDelegate: NSObject, CBCentralManagerDelegate {
     ///   - central: The central manager conducting the scan.
     ///   - peripheral: The discovered peripheral.
     ///   - advertisementData: A `BleAdvertisementData` object containing advertisement data from the peripheral.
-    ///   - RSSI: The received signal strength indicator (RSSI) of the discovered peripheral, represented as an `NSNumber`.
-    func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: NSNumber)
+    ///   - RSSI: The received signal strength indicator (RSSI) of the discovered peripheral.
+    func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: Int)
     
     /// Called when a connection to a peripheral is disconnected.
     ///
@@ -99,7 +99,7 @@ public protocol BleCentralManagerDelegate: NSObject, CBCentralManagerDelegate {
 public extension BleCentralManagerDelegate {
     func bleCentralManagerDidUpdateState(_ central: BleCentralManager) { }
     func bleCentralManager(_ central: BleCentralManager, didConnect peripheral: BlePeripheral) { }
-    func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: NSNumber) { }
+    func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: Int) { }
     func bleCentralManager(_ central: BleCentralManager, didDisconnectPeripheral peripheral: BlePeripheral, error: Error?) { }
     func bleCentralManager(_ central: BleCentralManager, didFailToConnect peripheral: BlePeripheral, error: Error?) { }
     func bleCentralManager(_ central: BleCentralManager, willRestoreState dict: [String: Any]) { }

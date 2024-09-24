@@ -40,6 +40,8 @@ public class BlePeripheralProxy: NSObject {
     /// The `BlePeripheral` instance this proxy manages.
     public let peripheral: BlePeripheral
     
+    // MARK: - Publishers
+    
     /// A publisher that emits when characteristics are discovered for a service.
     /// It emits a tuple containing the service and an array of characteristics.
     public lazy var didDiscoverCharacteristicsPublisher: AnyPublisher<(service: CBService, characteristics: [CBCharacteristic]), Never> = {

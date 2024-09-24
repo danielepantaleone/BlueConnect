@@ -40,7 +40,7 @@ extension BleCentralManagerProxy: CBCentralManagerDelegate {
     }
     
     public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        bleCentralManager(central, didDiscover: peripheral, advertisementData: .init(advertisementData), rssi: RSSI)
+        bleCentralManager(central, didDiscover: peripheral, advertisementData: .init(advertisementData), rssi: RSSI.intValue)
     }
     
     public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {

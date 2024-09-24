@@ -378,6 +378,10 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         
     }
     
+    public func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: Int) {
+        
+    }
+    
     public func bleCentralManager(_ central: BleCentralManager, didFailToConnect peripheral: BlePeripheral, error: Error?) {
         
         mutex.lock()
