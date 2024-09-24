@@ -90,6 +90,8 @@ extension DispatchTimeInterval {
 
 // MARK: - DispatchTimeInterval + Comparable
 
+#if $RetroactiveAttribute
+
 extension DispatchTimeInterval: @retroactive Comparable {
     
     /// Compares two `DispatchTimeInterval` values.
@@ -103,3 +105,21 @@ extension DispatchTimeInterval: @retroactive Comparable {
     }
     
 }
+
+#else
+
+extension DispatchTimeInterval: Comparable {
+    
+    /// Compares two `DispatchTimeInterval` values.
+    ///
+    /// - Parameters:
+    ///   - lhs: The left-hand side `DispatchTimeInterval`.
+    ///   - rhs: The right-hand side `DispatchTimeInterval`.
+    /// - Returns: `true` if the left-hand side is less than the right-hand side, based on their nanosecond values.
+    public static func < (lhs: DispatchTimeInterval, rhs: DispatchTimeInterval) -> Bool {
+        return lhs.nanoseconds < rhs.nanoseconds
+    }
+    
+}
+
+#endif
