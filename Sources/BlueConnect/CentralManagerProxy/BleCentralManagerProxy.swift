@@ -51,11 +51,6 @@ public class BleCentralManagerProxy: NSObject {
         didConnectSubject.eraseToAnyPublisher()
     }()
     
-    /// A publisher that emits when a peripheral is discovered, including its advertisement data and signal strength (RSSI).
-    public lazy var didDiscoverPublisher: AnyPublisher<(peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi: NSNumber), Never> = {
-        didDiscoverSubject.eraseToAnyPublisher()
-    }()
-    
     /// A publisher that emits when a peripheral disconnects, optionally including an error if the disconnection was unexpected.
     public lazy var didDisconnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error?), Never> = {
         didDisconnectSubject.eraseToAnyPublisher()
@@ -76,6 +71,8 @@ public class BleCentralManagerProxy: NSObject {
     var connectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
     var connectionTimers: [UUID: DispatchSourceTimer] = [:]
     var disconnectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
+    var discoverSubject: PassthroughSubject<BleCentralManagerScanRecord, Error>?
+    var discoverTimer: DispatchSourceTimer?
     let mutex = RecursiveMutex()
     
     lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
@@ -286,6 +283,74 @@ extension BleCentralManagerProxy {
     
 }
 
+// MARK: - Peripheral discovery
+
+extension BleCentralManagerProxy {
+    
+    /// Scans for BLE peripherals with specified services and options.
+    ///
+    /// - Parameters:
+    ///   - serviceUUIDs: An optional array of service UUIDs to filter the scan results. If `nil`, it scans for all available peripherals.
+    ///   - options: Optional dictionary of options for customizing the scanning behavior.
+    ///   - timeout: The time interval after which the scan should stop automatically. Default is 60 seconds.
+    /// - Returns: A publisher that emits `BleCentralManagerScanRecord` instances as peripherals are discovered, and completes or fails on error.
+    ///
+    /// This function initiates a scan for BLE peripherals. If a scan is already in progress, the new scan parameters are ignored and
+    /// the existing publisher is returned. The scan is stopped automatically after the specified timeout, or it can be stopped manually
+    /// by calling `stopScan()`.
+    ///
+    /// - Note: If the central manager is not in the `.poweredOn` state, the scan fails, and the publisher sends a `.failure` event with an appropriate error.
+    func scanForPeripherals(
+        withServices serviceUUIDs: [CBUUID]? = nil,
+        options: [String: Any]? = nil,
+        timeout: DispatchTimeInterval = .seconds(60)
+    ) -> AnyPublisher<BleCentralManagerScanRecord, Error> {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // If we are already have a subject it means we are already scanning we should already be receiving updates.
+        // In this case scan parameters are completely ignored not to override previous scan attempt.
+        // We return the publisher so that the caller can listen for scan completion.
+        if let discoverSubject {
+            return discoverSubject.eraseToAnyPublisher()
+        }
+        
+        // Create a passthrough subject through which manage the whole peripheral discover process.
+        let subject: PassthroughSubject<BleCentralManagerScanRecord, Error> = .init()
+        
+        // Ensure central manager is in a powered-on state.
+        guard centralManager.state == .poweredOn else {
+            subject.send(completion: .failure(BleCentralManagerProxyError(category: .invalidState(centralManager.state))))
+            return subject.eraseToAnyPublisher()
+        }
+        
+        // Start discover timer.
+        startDiscoverTimer(timeout: timeout)
+        // Initiate discovery.
+        centralManager.scanForPeripherals(withServices: serviceUUIDs, options: options)
+        // Store locally to update when timeout expire or on scan stop.
+        discoverSubject = subject
+        
+        return subject.eraseToAnyPublisher()
+
+    }
+    
+    /// Stops the current BLE peripheral scan.
+    ///
+    /// Stops the  BLE peripherals discovery and completes the scan's publisher with `.finished`.
+    func stopScan() {
+        mutex.lock()
+        defer { mutex.unlock() }
+        // Stop discover timer.
+        stopDiscoverTimer()
+        // Send publisher completion.
+        discoverSubject?.send(completion: .finished)
+        discoverSubject = nil
+    }
+    
+}
+
 // MARK: - Timers
 
 extension BleCentralManagerProxy {
@@ -336,6 +401,40 @@ extension BleCentralManagerProxy {
         connectionTimers[peripheralIdentifier] = nil
     }
     
+    func startDiscoverTimer(timeout: DispatchTimeInterval) {
+        mutex.lock()
+        defer { mutex.unlock() }
+        guard timeout != .never else {
+            discoverTimer?.cancel()
+            discoverTimer = nil
+            return
+        }
+        discoverTimer?.cancel()
+        discoverTimer = DispatchSource.makeTimerSource()
+        discoverTimer?.schedule(deadline: .now() + timeout, repeating: .never)
+        discoverTimer?.setEventHandler { [weak self] in
+            guard let self else { return }
+            mutex.lock()
+            defer { mutex.unlock() }
+            // Kill the timer and reset.
+            discoverTimer?.cancel()
+            discoverTimer = nil
+            // Stop scanning for peripherals.
+            centralManager.stopScan()
+            // Send out completion on the publisher.
+            discoverSubject?.send(completion: .finished)
+            discoverSubject = nil
+        }
+        discoverTimer?.resume()
+    }
+    
+    func stopDiscoverTimer() {
+        mutex.lock()
+        defer { mutex.unlock() }
+        discoverTimer?.cancel()
+        discoverTimer = nil
+    }
+    
 }
 
 // MARK: - BleCentralManagerDelegate conformance
@@ -343,6 +442,8 @@ extension BleCentralManagerProxy {
 extension BleCentralManagerProxy: BleCentralManagerDelegate {
     
     public func bleCentralManagerDidUpdateState(_ central: BleCentralManager) {
+        // TODO: STOP SCAN TIMER
+        // TODO: STOP CONNECTION TIMER
         didUpdateStateSubject.send(central.state)
     }
     
@@ -379,7 +480,10 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: Int) {
-        
+        discoverSubject?.send(.init(
+            peripheral: peripheral,
+            advertisementData: advertisementData,
+            RSSI: RSSI))
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didFailToConnect peripheral: BlePeripheral, error: Error?) {
