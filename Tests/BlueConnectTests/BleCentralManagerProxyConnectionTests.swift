@@ -34,6 +34,12 @@ import XCTest
 
 final class BleCentralManagerProxyConnectionTests: BlueConnectTests {
     
+}
+
+// MARK: - Test connection
+
+extension BleCentralManagerProxyConnectionTests {
+    
     func testPeripheralConnect() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -60,22 +66,6 @@ final class BleCentralManagerProxyConnectionTests: BlueConnectTests {
                 }
             }
         wait(for: [connectExp, publisherExp], timeout: 2.0)
-        XCTAssertEqual(try blePeripheral_1.state, .connected)
-    }
-    
-    func testPeripheralConnectAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Assert initial peripheral state
-        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
-        do {
-            try await bleCentralManagerProxy.connect(
-                peripheral: try blePeripheral_1,
-                options: nil,
-                timeout: .never)
-        } catch {
-            XCTFail("peripheral connection failed with error: \(error)")
-        }
         XCTAssertEqual(try blePeripheral_1.state, .connected)
     }
     
@@ -179,24 +169,6 @@ final class BleCentralManagerProxyConnectionTests: BlueConnectTests {
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
     
-    func testPeripheralConnectFailDueToBleCentralManagerOffAsync() async throws {
-        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
-        do {
-            try await bleCentralManagerProxy.connect(
-                peripheral: try blePeripheral_1,
-                options: nil,
-                timeout: .never)
-        } catch let proxyError as BleCentralManagerProxyError {
-            guard case .invalidState(let state) = proxyError.category else {
-                XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError category 'invalidState', got '\(proxyError.category)' instead")
-                return
-            }
-            XCTAssertEqual(state, .poweredOff)
-        } catch {
-            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
-        }
-    }
-    
     func testPeripheralConnectFailDueToTimeout() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -237,27 +209,7 @@ final class BleCentralManagerProxyConnectionTests: BlueConnectTests {
         // Assert final peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
-    
-    func testPeripheralConnectFailDueToTimeoutAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Assert initial peripheral state
-        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
-        // Mock connection timeout
-        bleCentralManager.delayOnConnection = .seconds(10)
-        // Test timeout
-        do {
-            try await bleCentralManagerProxy.connect(
-                peripheral: try blePeripheral_1,
-                options: nil,
-                timeout: .seconds(2))
-        } catch let proxyError as BleCentralManagerProxyError where proxyError.category == .timeout {
-            XCTAssertEqual(try blePeripheral_1.state, .disconnected)
-        } catch {
-            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError category 'timeout', got '\(error)' instead")
-        }
-    }
-    
+
     func testPeripheralConnectFailDueToErrorOnConnection() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -303,6 +255,66 @@ final class BleCentralManagerProxyConnectionTests: BlueConnectTests {
         wait(for: [connectExp, connectionPublisherExp, connectionFailurePublisherExp], timeout: 4.0)
         // Assert final peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+    }
+    
+}
+
+// MARK: - Test connection (async)
+
+extension BleCentralManagerProxyConnectionTests {
+ 
+    func testPeripheralConnectAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Assert initial peripheral state
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        do {
+            try await bleCentralManagerProxy.connect(
+                peripheral: try blePeripheral_1,
+                options: nil,
+                timeout: .never)
+        } catch {
+            XCTFail("peripheral connection failed with error: \(error)")
+        }
+        XCTAssertEqual(try blePeripheral_1.state, .connected)
+    }
+    
+    func testPeripheralConnectFailDueToBleCentralManagerOffAsync() async throws {
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        do {
+            try await bleCentralManagerProxy.connect(
+                peripheral: try blePeripheral_1,
+                options: nil,
+                timeout: .never)
+        } catch let proxyError as BleCentralManagerProxyError {
+            guard case .invalidState(let state) = proxyError.category else {
+                XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError category 'invalidState', got '\(proxyError.category)' instead")
+                return
+            }
+            XCTAssertEqual(state, .poweredOff)
+        } catch {
+            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+        }
+    }
+    
+    func testPeripheralConnectFailDueToTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Assert initial peripheral state
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        // Mock connection timeout
+        bleCentralManager.delayOnConnection = .seconds(10)
+        // Test timeout
+        do {
+            try await bleCentralManagerProxy.connect(
+                peripheral: try blePeripheral_1,
+                options: nil,
+                timeout: .seconds(2))
+        } catch let proxyError as BleCentralManagerProxyError where proxyError.category == .timeout {
+            XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        } catch {
+            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError category 'timeout', got '\(error)' instead")
+        }
     }
     
     func testPeripheralConnectFailDueToErrorOnConnectionAsync() async throws {

@@ -34,6 +34,12 @@ import XCTest
 
 final class BleCentralManagerProxyDisconnectionTests: BlueConnectTests {
     
+}
+
+// MARK: - Test disconnection
+
+extension BleCentralManagerProxyDisconnectionTests {
+    
     func testPeripheralDisconnect() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -58,20 +64,6 @@ final class BleCentralManagerProxyDisconnectionTests: BlueConnectTests {
                 }
             }
         wait(for: [disconnectExp, publisherExp], timeout: 2.0)
-        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
-    }
-    
-    func testPeripheralDisconnectAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Test disconnection
-        do {
-            try await bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1)
-        } catch {
-            XCTFail("peripheral disconnection failed with error: \(error)")
-        }
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
     
@@ -151,6 +143,26 @@ final class BleCentralManagerProxyDisconnectionTests: BlueConnectTests {
             }
         }
         wait(for: [connectExp, publisherExp], timeout: 2.0)
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+    }
+    
+}
+
+// MARK: - Test disconnection (async)
+
+extension BleCentralManagerProxyDisconnectionTests {
+    
+    func testPeripheralDisconnectAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Test disconnection
+        do {
+            try await bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1)
+        } catch {
+            XCTFail("peripheral disconnection failed with error: \(error)")
+        }
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
     
