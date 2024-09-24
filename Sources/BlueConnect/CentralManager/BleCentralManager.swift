@@ -34,7 +34,7 @@ import CoreBluetooth
 /// This protocol can be adopted by mock objects to simulate BLE central manager behavior in tests, enabling controlled and repeatable testing of BLE operations without requiring a physical device.
 ///
 /// - Note: `CBCentralManager` conforms to `BleCentralManager`.
-public protocol BleCentralManager {
+public protocol BleCentralManager: AnyObject {
     
     // MARK: - Properties
     

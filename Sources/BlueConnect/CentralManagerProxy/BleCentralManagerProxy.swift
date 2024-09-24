@@ -37,7 +37,9 @@ public class BleCentralManagerProxy: NSObject {
     // MARK: - Public properties
     
     /// The instance of the `BleCentralManager` that this proxy manages.
-    public private(set) var centralManager: BleCentralManager!
+    public let centralManager: BleCentralManager
+    
+    // MARK: - Publishers
     
     /// A publisher that emits the updated state of the BLE central manager.
     public lazy var didUpdateStatePublisher: AnyPublisher<CBManagerState, Never> = {
@@ -94,8 +96,8 @@ public class BleCentralManagerProxy: NSObject {
     ///
     /// - Parameter centralManager: The `BleCentralManager` instance that this proxy will manage.
     public init(centralManager: BleCentralManager) {
-        super.init()
         self.centralManager = centralManager
+        super.init()
         self.centralManager.centraManagerDelegate = self
     }
     
