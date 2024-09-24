@@ -443,7 +443,6 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     
     public func bleCentralManagerDidUpdateState(_ central: BleCentralManager) {
         // TODO: STOP SCAN TIMER
-        // TODO: STOP CONNECTION TIMER
         didUpdateStateSubject.send(central.state)
     }
     
@@ -468,6 +467,14 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         
         mutex.lock()
         defer { mutex.unlock() }
+        
+        // Stop the connection timer just in case iOS delivers disconnect instead of connection failure.
+        stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
+        // Notify connection failure callbacks in case this was a disconnection during a connection attempt.
+        notifyCallbacks(
+            store: &connectionCallbacks,
+            uuid: peripheral.identifier,
+            value: .failure(error ?? BleCentralManagerProxyError(category: .unknown)))
         
         // Notify publisher
         didDisconnectSubject.send((peripheral, error))
