@@ -103,14 +103,21 @@ public class BleCentralManagerProxy: NSObject {
         mutex.lock()
         defer { mutex.unlock() }
         centralManager.centraManagerDelegate = nil
+        // Stop ongoing scan (if any)
+        centralManager.stopScan()
         // Stop timers
         connectionTimers.forEach { $1.cancel() }
         connectionTimers.removeAll()
+        discoverTimer?.cancel()
+        discoverTimer = nil
         // Notify callbacks
         connectionCallbacks.values
             .flatMap { $0 }
             .forEach { $0(.failure(BleCentralManagerProxyError(category: .destroyed))) }
         connectionCallbacks.removeAll()
+        // Notify scan finished
+        discoverSubject?.send(completion: .failure(BleCentralManagerProxyError(category: .destroyed)))
+        discoverSubject = nil
     }
     
     // MARK: - Internal methods
