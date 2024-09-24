@@ -101,6 +101,7 @@ class MockBleCentralManager: BleCentralManager {
             func _connectInternal() {
                 mutex.lock()
                 defer { mutex.unlock() }
+                guard state == .poweredOn else { return }
                 guard mockPeripheral.state == .connecting else { return }
                 mockPeripheral.state = .connected
                 centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
@@ -198,11 +199,19 @@ class MockBleCentralManager: BleCentralManager {
         for peripheral in discoveredPeripherals {
             guard let mockPeripheral = peripheral as? MockBlePeripheral else { continue }
             guard mockPeripheral.state != .disconnected else { continue }
-            mockPeripheral.state = .disconnected
-            centraManagerDelegate?.bleCentralManager(
-                self,
-                didDisconnectPeripheral: mockPeripheral,
-                error: nil)
+            if mockPeripheral.state == .connecting {
+                mockPeripheral.state = .disconnected
+                centraManagerDelegate?.bleCentralManager(
+                    self,
+                    didFailToConnect: peripheral,
+                    error: MockBleError.bluetoothIsOff)
+            } else {
+                mockPeripheral.state = .disconnected
+                centraManagerDelegate?.bleCentralManager(
+                    self,
+                    didDisconnectPeripheral: mockPeripheral,
+                    error: MockBleError.bluetoothIsOff)
+            }
         }
     }
     
