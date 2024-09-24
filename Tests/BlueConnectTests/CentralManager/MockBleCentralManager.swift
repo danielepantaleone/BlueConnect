@@ -50,7 +50,7 @@ class MockBleCentralManager: BleCentralManager {
     weak var centraManagerDelegate: BleCentralManagerDelegate?
 
     var authorization: CBManagerAuthorization { .allowedAlways }
-    let isScanning: Bool = false
+    var isScanning: Bool = false
     let mutex = RecursiveMutex()
     var state: CBManagerState = .poweredOff {
         didSet {
@@ -188,6 +188,7 @@ class MockBleCentralManager: BleCentralManager {
     func scanForPeripherals(withServices: [CBUUID]?, options: [String: Any]?) {
         mutex.lock()
         defer { mutex.unlock() }
+        isScanning = true
         scanCounter = 0
         scanTimer?.cancel()
         scanTimer = DispatchSource.makeTimerSource(queue: .global())
@@ -202,6 +203,7 @@ class MockBleCentralManager: BleCentralManager {
     func stopScan() {
         mutex.lock()
         defer { mutex.unlock() }
+        isScanning = false
         scanCounter = 0
         scanTimer?.cancel()
         scanTimer = nil
