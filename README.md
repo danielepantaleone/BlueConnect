@@ -28,9 +28,9 @@ This combination of asynchronous communication, event-driven architecture, and t
 - Delivers event notifications via Combine publishers for both `CBCentralManager` and `CBPeripheral`.
 - Includes connection timeout handling for `CBPeripheral`.
 - Includes characteristic operations timeout handling for `CBPeripheral` (discovery, read, write, set notify).
-- Provides direct interaction with `CBPeripheral` characteristics with no need to manage `CBPeripheral` raw data.
+- Provides direct interaction with `CBPeripheral` characteristics with no need to manage `CBPeripheral` data.
 - Provides an optional cache policy for `CBPeripheral` data retrieval, ideal for scenarios where characteristic data remains static over time.
-- Provides automatic service/characteristic discovery when characteristic operations are requested (read, write, set notify),
+- Provides automatic service/characteristic discovery when characteristic operations are requested (read, write, set notify).
 - Facilitates unit testing by supporting BLE central and peripheral mocks, enabling easier testing for libraries and apps that interact with BLE peripherals.
 
 ## Usage
@@ -49,7 +49,7 @@ enabling you to perform operations like reading, writing, and enabling notificat
 - `BleCharacteristicProxy`: The base proxy for discovering characteristics.
 - `BleCharacteristicReadProxy`: A proxy for reading data from a characteristic.
 - `BleCharacteristicWriteProxy`: A proxy for writing data to a characteristic.
-- `BleCharacteristicWriteWithoutResponseProxy`: A proxy for writing data to a characteristic without awaiting a response.
+- `BleCharacteristicWriteWithoutResponseProxy`: A proxy for writing data to a characteristic without awaiting a response from the BLE peripheral.
 - `BleCharacteristicNotifyProxy`: A proxy for enabling notifications on a characteristic.
 
 ### Scanning for peripherals
@@ -115,8 +115,8 @@ do {
         .store(in: &subscriptions)
 
     // The following will try to establish a connection to a BLE peripheral for at most 60 seconds.
-    // If the connection cannot be stablished withing the specified amount of time, the connection 
-    // attempt is dropped and an notified by raising an appropriate error. If the connection is not 
+    // If the connection cannot be stablished within the specified amount of time, the connection 
+    // attempt is dropped and notified by raising an appropriate error. If the connection is not 
     // established then nothing is advertised on the combine publisher.
     try await centralManagerProxy.connect(
         peripheral: peripheral,
