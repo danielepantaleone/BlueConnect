@@ -295,9 +295,8 @@ extension BleCentralManagerProxy {
     ///   - timeout: The time interval after which the scan should stop automatically. Default is 60 seconds.
     /// - Returns: A publisher that emits `BleCentralManagerScanRecord` instances as peripherals are discovered, and completes or fails on error.
     ///
-    /// This function initiates a scan for BLE peripherals. If a scan is already in progress, the new scan parameters are ignored and
-    /// the existing publisher is returned. The scan is stopped automatically after the specified timeout, or it can be stopped manually
-    /// by calling `stopScan()`.
+    /// This function initiates a scan for BLE peripherals. If a scan is already in progress, the existing scan is terminated and a new one is started right after.
+    /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
     ///
     /// - Note: If the central manager is not in the `.poweredOn` state, the scan fails, and the publisher sends a `.failure` event with an appropriate error.
     func scanForPeripherals(
@@ -310,11 +309,11 @@ extension BleCentralManagerProxy {
         defer { mutex.unlock() }
         
         // If we are already have a subject it means we are already scanning we should already be receiving updates.
-        // In this case scan parameters are completely ignored not to override previous scan attempt.
-        // We return the publisher so that the caller can listen for scan completion.
-        if let discoverSubject {
-            return discoverSubject.eraseToAnyPublisher()
-        }
+        // In this case we notify the completion of previous scan and we start a new one (killing any previous timer).
+        discoverTimer?.cancel()
+        discoverTimer = nil
+        discoverSubject?.send(completion: .finished)
+        discoverSubject = nil
         
         // Create a passthrough subject through which manage the whole peripheral discover process.
         let subject: PassthroughSubject<BleCentralManagerScanRecord, Error> = .init()
@@ -327,10 +326,10 @@ extension BleCentralManagerProxy {
         
         // Start discover timer.
         startDiscoverTimer(timeout: timeout)
-        // Initiate discovery.
-        centralManager.scanForPeripherals(withServices: serviceUUIDs, options: options)
         // Store locally to update when timeout expire or on scan stop.
         discoverSubject = subject
+        // Initiate discovery.
+        centralManager.scanForPeripherals(withServices: serviceUUIDs, options: options)
         
         return subject.eraseToAnyPublisher()
 
