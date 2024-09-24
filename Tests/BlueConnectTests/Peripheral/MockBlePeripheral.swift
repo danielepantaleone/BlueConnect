@@ -570,6 +570,8 @@ class MockBlePeripheral: BlePeripheral {
     // MARK: - Internal notify
     
     private func startNotify() {
+        mutex.lock()
+        defer { mutex.unlock() }
         timer?.cancel()
         timer = DispatchSource.makeTimerSource(queue: .global())
         timer?.schedule(deadline: .now() + .seconds(1), repeating: 1.0)
@@ -581,6 +583,8 @@ class MockBlePeripheral: BlePeripheral {
     }
     
     private func stopNotify() {
+        mutex.lock()
+        defer { mutex.unlock() }
         timer?.cancel()
         timer = nil
     }

@@ -41,8 +41,10 @@ class MockBleCentralManager: BleCentralManager {
 
     // MARK: - Private properties
     
-    private var discoveredPeripherals: [BlePeripheral] = []
-
+    private var peripherals: [BlePeripheral] = []
+    private var scanTimer: DispatchSourceTimer?
+    private var scanCounter: Int = 0
+    
     // MARK: - Protocol properties
     
     var authorization: CBManagerAuthorization { .allowedAlways }
@@ -66,7 +68,7 @@ class MockBleCentralManager: BleCentralManager {
     // MARK: - Initialization
     
     init(peripherals: [BlePeripheral]) {
-        discoveredPeripherals = peripherals
+        self.peripherals = peripherals
     }
     
     // MARK: - Interface
@@ -166,7 +168,7 @@ class MockBleCentralManager: BleCentralManager {
     func retrievePeripherals(withIds identifiers: [UUID]) -> [BlePeripheral] {
         mutex.lock()
         defer { mutex.unlock() }
-        return discoveredPeripherals.filter { peripheral in
+        return peripherals.filter { peripheral in
             identifiers.contains { $0 == peripheral.identifier }
         }
     }
@@ -174,7 +176,7 @@ class MockBleCentralManager: BleCentralManager {
     func retrieveConnectedPeripherals(withServiceIds serviceUUIDs: [CBUUID]) -> [BlePeripheral] {
         mutex.lock()
         defer { mutex.unlock() }
-        return discoveredPeripherals.filter { peripheral in
+        return peripherals.filter { peripheral in
             guard peripheral.state == .connected else { return false }
             guard let services = peripheral.services else { return false }
             guard services.map({ $0.uuid }).contains(oneOf: serviceUUIDs) else { return false}
@@ -183,11 +185,25 @@ class MockBleCentralManager: BleCentralManager {
     }
     
     func scanForPeripherals(withServices: [CBUUID]?, options: [String: Any]?) {
-
+        mutex.lock()
+        defer { mutex.unlock() }
+        scanCounter = 0
+        scanTimer?.cancel()
+        scanTimer = DispatchSource.makeTimerSource(queue: .global())
+        scanTimer?.schedule(deadline: .now() + .seconds(1), repeating: 1.0)
+        scanTimer?.setEventHandler { [weak self] in
+            guard let self else { return }
+            scanInterval()
+        }
+        scanTimer?.resume()
     }
     
     func stopScan() {
-        
+        mutex.lock()
+        defer { mutex.unlock() }
+        scanCounter = 0
+        scanTimer?.cancel()
+        scanTimer = nil
     }
     
     // MARK: - Internals
@@ -196,7 +212,7 @@ class MockBleCentralManager: BleCentralManager {
         mutex.lock()
         defer { mutex.unlock() }
         guard state != .poweredOn else { return }
-        for peripheral in discoveredPeripherals {
+        for peripheral in peripherals {
             guard let mockPeripheral = peripheral as? MockBlePeripheral else { continue }
             guard mockPeripheral.state != .disconnected else { continue }
             if mockPeripheral.state == .connecting {
@@ -213,6 +229,24 @@ class MockBleCentralManager: BleCentralManager {
                     error: MockBleError.bluetoothIsOff)
             }
         }
+    }
+    
+    private func scanInterval() {
+        mutex.lock()
+        defer { mutex.unlock() }
+        guard !peripherals.isEmpty else { return }
+        scanCounter += 1
+        let peripheral = peripherals[scanCounter % peripherals.count]
+        var advertisementData: [String: Any] = [:]
+        advertisementData[CBAdvertisementDataIsConnectable] = true
+        if let name = peripheral.name {
+            advertisementData[CBAdvertisementDataLocalNameKey] = name
+        }
+        centraManagerDelegate?.bleCentralManager(
+            self,
+            didDiscover: peripheral,
+            advertisementData: .init(advertisementData),
+            rssi: Int.random(in: (-90)...(-50)))
     }
     
 }
