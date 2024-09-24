@@ -99,6 +99,21 @@ public class BleCentralManagerProxy: NSObject {
         self.centralManager.centraManagerDelegate = self
     }
     
+    /// Perform `BleCentralManagerProxy` graceful deinitialization.
+    deinit {
+        mutex.lock()
+        defer { mutex.unlock() }
+        centralManager.centraManagerDelegate = nil
+        // Stop timers
+        connectionTimers.forEach { $1.cancel() }
+        connectionTimers.removeAll()
+        // Notify callbacks
+        connectionCallbacks.values
+            .flatMap { $0 }
+            .forEach { $0(.failure(BleCentralManagerProxyError(category: .destroyed))) }
+        connectionCallbacks.removeAll()
+    }
+    
     // MARK: - Internal methods
     
     /// Registers a callback for a peripheral, associating it with the peripheral's UUID.

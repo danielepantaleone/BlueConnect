@@ -37,6 +37,8 @@ public struct BleCentralManagerProxyError: Error {
 
     /// An enumeration defining different categories of errors that can occur with the BLE central manager proxy.
     public enum Category: Equatable {
+        /// The central manager proxy instance has been destroyed and is no longer usable.
+        case destroyed
         /// Indicates that the central manager is in an invalid state for the requested operation.
         case invalidState(CBManagerState)
         /// Indicates that a timeout occurred during an operation.
