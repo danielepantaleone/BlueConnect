@@ -1,5 +1,10 @@
 # BlueConnect
 
+![Cocoapods Version](https://img.shields.io/cocoapods/v/BlueConnect)
+![GitHub Release](https://img.shields.io/github/v/release/danielepantaleone/BlueConnect)
+![GitHub License](https://img.shields.io/github/license/danielepantaleone/BlueConnect)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/danielepantaleone/BlueConnect/swift-tests.yml)
+
 BlueConnect is a Swift framework built on top of CoreBluetooth, designed to simplify interaction with Bluetooth Low Energy (BLE) peripherals. 
 By wrapping Core Bluetooth functionalities, BlueConnect provides a modern approach to BLE communication. 
 It leverages asynchronous programming models, allowing you to interact with peripherals using either traditional callbacks or Swift concurrency with async/await. 
@@ -351,6 +356,17 @@ do {
 ```
 
 ## Providing unit tests in your codebase
+
+By leveraging the power of `BleCentralManagerProxy` and `BlePeripheralProxy`, you can easily create mocks for your codebase, allowing you to run unit tests in a controlled environment. This is made possible because `BleCentralManagerProxy` and `BlePeripheralProxy` rely on protocols during initialization:
+
+- `BleCentralManager`: A protocol that defines all public methods of `CBCentralManager`. `CBCentralManager` itself conforms to this protocol.
+- `BlePeripheral`: A protocol that defines all public methods of `CBPeripheral`. `CBPeripheral` itself conforms to this protocol.
+
+You can create mock versions of your central manager and peripheral(s) and supply them during the initialization of 
+`BleCentralManagerProxy` and `BlePeripheralProxy`. This can be easily achieved by using a dependency injection (DI) container such as [Factory](https://github.com/hmlongco/Factory?tab=readme-ov-file#mocking).
+
+- An example of a mocked central manager can be found [here](https://github.com/danielepantaleone/BlueConnect/blob/master/Tests/BlueConnectTests/CentralManager/MockBleCentralManager.swift).
+- An example of a mocked peripheral can be found [here](https://github.com/danielepantaleone/BlueConnect/blob/master/Tests/BlueConnectTests/Peripheral/MockBlePeripheral.swift).
 
 ## Installation
 
