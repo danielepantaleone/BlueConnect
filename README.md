@@ -328,7 +328,7 @@ let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
 let heartRateProxy = HeartRateProxy(peripheralProxy: peripheralProxy)
 
 // You can optionally subscribe a publisher to be triggered when the notify flag is changed.
-bleHeartRateProxy.didUpdateNotificationStatePublisher
+heartRateProxy.didUpdateNotificationStatePublisher
     .receive(on: DispatchQueue.main)
     .sink { enabled in 
         print("notification enabled: \(enabled)")
@@ -336,7 +336,7 @@ bleHeartRateProxy.didUpdateNotificationStatePublisher
     .store(in: &subscriptions)
 
 // You can optionally subscribe a publisher to be notified when data is received from the characteristic.
-serialNumberProxy.didUpdateValuePublisher
+heartRateProxy.didUpdateValuePublisher
     .receive(on: DispatchQueue.main)
     .sink { heartRate in 
         print("heart rate is \(heartRate)")
@@ -348,7 +348,7 @@ do {
     // If the Heart Rate characteristic, or the service backing the Heart Rate characteristic, has not 
     // been discovered yet, a silent discovery is performed before attempting to enable data notify on the
     // characteristic.
-    try await pinProxy.setNotify(enabled: true, timeout: .seconds(10))
+    try await heartRateProxy.setNotify(enabled: true, timeout: .seconds(10))
     print("notify enabled on the characteristic")
 } catch {
     print("failed to enable notify on the characteristic with error: \(error)")
