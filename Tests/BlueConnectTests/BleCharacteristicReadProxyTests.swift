@@ -68,7 +68,7 @@ extension BleCharacteristicReadProxyTests {
         let readExp = expectation(description: "waiting for characteristic to be read")
         let publisherExp = expectation(description: "waiting for characteristic update to be signaled by publisher")
         // Test read emit on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher?
+        bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 == "12345678" }
             .sink { _ in publisherExp.fulfill() }
@@ -100,7 +100,7 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher?
+        bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -139,7 +139,7 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher?
+        bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -178,7 +178,7 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher?
+        bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -217,7 +217,7 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher?
+        bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -256,7 +256,7 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher?
+        bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)

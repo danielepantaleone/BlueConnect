@@ -37,8 +37,7 @@ struct MockCharacteristicSerialNumberProxy: BleCharacteristicReadProxy {
     var characteristicUUID: CBUUID = MockBleDescriptor.serialNumberCharacteristicUUID
     var serviceUUID: CBUUID = MockBleDescriptor.deviceInformationServiceUUID
     var decodingError: Error?
-    
-    weak var peripheralProxy: BlePeripheralProxy?
+    var peripheralProxy: BlePeripheralProxy
     
     init(peripheralProxy: BlePeripheralProxy) {
         self.peripheralProxy = peripheralProxy

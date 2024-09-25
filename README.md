@@ -13,7 +13,9 @@ This combination of asynchronous communication, event-driven architecture, and t
 * [Feature highlights](#feature-highlights)
 * [Usage](#usage)
     * [Scanning for peripherals](#scanning-for-peripherals)
-    * [Connecting to a peripheral](#connecting-to-a-peripheral)
+    * [Connecting a peripheral](#connecting-a-peripheral)
+    * [Disconnecting a peripheral](#disconnecting-a-peripheral)
+    * [Reading a characteristic](#reading-a-characteristic)
 * [Installation](#installation)
     * [Cocoapods](#cocoapods)
     * [Swift package manager](#swift-package-manager)
@@ -81,13 +83,15 @@ centralManagerProxy.scanForPeripherals(timeout: .seconds(30))
         },
         receiveValue: { record in 
             // This is called multiple times for every discovered peripheral.
-            print("peripheral with identifier '\(record.peripheral.identifier)' was discovered")
+            print("peripheral '\(record.peripheral.identifier)' was discovered")
         }
     )
     .store(in: &subscriptions)
 ```
 
-### Connecting to a peripheral
+The peripheral scan will automatically stop if a timeout is specified. However, you can also manually stop the scan at any time by calling `stopScan` on the `BleCentralManagerProxy`.
+
+### Connecting a peripheral
 
 To connect to a BLE peripheral, use the `connect` method on the `BleCentralManagerProxy`. 
 You can provide connection options that will be forwarded to the underlying `CBCentralManager`. 
@@ -104,18 +108,26 @@ var subscriptions: Set<AnyCancellable> = []
 let centralManager = CBCentralManager()
 let centralManagerProxy = BleCentralManagerProxy(centralManager: centralManager)
 
+// You can optionally subscribe a publisher to be notified when a connection is established.
+centralManagerProxy.didConnectPublisher
+    .receive(on: DispatchQueue.main)
+    .sink { peripheral in 
+        print("peripheral '\(peripheral.identifier)' connected")
+    }
+    .store(in: &subscriptions)
+
+// You can optionally subscribe a publisher to be notified when a connection attempt fails.
+centralManagerProxy.didFailToConnectPublisher
+    .receive(on: DispatchQueue.main)
+    .sink { peripheral, error in 
+        print("peripheral '\(peripheral.identifier)' failed to connect with error: \(error)")
+    }
+    .store(in: &subscriptions)
+
 do {
 
-    // You can optionally subscribe a publisher to be notified when a connection is established.
-    centralManagerProxy.didConnectPublisher
-        .receive(on: DispatchQueue.main)
-        .sink { peripheral in 
-            print("peripheral with identifier '\(peripheral.identifier)' connected")
-        }
-        .store(in: &subscriptions)
-
     // The following will try to establish a connection to a BLE peripheral for at most 60 seconds.
-    // If the connection cannot be stablished within the specified amount of time, the connection 
+    // If the connection cannot be established within the specified amount of time, the connection 
     // attempt is dropped and notified by raising an appropriate error. If the connection is not 
     // established then nothing is advertised on the combine publisher.
     try await centralManagerProxy.connect(
@@ -123,12 +135,50 @@ do {
         options: nil,
         timeout: .seconds(60))
 
-    print("peripheral with identifier '\(peripheral.identifier)' connected")
+    print("peripheral '\(peripheral.identifier)' connected")
 
 } catch {
     print("peripheral connection failed with error: \(error)")
 }
 ```
+
+### Disconnecting a peripheral
+
+To disconnect a connected BLE peripheral, use the `disconnect` method on the `BleCentralManagerProxy`. The disconnection event will be notified through the Combine publisher, enabling you to respond to changes in the connection status.
+
+```swift
+import BlueConnect
+import Combine
+import CoreBluetooth
+
+var subscriptions: Set<AnyCancellable> = []
+let centralManager = CBCentralManager()
+let centralManagerProxy = BleCentralManagerProxy(centralManager: centralManager)
+
+ // You can optionally subscribe a publisher to be notified when a peripheral is disconnected.
+centralManagerProxy.didDisconnectPublisher
+    .receive(on: DispatchQueue.main)
+    .sink { peripheral in 
+        print("peripheral '\(peripheral.identifier)' disconnected")
+    }
+    .store(in: &subscriptions)
+
+do {
+
+    // The following will disconnect a BLE peripheral.
+    // If the connection cannot be performed established then nothing is advertised on the combine publisher.
+    try await centralManagerProxy.disconnect(peripheral: peripheral)
+
+    print("peripheral '\(peripheral.identifier)' disconnected")
+
+} catch {
+    print("peripheral disconnection failed with error: \(error)")
+}
+```
+
+### Reading a characteristic
+
+To read a characteristic you can create your own proxy and benefit from the conformance to the `BleCharacteristicReadProxy` protocol.
 
 ## Installation
 

@@ -71,12 +71,12 @@ extension BleCharacteristicNotifyProxyTests {
         valuePublisherExp.assertForOverFulfill = false
         valuePublisherExp.expectedFulfillmentCount = 3
         // Test set notify ack emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher?
+        bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
-        bleHeartRateProxy.didUpdateValuePublisher?
+        bleHeartRateProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in valuePublisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -105,7 +105,7 @@ extension BleCharacteristicNotifyProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic notification state update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test set notify not emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher?
+        bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }
@@ -145,7 +145,7 @@ extension BleCharacteristicNotifyProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic notification state update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test set notify not emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher?
+        bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }
@@ -185,7 +185,7 @@ extension BleCharacteristicNotifyProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic notification state update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test set notify not emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher?
+        bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }
@@ -225,7 +225,7 @@ extension BleCharacteristicNotifyProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic notification state update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test set notify not emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher?
+        bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }

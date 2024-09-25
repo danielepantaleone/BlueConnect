@@ -57,8 +57,8 @@ public extension BleCharacteristicReadProxy {
     /// This publisher listens to characteristic value changes and emits a signal with data decoded into the proxy's value type.
     ///
     /// - Note: This publisher filters events to only those corresponding to the current characteristic.
-    var didUpdateValuePublisher: AnyPublisher<ValueType, Never>? {
-        peripheralProxy?.didUpdateValuePublisher
+    var didUpdateValuePublisher: AnyPublisher<ValueType, Never> {
+        peripheralProxy.didUpdateValuePublisher
             .filter { $0.characteristic.uuid == characteristicUUID }
             .tryMap { _, data in try decode(data) }
             .catch { _ in Empty<ValueType, Never>() }
@@ -85,7 +85,7 @@ public extension BleCharacteristicReadProxy {
         discover(timeout: timeout) { characteristicDiscoveryResult in
             characteristicDiscoveryResult.forwardError(to: callback)
             characteristicDiscoveryResult.onSuccess { characteristic in
-                peripheralProxy?.read(
+                peripheralProxy.read(
                     characteristicUUID: characteristic.uuid,
                     cachePolicy: cachePolicy,
                     timeout: timeout - start.distance(to: .now())

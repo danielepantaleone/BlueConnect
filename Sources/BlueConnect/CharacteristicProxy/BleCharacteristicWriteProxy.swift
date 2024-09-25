@@ -56,8 +56,8 @@ public extension BleCharacteristicWriteProxy {
     /// This publisher listens to write operations for characteristics and emits a signal when the write operation completes successfully.
     ///
     /// - Note: This publisher filters events to only those corresponding to the current characteristic.
-    var didWriteValuePublisher: AnyPublisher<Void, Never>? {
-        peripheralProxy?.didWriteValuePublisher
+    var didWriteValuePublisher: AnyPublisher<Void, Never> {
+        peripheralProxy.didWriteValuePublisher
             .filter { $0.uuid == characteristicUUID }
             .map { _ in () }
             .eraseToAnyPublisher()
@@ -84,7 +84,7 @@ public extension BleCharacteristicWriteProxy {
             result.onSuccess { characteristic in
                 do {
                     let data = try encode(value)
-                    peripheralProxy?.write(
+                    peripheralProxy.write(
                         data: data,
                         to: characteristic.uuid,
                         timeout: timeout - start.distance(to: .now())

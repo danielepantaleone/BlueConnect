@@ -36,8 +36,7 @@ struct MockCharacteristicHeartRateProxy: BleCharacteristicReadProxy, BleCharacte
     
     var characteristicUUID: CBUUID = MockBleDescriptor.heartRateCharacteristicUUID
     var serviceUUID: CBUUID = MockBleDescriptor.heartRateServiceUUID
-    
-    weak var peripheralProxy: BlePeripheralProxy?
+    var peripheralProxy: BlePeripheralProxy
     
     init(peripheralProxy: BlePeripheralProxy) {
         self.peripheralProxy = peripheralProxy

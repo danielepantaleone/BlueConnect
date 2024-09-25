@@ -68,7 +68,7 @@ extension BleCharacteristicWriteProxyTests {
         let writeExp = expectation(description: "waiting for characteristic to be written")
         let publisherExp = expectation(description: "waiting for characteristic write ack to be signaled by publisher")
         // Test write ack emit on publisher
-        bleSecretProxy.didWriteValuePublisher?
+        bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -96,7 +96,7 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher?
+        bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -135,7 +135,7 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher?
+        bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -174,7 +174,7 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher?
+        bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -213,7 +213,7 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher?
+        bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
@@ -252,7 +252,7 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher?
+        bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
