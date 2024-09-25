@@ -1,7 +1,8 @@
 name: Swift Tests
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - 'master'
     paths-ignore:
       - 'Documentation/**'
       - 'README.md'
@@ -10,7 +11,8 @@ on:
       - 'LICENSE'
       - 'swift-generate-documentation.sh'
   pull_request:
-    branches: [ "master" ]
+    branches: 
+      - '*'
 jobs:
   tests:
     name: Swift ${{ matrix.swift }} on ${{ matrix.platform }}
