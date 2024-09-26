@@ -199,7 +199,11 @@ extension BleCentralManagerProxy {
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
-            callback?(.failure(BleCentralManagerProxyError(category: .invalidState(centralManager.state))))
+            let error = BleCentralManagerProxyError(category: .invalidState(centralManager.state))
+            // Notify publisher
+            didFailToConnectSubject.send((peripheral, error))
+            // Notify callback
+            callback?(.failure(error))
             return
         }
         
@@ -506,7 +510,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         
         // Notify publisher
         didDisconnectSubject.send((peripheral, error))
-        // Notify registered callbacks (only if disconnection initiated by calling disconnect()
+        // Notify registered callbacks (only if disconnection initiated by calling disconnect())
         notifyCallbacks(
             store: &disconnectionCallbacks,
             uuid: peripheral.identifier,

@@ -136,13 +136,25 @@ extension BleCentralManagerProxyConnectionTests {
     func testPeripheralConnectFailDueToBleCentralManagerOff() throws {
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         let connectExp = expectation(description: "waiting for peripheral connection to fail")
-        let publisherExp = expectation(description: "waiting for publisher not to be called")
-        publisherExp.isInverted = true
-        // Test publisher not called
+        let connectionFailurePublisherExp = expectation(description: "waiting for connection failure publisher to be called")
+        let connectPublisherExp = expectation(description: "waiting for connection publisher not to be called")
+        connectPublisherExp.isInverted = true
+        // Test connection failure publisher to be called
+        bleCentralManagerProxy.didFailToConnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _, error in
+                guard let proxyError = error as? BleCentralManagerProxyError else { return }
+                guard case .invalidState(let state) = proxyError.category else { return }
+                XCTAssertEqual(state, .poweredOff)
+                connectionFailurePublisherExp.fulfill()
+            }
+            .store(in: &subscriptions)
+        // Test connection publisher not called
         bleCentralManagerProxy.didConnectPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.identifier == MockBleDescriptor.peripheralUUID_1 }
-            .sink { _ in publisherExp.fulfill() }
+            .sink { _ in connectPublisherExp.fulfill() }
             .store(in: &subscriptions)
         // Test connection failure on callback
         bleCentralManagerProxy.connect(
@@ -166,7 +178,7 @@ extension BleCentralManagerProxyConnectionTests {
                     connectExp.fulfill()
             }
         }
-        wait(for: [connectExp, publisherExp], timeout: 2.0)
+        wait(for: [connectExp, connectionFailurePublisherExp, connectPublisherExp], timeout: 2.0)
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
     
