@@ -157,6 +157,7 @@ public class BleCentralManagerProxy: NSObject {
         store[uuid] = []
         callbacks.forEach { $0(value) }
     }
+    
 }
 
 // MARK: - Peripheral connection
@@ -200,14 +201,12 @@ extension BleCentralManagerProxy {
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
             let error = BleCentralManagerProxyError(category: .invalidState(centralManager.state))
-            // Notify publisher
             didFailToConnectSubject.send((peripheral, error))
-            // Notify callback
             callback?(.failure(error))
             return
         }
         
-        // If already connected, notify success
+        // If already connected, notify success on callback (not on publisher since it's not a new connection)
         guard peripheral.state != .connected else {
             callback?(.success(()))
             return
@@ -271,7 +270,7 @@ extension BleCentralManagerProxy {
             return
         }
         
-        // If already disconnected, notify success
+        // If already disconnected, notify success (not on publisher since it's already disconnected)
         guard peripheral.state != .disconnected else {
             callback?(.success(()))
             return

@@ -125,40 +125,6 @@ extension BleCentralManagerProxyDisconnectionTests {
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
     
-    func testPeripheralConnectWithPeripheralAlreadyConnecting() throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Delay connection to mock connecting state
-        bleCentralManager.delayOnConnection = .seconds(4)
-        // Test single emission on connection publisher
-        let publisherExp = expectation(description: "waiting for peripheral connection to be signaled by publisher")
-        // Test connection not to be emitted on publisher because already connected
-        bleCentralManagerProxy.didConnectPublisher
-            .receive(on: DispatchQueue.main)
-            .filter { $0.identifier == MockBleDescriptor.peripheralUUID_1 }
-            .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
-        // Test connection
-        let connectExp = expectation(description: "waiting for peripheral to connect with multiple callbacks")
-        connectExp.expectedFulfillmentCount = 3
-        for _ in 0..<3 {
-            bleCentralManagerProxy.connect(
-                peripheral: try blePeripheral_1,
-                options: nil,
-                timeout: .never) { result in
-                    switch result {
-                        case .success:
-                            connectExp.fulfill()
-                        case .failure(let error):
-                            XCTFail("peripheral connection failed with error: \(error)")
-                    }
-                }
-        }
-        wait(for: [connectExp, publisherExp], timeout: 6.0)
-        XCTAssertEqual(try blePeripheral_1.state, .connected)
-    }
-    
-    
     func testPeripheralDisconnectDueToBleManagerGoingOff() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -181,14 +147,14 @@ extension BleCentralManagerProxyDisconnectionTests {
     
     func testPeripheralDisconnectFailDueToBleCentralManagerOff() throws {
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
-        let connectExp = expectation(description: "waiting for peripheral disconnection to fail")
-        let publisherExp = expectation(description: "waiting for publisher not to be called")
-        publisherExp.isInverted = true
+        let disconnectExp = expectation(description: "waiting for peripheral disconnection to fail")
+        let disconnectPublisherExp = expectation(description: "waiting for publisher not to be called")
+        disconnectPublisherExp.isInverted = true
         // Test publisher not called
         bleCentralManagerProxy.didDisconnectPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
-            .sink { _ in publisherExp.fulfill() }
+            .sink { _ in disconnectPublisherExp.fulfill() }
             .store(in: &subscriptions)
         // Test connection failure on callback
         bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1) { result in
@@ -205,10 +171,10 @@ extension BleCentralManagerProxyDisconnectionTests {
                         return
                     }
                     XCTAssertEqual(state, .poweredOff)
-                    connectExp.fulfill()
+                    disconnectExp.fulfill()
             }
         }
-        wait(for: [connectExp, publisherExp], timeout: 2.0)
+        wait(for: [disconnectExp, disconnectPublisherExp], timeout: 2.0)
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
     
