@@ -221,7 +221,7 @@ let serialNumberProxy = SerialNumberProxy(peripheralProxy: peripheralProxy)
 
 // You can optionally subscribe a publisher to be notified when data is read from the characteristic.
 // The publisher sink method won't be triggered when reading data from local cache.
-serialNumberProxy.didUpdateValuePublisher
+serialNumberProxy.didUpdateValuePublisher?
     .receive(on: DispatchQueue.main)
     .sink { serialNumber in 
         print("serial number is \(serialNumber)")
@@ -273,7 +273,7 @@ let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
 let pinProxy = PinProxy(peripheralProxy: peripheralProxy)
 
 // You can optionally subscribe a publisher to be notified when data is written to the characteristic.
-pinProxy.didWriteValuePublisher
+pinProxy.didWriteValuePublisher?
     .receive(on: DispatchQueue.main)
     .sink {  
         print("data was written to the characteristic")
@@ -336,7 +336,7 @@ heartRateProxy.didUpdateNotificationStatePublisher
     .store(in: &subscriptions)
 
 // You can optionally subscribe a publisher to be notified when data is received from the characteristic.
-heartRateProxy.didUpdateValuePublisher
+heartRateProxy.didUpdateValuePublisher?
     .receive(on: DispatchQueue.main)
     .sink { heartRate in 
         print("heart rate is \(heartRate)")
