@@ -343,4 +343,27 @@ extension BleCharacteristicNotifyProxyTests {
         }
     }
     
+    func testSetNotifyAndGetIsNotifyingAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Assert initial state
+        let isNotifyingInitial = try await bleHeartRateProxy.isNotifying
+        XCTAssertFalse(isNotifyingInitial)
+        // Test characteristic notify enabled
+        do {
+            let enabled = try await bleHeartRateProxy.setNotify(
+                enabled: true,
+                timeout: .never)
+            XCTAssertTrue(enabled)
+        } catch {
+            XCTFail("characteristic set notify failed with error: \(error)")
+        }
+        // Assert final state
+        let isNotifyingFinal = try await bleHeartRateProxy.isNotifying
+        XCTAssertTrue(isNotifyingFinal)
+        
+    }
+    
 }

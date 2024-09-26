@@ -30,6 +30,18 @@ import Foundation
 
 public extension BleCharacteristicNotifyProxy {
     
+    /// A Boolean value indicating whether notifications are enabled for the characteristic.
+    ///
+    /// This property asynchronously discovers the characteristic and checks if notifications are active.
+    ///
+    /// - Throws: An error if the discovery process fails.
+    /// - Returns: A Boolean value: `true` if notifications are enabled; otherwise, `false`.
+    var isNotifying: Bool {
+        get async throws {
+            return try await discover().isNotifying
+        }
+    }
+    
     /// Enable or disable notifications for the characteristic.
     ///
     /// This method enables or disables notifications for the characteristic on the BLE peripheral.
