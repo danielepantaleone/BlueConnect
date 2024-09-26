@@ -46,7 +46,7 @@ public protocol BleCharacteristicProxy {
     var serviceUUID: CBUUID { get }
     
     /// A weak reference to the `BlePeripheralProxy` managing the peripheral associated with this characteristic.
-    var peripheralProxy: BlePeripheralProxy { get }
+    var peripheralProxy: BlePeripheralProxy? { get }
     
 }
 
@@ -63,10 +63,10 @@ public extension BleCharacteristicProxy {
     ///   - callback: A closure to execute when the characteristic is discovered. This closure receives a `Result<CBCharacteristic, Error>` where the success case contains the discovered characteristic and the failure case contains an error.
     func discover(timeout: DispatchTimeInterval = .seconds(10), callback: @escaping (Result<CBCharacteristic, Error>) -> Void) {
         let start: DispatchTime = .now()
-        peripheralProxy.discover(serviceUUID: serviceUUID, timeout: timeout) { serviceDiscoveryResult in
+        peripheralProxy?.discover(serviceUUID: serviceUUID, timeout: timeout) { serviceDiscoveryResult in
             serviceDiscoveryResult.forwardError(to: callback)
             serviceDiscoveryResult.onSuccess { _ in
-                peripheralProxy.discover(
+                peripheralProxy?.discover(
                     characteristicUUID: characteristicUUID,
                     in: serviceUUID,
                     timeout: timeout - start.distance(to: .now()),

@@ -41,8 +41,8 @@ public extension BleCharacteristicNotifyProxy {
     /// This publisher will emit values when the notification state of the characteristic changes.
     ///
     /// - Note: This publisher filters events to only those corresponding to the current characteristic.
-    var didUpdateNotificationStatePublisher: AnyPublisher<Bool, Never> {
-        peripheralProxy.didUpdateNotificationStatePublisher
+    var didUpdateNotificationStatePublisher: AnyPublisher<Bool, Never>? {
+        peripheralProxy?.didUpdateNotificationStatePublisher
             .filter { $0.characteristic.uuid == characteristicUUID }
             .map { _, enabled in enabled }
             .eraseToAnyPublisher()
@@ -67,7 +67,7 @@ public extension BleCharacteristicNotifyProxy {
         discover(timeout: timeout) { characteristicDiscoveryResult in
             characteristicDiscoveryResult.forwardError(to: callback)
             characteristicDiscoveryResult.onSuccess { characteristic in
-                peripheralProxy.setNotify(
+                peripheralProxy?.setNotify(
                     enabled: enabled,
                     for: characteristic.uuid,
                     timeout: timeout - start.distance(to: .now()),

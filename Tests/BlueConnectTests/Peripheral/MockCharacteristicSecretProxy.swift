@@ -37,7 +37,8 @@ struct MockCharacteristicSecretProxy: BleCharacteristicWriteProxy {
     var characteristicUUID: CBUUID = MockBleDescriptor.secretCharacteristicUUID
     var serviceUUID: CBUUID = MockBleDescriptor.customServiceUUID
     var encodingError: Error?
-    var peripheralProxy: BlePeripheralProxy
+    
+    weak var peripheralProxy: BlePeripheralProxy?
     
     init(peripheralProxy: BlePeripheralProxy) {
         self.peripheralProxy = peripheralProxy

@@ -68,7 +68,7 @@ public extension BleCharacteristicWriteWithoutResponseProxy {
             result.forwardError(to: callback)
             result.onSuccess { characteristic in
                 do {
-                    try peripheralProxy.writeWithoutResponse(
+                    try peripheralProxy?.writeWithoutResponse(
                         data: try encode(value),
                         to: characteristic.uuid)
                     callback?(.success(()))

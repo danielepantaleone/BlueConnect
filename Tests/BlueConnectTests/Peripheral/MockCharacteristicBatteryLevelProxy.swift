@@ -36,7 +36,8 @@ struct MockCharacteristicBatteryLevelProxy: BleCharacteristicReadProxy {
     
     var characteristicUUID: CBUUID = MockBleDescriptor.batteryLevelCharacteristicUUID
     var serviceUUID: CBUUID = MockBleDescriptor.batteryServiceUUID
-    var peripheralProxy: BlePeripheralProxy
+    
+    weak var peripheralProxy: BlePeripheralProxy?
     
     init(peripheralProxy: BlePeripheralProxy) {
         self.peripheralProxy = peripheralProxy
