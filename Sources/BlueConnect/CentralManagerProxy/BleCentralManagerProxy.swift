@@ -309,7 +309,7 @@ extension BleCentralManagerProxy {
     /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
     ///
     /// - Note: If the central manager is not in the `.poweredOn` state, the scan fails, and the publisher sends a `.failure` event with an appropriate error.
-    func scanForPeripherals(
+    public func scanForPeripherals(
         withServices serviceUUIDs: [CBUUID]? = nil,
         options: [String: Any]? = nil,
         timeout: DispatchTimeInterval = .seconds(60)
@@ -348,7 +348,7 @@ extension BleCentralManagerProxy {
     /// Stops the current BLE peripheral scan.
     ///
     /// Stops the  BLE peripherals discovery and completes the scan's publisher with `.finished`.
-    func stopScan() {
+    public func stopScan() {
         mutex.lock()
         defer { mutex.unlock() }
         // Stop discover timer.
