@@ -114,7 +114,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                             XCTFail("peripheral discovery terminated with error: \(error)")
                     }
                 },
-                receiveValue: { record in
+                receiveValue: { _ in
                     publisherExp.fulfill()
                 }
             )

@@ -71,13 +71,12 @@ public class BleCentralManagerProxy: NSObject {
     var connectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
     var connectionTimers: [UUID: DispatchSourceTimer] = [:]
     var disconnectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
-    var discoverSubject: PassthroughSubject<BleCentralManagerScanRecord, Error>?
+    var discoverSubject: PassthroughSubject<(peripheral: BlePeripheral, advertisementData: BleAdvertisementData, RSSI: Int), Error>?
     var discoverTimer: DispatchSourceTimer?
     let mutex = RecursiveMutex()
     
     lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
     lazy var didConnectSubject: PassthroughSubject<BlePeripheral, Never> = .init()
-    lazy var didDiscoverSubject: PassthroughSubject<(peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi: NSNumber), Never> = .init()
     lazy var didDisconnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error?), Never> = .init()
     lazy var didFailToConnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error?), Never> = .init()
     lazy var willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
@@ -313,7 +312,11 @@ extension BleCentralManagerProxy {
         withServices serviceUUIDs: [CBUUID]? = nil,
         options: [String: Any]? = nil,
         timeout: DispatchTimeInterval = .seconds(60)
-    ) -> AnyPublisher<BleCentralManagerScanRecord, Error> {
+    ) -> AnyPublisher<(
+        peripheral: BlePeripheral,
+        advertisementData: BleAdvertisementData,
+        RSSI: Int
+    ), Error> {
         
         mutex.lock()
         defer { mutex.unlock() }
@@ -326,7 +329,11 @@ extension BleCentralManagerProxy {
         discoverSubject = nil
         
         // Create a passthrough subject through which manage the whole peripheral discover process.
-        let subject: PassthroughSubject<BleCentralManagerScanRecord, Error> = .init()
+        let subject: PassthroughSubject<(
+            peripheral: BlePeripheral,
+            advertisementData: BleAdvertisementData,
+            RSSI: Int
+        ), Error> = .init()
         
         // Ensure central manager is in a powered-on state.
         guard centralManager.state == .poweredOn else {
@@ -518,7 +525,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: Int) {
-        discoverSubject?.send(.init(
+        discoverSubject?.send((
             peripheral: peripheral,
             advertisementData: advertisementData,
             RSSI: RSSI))

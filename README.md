@@ -94,9 +94,9 @@ centralManagerProxy.scanForPeripherals(timeout: .seconds(30))
                     print("peripheral scan terminated with error: \(error)")
             }
         },
-        receiveValue: { record in 
+        receiveValue: { peripheral, advertisementData, RSSI in 
             // This is called multiple times for every discovered peripheral.
-            print("peripheral '\(record.peripheral.identifier)' was discovered")
+            print("peripheral '\(peripheral.identifier)' was discovered")
         }
     )
     .store(in: &subscriptions)
