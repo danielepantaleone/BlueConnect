@@ -71,7 +71,10 @@ public class BleCentralManagerProxy: NSObject {
     var connectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
     var connectionTimers: [UUID: DispatchSourceTimer] = [:]
     var disconnectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
-    var discoverSubject: PassthroughSubject<(peripheral: BlePeripheral, advertisementData: BleAdvertisementData, RSSI: Int), Error>?
+    var discoverSubject: PassthroughSubject<(
+        peripheral: BlePeripheral,
+        advertisementData: BleAdvertisementData,
+        RSSI: Int), Error>?
     var discoverTimer: DispatchSourceTimer?
     let mutex = RecursiveMutex()
     
