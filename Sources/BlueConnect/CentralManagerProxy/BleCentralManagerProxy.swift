@@ -94,6 +94,8 @@ public class BleCentralManagerProxy: NSObject {
     /// Initializes the proxy with the provided `BleCentralManager`.
     ///
     /// - Parameter centralManager: The `BleCentralManager` instance that this proxy will manage.
+    ///
+    /// - Important: When passing an instance of `CBCentralManager` as the `BleCentralManager` implementation, you can set its delegate to `nil` because it will be assigned to the proxy right after initialization.
     public init(centralManager: BleCentralManager) {
         self.centralManager = centralManager
         super.init()
