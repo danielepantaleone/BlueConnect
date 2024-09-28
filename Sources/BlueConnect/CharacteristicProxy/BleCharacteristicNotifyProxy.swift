@@ -41,11 +41,11 @@ public extension BleCharacteristicNotifyProxy {
     /// This publisher will emit values when the notification state of the characteristic changes.
     ///
     /// - Note: This publisher filters events to only those corresponding to the current characteristic.
-    var didUpdateNotificationStatePublisher: AnyPublisher<Bool, Never>? {
+    var didUpdateNotificationStatePublisher: AnyPublisher<Bool, Never> {
         peripheralProxy?.didUpdateNotificationStatePublisher
             .filter { $0.characteristic.uuid == characteristicUUID }
             .map { _, enabled in enabled }
-            .eraseToAnyPublisher()
+            .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
     }
     
     /// Enable or disable notifications for the characteristic.

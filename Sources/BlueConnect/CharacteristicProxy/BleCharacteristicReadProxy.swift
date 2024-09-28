@@ -57,12 +57,11 @@ public extension BleCharacteristicReadProxy {
     /// This publisher listens to characteristic value changes and emits a signal with data decoded into the proxy's value type.
     ///
     /// - Note: This publisher filters events to only those corresponding to the current characteristic.
-    var didUpdateValuePublisher: AnyPublisher<ValueType, Never>? {
+    var didUpdateValuePublisher: AnyPublisher<ValueType, Never> {
         peripheralProxy?.didUpdateValuePublisher
             .filter { $0.characteristic.uuid == characteristicUUID }
-            .tryMap { _, data in try decode(data) }
-            .catch { _ in Empty<ValueType, Never>() }
-            .eraseToAnyPublisher()
+            .compactMap { _, data in try? decode(data) }
+            .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
     }
     
     /// Read the characteristic from the BLE peripheral if no valid cached value is found.
