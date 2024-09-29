@@ -25,6 +25,7 @@
 //  THE SOFTWARE.
 //
 
+import CoreBluetooth
 import Foundation
 
 /// An enumeration representing various errors that can occur while interacting with a BLE peripheral via the `BlePeripheralProxy`.
@@ -35,13 +36,17 @@ public enum BlePeripheralProxyError: Error {
     
     /// The specified characteristic was not found on the peripheral.
     ///
+    /// - Parameter characteristicUUID: The UUID of the characteristic that could not be found.
+    ///
     /// This error occurs when the desired characteristic is unavailable on the connected peripheral.
-    case characteristicNotFound
+    case characteristicNotFound(characteristicUUID: CBUUID)
     
     /// The specified characteristic does not contain any data.
     ///
+    /// - Parameter characteristicUUID: The UUID of the characteristic whose data is `nil`.
+    ///
     /// This error is thrown when a characteristic is found, but the data it contains is `nil`.
-    case characteristicDataIsNil
+    case characteristicDataIsNil(characteristicUUID: CBUUID)
     
     /// The peripheral proxy instance has been destroyed and is no longer usable.
     ///
@@ -55,37 +60,51 @@ public enum BlePeripheralProxyError: Error {
     
     /// The specified service was not found on the peripheral.
     ///
+    /// - Parameter serviceUUID: The UUID of the service that could not be found.
+    ///
     /// This error is thrown when the required service is unavailable on the connected peripheral.
-    case serviceNotFound
+    case serviceNotFound(serviceUUID: CBUUID)
     
     /// Notify is not supported on the characteristic.
     ///
+    /// - Parameter characteristicUUID: The UUID of the characteristic that does not support notifications.
+    ///
     /// This error occurs when the characteristic does not support notifications.
-    case notifyNotSupported
+    case notifyNotSupported(characteristicUUID: CBUUID)
     
     /// The set notify operation timed out before it could complete.
     ///
+    /// - Parameter characteristicUUID: The UUID of the characteristic for which the notification operation timed out.
+    ///
     /// This error occurs when attempting to enable or disable notifications and the operation exceeds the expected time limit.
-    case notifyTimeout
+    case notifyTimeout(characteristicUUID: CBUUID)
     
     /// Reading data from the characteristic is not supported.
     ///
+    /// - Parameter characteristicUUID: The UUID of the characteristic that does not support reading.
+    ///
     /// This error is thrown when the characteristic does not support reading operations.
-    case readNotSupported
+    case readNotSupported(characteristicUUID: CBUUID)
     
     /// The read operation timed out before it could complete.
     ///
+    /// - Parameter characteristicUUID: The UUID of the characteristic for which the read operation timed out.
+    ///
     /// This error occurs when a read operation takes too long to return data.
-    case readTimeout
+    case readTimeout(characteristicUUID: CBUUID)
     
     /// Writing data to the characteristic is not supported.
     ///
+    /// - Parameter characteristicUUID: The UUID of the characteristic that does not support writing.
+    ///
     /// This error occurs when the characteristic does not support writing operations.
-    case writeNotSupported
+    case writeNotSupported(characteristicUUID: CBUUID)
     
     /// The write operation timed out before it could complete.
     ///
+    /// - Parameter characteristicUUID: The UUID of the characteristic for which the write operation timed out.
+    ///
     /// This error occurs when a write operation exceeds the allowed time limit.
-    case writeTimeout
+    case writeTimeout(characteristicUUID: CBUUID)
     
 }

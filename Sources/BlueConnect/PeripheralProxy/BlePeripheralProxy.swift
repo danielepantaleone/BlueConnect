@@ -401,7 +401,7 @@ extension BlePeripheralProxy {
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
                     uuid: characteristicUUID,
-                    value: .failure(BlePeripheralProxyError.serviceNotFound))
+                    value: .failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
             }
             return
         }
@@ -476,11 +476,11 @@ extension BlePeripheralProxy {
             return
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError.characteristicNotFound))
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
             return
         }
         guard characteristic.properties.contains(.read) else {
-            callback(.failure(BlePeripheralProxyError.readNotSupported))
+            callback(.failure(BlePeripheralProxyError.readNotSupported(characteristicUUID: characteristicUUID)))
             return
         }
         
@@ -538,11 +538,11 @@ extension BlePeripheralProxy {
             return
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError.characteristicNotFound))
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
             return
         }
         guard characteristic.properties.contains(.write) else {
-            callback(.failure(BlePeripheralProxyError.writeNotSupported))
+            callback(.failure(BlePeripheralProxyError.writeNotSupported(characteristicUUID: characteristicUUID)))
             return
         }
         
@@ -582,10 +582,10 @@ extension BlePeripheralProxy {
             throw BlePeripheralProxyError.peripheralNotConnected
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            throw BlePeripheralProxyError.characteristicNotFound
+            throw BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)
         }
         guard characteristic.properties.contains(.writeWithoutResponse) else {
-            throw BlePeripheralProxyError.writeNotSupported
+            throw BlePeripheralProxyError.writeNotSupported(characteristicUUID: characteristicUUID)
         }
 
         peripheral.writeValue(data, for: characteristic, type: .withoutResponse)
@@ -625,11 +625,11 @@ extension BlePeripheralProxy {
             return
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError.characteristicNotFound))
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
             return
         }
         guard characteristic.properties.contains(.notify) else {
-            callback(.failure(BlePeripheralProxyError.notifyNotSupported))
+            callback(.failure(BlePeripheralProxyError.notifyNotSupported(characteristicUUID: characteristicUUID)))
             return
         }
         guard enabled != characteristic.isNotifying else {
@@ -673,7 +673,7 @@ extension BlePeripheralProxy {
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
                     uuid: characteristicUUID,
-                    value: .failure(BlePeripheralProxyError.characteristicNotFound))
+                    value: .failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
             }
             discoverCharacteristicTimers[characteristicUUID]?.resume()
         }
@@ -696,7 +696,7 @@ extension BlePeripheralProxy {
                 notifyCallbacks(
                     store: &discoverServiceCallbacks,
                     uuid: serviceUUID,
-                    value: .failure(BlePeripheralProxyError.serviceNotFound))
+                    value: .failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
             }
             discoverServiceTimers[serviceUUID]?.resume()
         }
@@ -718,7 +718,7 @@ extension BlePeripheralProxy {
             notifyCallbacks(
                 store: &characteristicReadCallbacks,
                 uuid: characteristicUUID,
-                value: .failure(BlePeripheralProxyError.readTimeout))
+                value: .failure(BlePeripheralProxyError.readTimeout(characteristicUUID: characteristicUUID)))
         }
         characteristicReadTimers[characteristicUUID]?.resume()
     }
@@ -739,7 +739,7 @@ extension BlePeripheralProxy {
             notifyCallbacks(
                 store: &characteristicNotifyCallbacks,
                 uuid: characteristicUUID,
-                value: .failure(BlePeripheralProxyError.notifyTimeout))
+                value: .failure(BlePeripheralProxyError.notifyTimeout(characteristicUUID: characteristicUUID)))
         }
         characteristicNotifyTimers[characteristicUUID]?.resume()
     }
@@ -760,7 +760,7 @@ extension BlePeripheralProxy {
             notifyCallbacks(
                 store: &characteristicWriteCallbacks,
                 uuid: characteristicUUID,
-                value: .failure(BlePeripheralProxyError.writeTimeout))
+                value: .failure(BlePeripheralProxyError.writeTimeout(characteristicUUID: characteristicUUID)))
         }
         characteristicWriteTimers[characteristicUUID]?.resume()
     }
@@ -933,7 +933,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
             notifyCallbacks(
                 store: &characteristicReadCallbacks,
                 uuid: characteristic.uuid,
-                value: .failure(BlePeripheralProxyError.characteristicDataIsNil))
+                value: .failure(BlePeripheralProxyError.characteristicDataIsNil(characteristicUUID: characteristic.uuid)))
             return
         }
         

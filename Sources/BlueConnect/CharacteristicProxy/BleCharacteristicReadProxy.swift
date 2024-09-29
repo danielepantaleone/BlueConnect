@@ -94,7 +94,7 @@ public extension BleCharacteristicReadProxy {
                         do {
                             callback(.success(try decode(data)))
                         } catch {
-                            callback(.failure(BleCharacteristicProxyError.decodingError(cause: error)))
+                            callback(.failure(BleCharacteristicProxyError.decodingError(characteristicUUID: characteristic.uuid, cause: error)))
                         }
                     }
                 }

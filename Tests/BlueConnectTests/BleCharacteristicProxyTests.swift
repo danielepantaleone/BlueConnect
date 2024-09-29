@@ -122,10 +122,11 @@ extension BleCharacteristicProxyTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError else {
+                    guard case .serviceNotFound(let serviceUUID) = proxyError else {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(serviceUUID, MockBleDescriptor.deviceInformationServiceUUID)
                     expectation.fulfill()
             }
         }
@@ -151,10 +152,11 @@ extension BleCharacteristicProxyTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError else {
+                    guard case .characteristicNotFound(let characteristicUUID) = proxyError else {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
                     expectation.fulfill()
             }
         }
@@ -207,8 +209,8 @@ extension BleCharacteristicProxyTests {
         do {
             try await bleSerialNumberProxy.discover(timeout: .seconds(2))
             XCTFail("characteristic discovery was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.serviceNotFound {
-            // NO OP
+        } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
+            XCTAssertEqual(serviceUUID, MockBleDescriptor.deviceInformationServiceUUID)
         } catch {
             XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
@@ -225,8 +227,8 @@ extension BleCharacteristicProxyTests {
         do {
             try await bleSerialNumberProxy.discover(timeout: .seconds(2))
             XCTFail("characteristic discovery was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.characteristicNotFound {
-            // NO OP
+        } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
         } catch {
             XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }

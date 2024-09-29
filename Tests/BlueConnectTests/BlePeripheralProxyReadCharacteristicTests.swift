@@ -379,10 +379,11 @@ extension BlePeripheralProxyReadCharacteristicTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError else {
+                    guard case .characteristicNotFound(let characteristicUUID) = proxyError else {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
                     XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
                     XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
                     readExp.fulfill()
@@ -426,10 +427,11 @@ extension BlePeripheralProxyReadCharacteristicTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .readNotSupported = proxyError else {
+                    guard case .readNotSupported(let characteristicUUID) = proxyError else {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'readNotSupported', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
                     XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.secretCharacteristicUUID])
                     XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.secretCharacteristicUUID])
                     readExp.fulfill()
@@ -475,10 +477,11 @@ extension BlePeripheralProxyReadCharacteristicTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .readTimeout = proxyError else {
+                    guard case .readTimeout(let characteristicUUID) = proxyError else {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'readTimeout', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
                     XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
                     XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
                     readExp.fulfill()
@@ -575,10 +578,11 @@ extension BlePeripheralProxyReadCharacteristicTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicDataIsNil = proxyError else {
+                    guard case .characteristicDataIsNil(let characteristicUUID) = proxyError else {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'characteristicDataIsNil', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
                     XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.secretCharacteristicUUID])
                     XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.secretCharacteristicUUID])
                     readExp.fulfill()
@@ -696,7 +700,8 @@ extension BlePeripheralProxyReadCharacteristicTests {
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 cachePolicy: .never,
                 timeout: .never)
-        } catch BlePeripheralProxyError.characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
             XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
         } catch {
@@ -719,7 +724,8 @@ extension BlePeripheralProxyReadCharacteristicTests {
                 characteristicUUID: MockBleDescriptor.secretCharacteristicUUID,
                 cachePolicy: .never,
                 timeout: .never)
-        } catch BlePeripheralProxyError.readNotSupported {
+        } catch BlePeripheralProxyError.readNotSupported(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.secretCharacteristicUUID])
             XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
@@ -744,7 +750,8 @@ extension BlePeripheralProxyReadCharacteristicTests {
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 cachePolicy: .never,
                 timeout: .seconds(2))
-        } catch BlePeripheralProxyError.readTimeout {
+        } catch BlePeripheralProxyError.readTimeout(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
             XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
         } catch {
@@ -796,7 +803,8 @@ extension BlePeripheralProxyReadCharacteristicTests {
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 cachePolicy: .never,
                 timeout: .seconds(2))
-        } catch BlePeripheralProxyError.characteristicDataIsNil {
+        } catch BlePeripheralProxyError.characteristicDataIsNil(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
             XCTAssertNil(blePeripheralProxy_1.cache[MockBleDescriptor.serialNumberCharacteristicUUID])
             XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
         } catch {

@@ -271,10 +271,11 @@ extension BlePeripheralProxyDiscoverServiceTests {
                         XCTFail("service discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError else {
+                    guard case .serviceNotFound(let serviceUUID) = proxyError else {
                         XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(serviceUUID, MockBleDescriptor.heartRateServiceUUID)
                     XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
                     XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
                     discoveryExp.fulfill()
@@ -314,10 +315,11 @@ extension BlePeripheralProxyDiscoverServiceTests {
                         XCTFail("service discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError else {
+                    guard case .serviceNotFound(let serviceUUID) = proxyError else {
                         XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(serviceUUID, MockBleDescriptor.heartRateServiceUUID)
                     XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
                     XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
                     discoveryExp.fulfill()
@@ -412,7 +414,8 @@ extension BlePeripheralProxyDiscoverServiceTests {
             try await blePeripheralProxy_1.discover(
                 serviceUUID: MockBleDescriptor.heartRateServiceUUID,
                 timeout: .seconds(2))
-        } catch BlePeripheralProxyError.serviceNotFound {
+        } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
+            XCTAssertEqual(serviceUUID, MockBleDescriptor.heartRateServiceUUID)
             XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
         } catch {
@@ -432,7 +435,8 @@ extension BlePeripheralProxyDiscoverServiceTests {
             try await blePeripheralProxy_1.discover(
                 serviceUUID: MockBleDescriptor.heartRateServiceUUID,
                 timeout: .seconds(2))
-        } catch BlePeripheralProxyError.serviceNotFound {
+        } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
+            XCTAssertEqual(serviceUUID, MockBleDescriptor.heartRateServiceUUID)
             XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
         } catch {

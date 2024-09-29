@@ -155,10 +155,11 @@ extension BleCharacteristicReadProxyTests {
                         XCTFail("characteristic read was expected to fail with BleCharacteristicProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .decodingError = proxyError else {
+                    guard case .decodingError(let characteristicUUID, _) = proxyError else {
                         XCTFail("characteristic read was expected to fail with BleCharacteristicProxyError 'decodingError', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
                     readExp.fulfill()
             }
         }
@@ -194,10 +195,11 @@ extension BleCharacteristicReadProxyTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .readTimeout = proxyError else {
+                    guard case .readTimeout(let characteristicUUID) = proxyError else {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'readTimeout', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
                     readExp.fulfill()
             }
         }
@@ -233,10 +235,11 @@ extension BleCharacteristicReadProxyTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError else {
+                    guard case .serviceNotFound(let serviceUUID) = proxyError else {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(serviceUUID, MockBleDescriptor.deviceInformationServiceUUID)
                     readExp.fulfill()
             }
         }
@@ -272,10 +275,11 @@ extension BleCharacteristicReadProxyTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError else {
+                    guard case .characteristicNotFound(let characteristicUUID) = proxyError else {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
                     readExp.fulfill()
             }
         }
@@ -328,8 +332,8 @@ extension BleCharacteristicReadProxyTests {
         do {
             _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .never)
             XCTFail("characteristic read was expected to fail but succeeded instead")
-        } catch BleCharacteristicProxyError.decodingError {
-            // NO OP
+        } catch BleCharacteristicProxyError.decodingError(let characteristicUUID, _) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
         } catch {
             XCTFail("characteristic read was expected to fail with BleCharacteristicProxyError 'decodingError', got '\(error)' instead")
         }
@@ -346,8 +350,8 @@ extension BleCharacteristicReadProxyTests {
         do {
             _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
             XCTFail("characteristic read was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.readTimeout {
-            // NO OP
+        } catch BlePeripheralProxyError.readTimeout(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
         } catch {
             XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'readTimeout', got '\(error)' instead")
         }
@@ -364,8 +368,8 @@ extension BleCharacteristicReadProxyTests {
         do {
             _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
             XCTFail("characteristic read was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.serviceNotFound {
-            // NO OP
+        } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
+            XCTAssertEqual(serviceUUID, MockBleDescriptor.deviceInformationServiceUUID)
         } catch {
             XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
@@ -382,8 +386,8 @@ extension BleCharacteristicReadProxyTests {
         do {
             _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
             XCTFail("characteristic read was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.characteristicNotFound {
-            // NO OP
+        } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
         } catch {
             XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }

@@ -132,10 +132,11 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError else {
+                    guard case .serviceNotFound(let serviceUUID) = proxyError else {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(serviceUUID, MockBleDescriptor.customServiceUUID)
                     writeExp.fulfill()
             }
         }
@@ -164,10 +165,11 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError else {
+                    guard case .characteristicNotFound(let characteristicUUID) = proxyError else {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.bufferCharacteristicUUID)
                     writeExp.fulfill()
             }
         }
@@ -225,8 +227,8 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                 value: Data([0x00, 0x01, 0x02, 0x03]),
                 timeout: .seconds(2))
             XCTFail("characteristic write was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.serviceNotFound {
-            // NO OP
+        } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
+            XCTAssertEqual(serviceUUID, MockBleDescriptor.customServiceUUID)
         } catch {
             XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
@@ -245,8 +247,8 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                 value: Data([0x00, 0x01, 0x02, 0x03]),
                 timeout: .seconds(2))
             XCTFail("characteristic write was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.characteristicNotFound {
-            // NO OP
+        } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.bufferCharacteristicUUID)
         } catch {
             XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }

@@ -73,7 +73,7 @@ public extension BleCharacteristicWriteWithoutResponseProxy {
                         to: characteristic.uuid)
                     callback?(.success(()))
                 } catch {
-                    callback?(.failure(BleCharacteristicProxyError.encodingError(cause: error)))
+                    callback?(.failure(BleCharacteristicProxyError.encodingError(characteristicUUID: characteristic.uuid, cause: error)))
                 }
             }
         }

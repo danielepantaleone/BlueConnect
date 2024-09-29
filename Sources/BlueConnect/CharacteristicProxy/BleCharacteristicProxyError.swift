@@ -25,6 +25,7 @@
 //  THE SOFTWARE.
 //
 
+import CoreBluetooth
 import Foundation
 
 /// An enumeration representing errors related to BLE characteristic data handling in the `BleCharacteristicProxy`.
@@ -35,16 +36,20 @@ public enum BleCharacteristicProxyError: Error {
     
     /// The characteristic proxy successfully retrieved the characteristic data, but data conversion to the expected type failed.
     ///
-    /// - Parameter cause: The underlying error that caused the decoding to fail.
+    /// - Parameters:
+    ///   - characteristicUUID: The UUID of the characteristic for which decoding failed.
+    ///   - cause: The underlying error that caused the decoding to fail.
     ///
     /// This error occurs when the raw data received from the characteristic cannot be decoded into the format expected by the proxy.
-    case decodingError(cause: Error)
+    case decodingError(characteristicUUID: CBUUID, cause: Error)
     
     /// The characteristic proxy failed to encode the characteristic value into the raw data format required for writing to the BLE peripheral.
     ///
-    /// - Parameter cause: The underlying error that caused the encoding to fail.
+    /// - Parameters:
+    ///   - characteristicUUID: The UUID of the characteristic for which encoding failed.
+    ///   - cause: The underlying error that caused the encoding to fail.
     ///
     /// This error occurs when encoding the characteristic value type into a binary format fails, preventing the data from being sent to the peripheral.
-    case encodingError(cause: Error)
+    case encodingError(characteristicUUID: CBUUID, cause: Error)
     
 }

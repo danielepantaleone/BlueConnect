@@ -93,7 +93,7 @@ public extension BleCharacteristicWriteProxy {
                         writeResult.forwardSuccess(to: callback)
                     }
                 } catch {
-                    callback?(.failure(BleCharacteristicProxyError.encodingError(cause: error)))
+                    callback?(.failure(BleCharacteristicProxyError.encodingError(characteristicUUID: characteristic.uuid, cause: error)))
                 }
             }
         }
