@@ -182,8 +182,8 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .peripheralNotConnected = proxyError.category else {
-                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                    guard case .peripheralNotConnected = proxyError else {
+                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
@@ -226,8 +226,8 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError.category else {
-                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                    guard case .characteristicNotFound = proxyError else {
+                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
@@ -272,8 +272,8 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .operationNotSupported = proxyError.category else {
-                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(proxyError.category)' instead")
+                    guard case .notifyNotSupported = proxyError else {
+                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'notifyNotSupported', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
@@ -320,8 +320,8 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .timeout = proxyError.category else {
-                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'timeout', got '\(proxyError.category)' instead")
+                    guard case .notifyTimeout = proxyError else {
+                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'notifyTimeout', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
@@ -368,7 +368,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         XCTFail("characteristic set notify was expected to fail with MockBleError.mockedError, got '\(error)' instead")
                         return
                     }
-                    guard mockedError == MockBleError.mockedError else {
+                    guard mockedError == .mockedError else {
                         XCTFail("characteristic set notify was expected to fail with MockBleError.mockedError, got '\(mockedError)' instead")
                         return
                     }
@@ -406,8 +406,8 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .destroyed = proxyError.category else {
-                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'destroyed', got '\(proxyError.category)' instead")
+                    guard case .destroyed = proxyError else {
+                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'destroyed', got '\(proxyError)' instead")
                         return
                     }
                     expectation.fulfill()
@@ -467,10 +467,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 enabled: true,
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
                 timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+        } catch BlePeripheralProxyError.peripheralNotConnected {
             XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
         } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -487,10 +487,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 enabled: true,
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
                 timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound {
             XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
         } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
     
@@ -509,10 +509,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 enabled: true,
                 for: MockBleDescriptor.serialNumberCharacteristicUUID,
                 timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
+        } catch BlePeripheralProxyError.notifyNotSupported {
             XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
         } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'notifyNotSupported', got '\(error)' instead")
         }
     }
     
@@ -533,10 +533,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 enabled: true,
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
                 timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
+        } catch BlePeripheralProxyError.notifyTimeout {
             XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
         } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'notifyTimeout', got '\(error)' instead")
         }
     }
     

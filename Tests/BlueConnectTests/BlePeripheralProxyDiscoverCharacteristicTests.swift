@@ -256,8 +256,8 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .peripheralNotConnected = proxyError.category else {
-                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                    guard case .peripheralNotConnected = proxyError else {
+                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
@@ -299,8 +299,8 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError.category else {
-                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(proxyError.category)' instead")
+                    guard case .serviceNotFound = proxyError else {
+                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
@@ -346,8 +346,8 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError.category else {
-                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                    guard case .characteristicNotFound = proxyError else {
+                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
@@ -393,8 +393,8 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError.category else {
-                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                    guard case .characteristicNotFound = proxyError else {
+                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
@@ -431,8 +431,8 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .destroyed = proxyError.category else {
-                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'destroyed', got '\(proxyError.category)' instead")
+                    guard case .destroyed = proxyError else {
+                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'destroyed', got '\(proxyError)' instead")
                         return
                     }
                     expectation.fulfill()
@@ -485,12 +485,12 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 in: MockBleDescriptor.deviceInformationServiceUUID,
                 timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+        } catch BlePeripheralProxyError.peripheralNotConnected {
             XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
             XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
         } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -505,12 +505,12 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 in: MockBleDescriptor.deviceInformationServiceUUID,
                 timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+        } catch BlePeripheralProxyError.serviceNotFound {
             XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
             XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
         } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
     }
     
@@ -529,12 +529,12 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 in: MockBleDescriptor.deviceInformationServiceUUID,
                 timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound {
             XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
             XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
         } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
     
@@ -553,12 +553,12 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 in: MockBleDescriptor.deviceInformationServiceUUID,
                 timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound {
             XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
             XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
         } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
     

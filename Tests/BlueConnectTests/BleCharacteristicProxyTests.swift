@@ -93,8 +93,8 @@ extension BleCharacteristicProxyTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .peripheralNotConnected = proxyError.category else {
-                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                    guard case .peripheralNotConnected = proxyError else {
+                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
                     expectation.fulfill()
@@ -122,8 +122,8 @@ extension BleCharacteristicProxyTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError.category else {
-                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(proxyError.category)' instead")
+                    guard case .serviceNotFound = proxyError else {
+                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
                     expectation.fulfill()
@@ -151,8 +151,8 @@ extension BleCharacteristicProxyTests {
                         XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError.category else {
-                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                    guard case .characteristicNotFound = proxyError else {
+                        XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
                     expectation.fulfill()
@@ -189,10 +189,10 @@ extension BleCharacteristicProxyTests {
         do {
             try await bleSerialNumberProxy.discover(timeout: .seconds(2))
             XCTFail("characteristic discovery was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+        } catch BlePeripheralProxyError.peripheralNotConnected {
             // NO OP
         } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -207,10 +207,10 @@ extension BleCharacteristicProxyTests {
         do {
             try await bleSerialNumberProxy.discover(timeout: .seconds(2))
             XCTFail("characteristic discovery was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+        } catch BlePeripheralProxyError.serviceNotFound {
             // NO OP
         } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
     }
     
@@ -225,10 +225,10 @@ extension BleCharacteristicProxyTests {
         do {
             try await bleSerialNumberProxy.discover(timeout: .seconds(2))
             XCTFail("characteristic discovery was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound {
             // NO OP
         } catch {
-            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
     

@@ -147,23 +147,23 @@ public class BlePeripheralProxy: NSObject {
         // Notify callbacks
         discoverServiceCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError(category: .destroyed))) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         discoverServiceCallbacks.removeAll()
         discoverCharacteristicCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError(category: .destroyed))) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         discoverCharacteristicCallbacks.removeAll()
         characteristicReadCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError(category: .destroyed))) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         characteristicReadCallbacks.removeAll()
         characteristicNotifyCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError(category: .destroyed))) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         characteristicNotifyCallbacks.removeAll()
         characteristicWriteCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError(category: .destroyed))) }
+            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
         characteristicWriteCallbacks.removeAll()
         // Notify publishers
         didDiscoverCharacteristicsSubject.send(completion: .finished)
@@ -293,7 +293,7 @@ extension BlePeripheralProxy {
                 notifyCallbacks(
                     store: &discoverServiceCallbacks,
                     uuid: serviceUUID,
-                    value: .failure(BlePeripheralProxyError(category: .peripheralNotConnected)))
+                    value: .failure(BlePeripheralProxyError.peripheralNotConnected))
             }
             return
         }
@@ -391,7 +391,7 @@ extension BlePeripheralProxy {
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
                     uuid: characteristicUUID,
-                    value: .failure(BlePeripheralProxyError(category: .peripheralNotConnected)))
+                    value: .failure(BlePeripheralProxyError.peripheralNotConnected))
             }
             return
         }
@@ -401,7 +401,7 @@ extension BlePeripheralProxy {
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
                     uuid: characteristicUUID,
-                    value: .failure(BlePeripheralProxyError(category: .serviceNotFound)))
+                    value: .failure(BlePeripheralProxyError.serviceNotFound))
             }
             return
         }
@@ -472,15 +472,15 @@ extension BlePeripheralProxy {
         }
         
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError(category: .peripheralNotConnected)))
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
             return
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError(category: .characteristicNotFound)))
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound))
             return
         }
         guard characteristic.properties.contains(.read) else {
-            callback(.failure(BlePeripheralProxyError(category: .operationNotSupported)))
+            callback(.failure(BlePeripheralProxyError.readNotSupported))
             return
         }
         
@@ -534,15 +534,15 @@ extension BlePeripheralProxy {
         defer { mutex.unlock() }
         
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError(category: .peripheralNotConnected)))
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
             return
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError(category: .characteristicNotFound)))
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound))
             return
         }
         guard characteristic.properties.contains(.write) else {
-            callback(.failure(BlePeripheralProxyError(category: .operationNotSupported)))
+            callback(.failure(BlePeripheralProxyError.writeNotSupported))
             return
         }
         
@@ -568,9 +568,9 @@ extension BlePeripheralProxy {
     ///   - data: The data to write to the characteristic.
     ///   - characteristicUUID: The UUID of the characteristic to which the data should be written.
     ///
-    /// - Throws: `BlePeripheralProxyError(category: .peripheralNotConnected)` if the peripheral is not connected.
-    /// - Throws: `BlePeripheralProxyError(category: .characteristicNotFound)` if the characteristic with the specified UUID cannot be found.
-    /// - Throws: `BlePeripheralProxyError(category: .operationNotSupported)` if the characteristic does not support writing without a response.
+    /// - Throws: `BlePeripheralProxyError.peripheralNotConnected` if the peripheral is not connected.
+    /// - Throws: `BlePeripheralProxyError.characteristicNotFound` if the characteristic with the specified UUID cannot be found.
+    /// - Throws: `BlePeripheralProxyError.writeNotSupported` if the characteristic does not support writing without a response.
     ///
     /// - Note: This method is useful for sending data where a response from the peripheral is not required, such as sending notifications or control commands.
     public func writeWithoutResponse(data: Data, to characteristicUUID: CBUUID) throws {
@@ -579,13 +579,13 @@ extension BlePeripheralProxy {
         defer { mutex.unlock() }
         
         guard peripheral.state == .connected else {
-            throw BlePeripheralProxyError(category: .peripheralNotConnected)
+            throw BlePeripheralProxyError.peripheralNotConnected
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            throw BlePeripheralProxyError(category: .characteristicNotFound)
+            throw BlePeripheralProxyError.characteristicNotFound
         }
         guard characteristic.properties.contains(.writeWithoutResponse) else {
-            throw BlePeripheralProxyError(category: .operationNotSupported)
+            throw BlePeripheralProxyError.writeNotSupported
         }
 
         peripheral.writeValue(data, for: characteristic, type: .withoutResponse)
@@ -621,15 +621,15 @@ extension BlePeripheralProxy {
         defer { mutex.unlock() }
         
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError(category: .peripheralNotConnected)))
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
             return
         }
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError(category: .characteristicNotFound)))
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound))
             return
         }
         guard characteristic.properties.contains(.notify) else {
-            callback(.failure(BlePeripheralProxyError(category: .operationNotSupported)))
+            callback(.failure(BlePeripheralProxyError.notifyNotSupported))
             return
         }
         guard enabled != characteristic.isNotifying else {
@@ -673,7 +673,7 @@ extension BlePeripheralProxy {
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
                     uuid: characteristicUUID,
-                    value: .failure(BlePeripheralProxyError(category: .characteristicNotFound)))
+                    value: .failure(BlePeripheralProxyError.characteristicNotFound))
             }
             discoverCharacteristicTimers[characteristicUUID]?.resume()
         }
@@ -696,7 +696,7 @@ extension BlePeripheralProxy {
                 notifyCallbacks(
                     store: &discoverServiceCallbacks,
                     uuid: serviceUUID,
-                    value: .failure(BlePeripheralProxyError(category: .serviceNotFound)))
+                    value: .failure(BlePeripheralProxyError.serviceNotFound))
             }
             discoverServiceTimers[serviceUUID]?.resume()
         }
@@ -718,7 +718,7 @@ extension BlePeripheralProxy {
             notifyCallbacks(
                 store: &characteristicReadCallbacks,
                 uuid: characteristicUUID,
-                value: .failure(BlePeripheralProxyError(category: .timeout)))
+                value: .failure(BlePeripheralProxyError.readTimeout))
         }
         characteristicReadTimers[characteristicUUID]?.resume()
     }
@@ -739,7 +739,7 @@ extension BlePeripheralProxy {
             notifyCallbacks(
                 store: &characteristicNotifyCallbacks,
                 uuid: characteristicUUID,
-                value: .failure(BlePeripheralProxyError(category: .timeout)))
+                value: .failure(BlePeripheralProxyError.notifyTimeout))
         }
         characteristicNotifyTimers[characteristicUUID]?.resume()
     }
@@ -760,7 +760,7 @@ extension BlePeripheralProxy {
             notifyCallbacks(
                 store: &characteristicWriteCallbacks,
                 uuid: characteristicUUID,
-                value: .failure(BlePeripheralProxyError(category: .timeout)))
+                value: .failure(BlePeripheralProxyError.writeTimeout))
         }
         characteristicWriteTimers[characteristicUUID]?.resume()
     }
@@ -933,7 +933,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
             notifyCallbacks(
                 store: &characteristicReadCallbacks,
                 uuid: characteristic.uuid,
-                value: .failure(BlePeripheralProxyError(category: .characteristicDataIsNil)))
+                value: .failure(BlePeripheralProxyError.characteristicDataIsNil))
             return
         }
         

@@ -122,8 +122,8 @@ extension BleCharacteristicNotifyProxyTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .peripheralNotConnected = proxyError.category else {
-                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                    guard case .peripheralNotConnected = proxyError else {
+                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
                     notifyExp.fulfill()
@@ -162,8 +162,8 @@ extension BleCharacteristicNotifyProxyTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .timeout = proxyError.category else {
-                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'timeout', got '\(proxyError.category)' instead")
+                    guard case .notifyTimeout = proxyError else {
+                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'notifyTimeout', got '\(proxyError)' instead")
                         return
                     }
                     notifyExp.fulfill()
@@ -202,8 +202,8 @@ extension BleCharacteristicNotifyProxyTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError.category else {
-                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(proxyError.category)' instead")
+                    guard case .serviceNotFound = proxyError else {
+                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
                     notifyExp.fulfill()
@@ -242,8 +242,8 @@ extension BleCharacteristicNotifyProxyTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError.category else {
-                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                    guard case .characteristicNotFound = proxyError else {
+                        XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
                     notifyExp.fulfill()
@@ -282,10 +282,10 @@ extension BleCharacteristicNotifyProxyTests {
         do {
             _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .never)
             XCTFail("characteristic set notify was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+        } catch BlePeripheralProxyError.peripheralNotConnected {
             // NO OP
         } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -300,10 +300,10 @@ extension BleCharacteristicNotifyProxyTests {
         do {
             _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .seconds(2))
             XCTFail("characteristic set notify was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
+        } catch BlePeripheralProxyError.notifyTimeout {
             // NO OP
         } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'notifyTimeout', got '\(error)' instead")
         }
     }
     
@@ -318,10 +318,10 @@ extension BleCharacteristicNotifyProxyTests {
         do {
             _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .seconds(2))
             XCTFail("characteristic set notify was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+        } catch BlePeripheralProxyError.serviceNotFound {
             // NO OP
         } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
     }
     
@@ -336,10 +336,10 @@ extension BleCharacteristicNotifyProxyTests {
         do {
             _ = try await bleHeartRateProxy.setNotify(enabled: true, timeout: .seconds(2))
             XCTFail("characteristic set notify was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound {
             // NO OP
         } catch {
-            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
     

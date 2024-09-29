@@ -27,46 +27,30 @@
 
 import CoreBluetooth
 
-/// A struct representing errors related to the BLE central manager proxy.
+/// An enumeration representing various errors that can occur in the `BleCentralManagerProxy`.
 ///
-/// `BleCentralManagerProxyError` encapsulates various error categories that can occur during operations with the BLE central manager proxy.
-/// It provides detailed information about the nature of the error, including an optional underlying error and a descriptive message.
-public struct BleCentralManagerProxyError: Error {
+/// `BleCentralManagerProxyError` is used to signal specific error conditions that arise when interacting with
+/// the central manager proxy, such as connection timeouts, invalid states, or unknown issues.
+public enum BleCentralManagerProxyError: Error {
     
-    // MARK: - Category
-
-    /// An enumeration defining different categories of errors that can occur with the BLE central manager proxy.
-    public enum Category: Equatable {
-        /// The central manager proxy instance has been destroyed and is no longer usable.
-        case destroyed
-        /// Indicates that the central manager is in an invalid state for the requested operation.
-        case invalidState(CBManagerState)
-        /// Indicates that a timeout occurred during an operation.
-        case timeout
-        /// Represents an unknown error condition.
-        case unknown
-    }
-    
-    // MARK: - Properties
-
-    /// The category of the error, indicating the type of issue encountered.
-    public internal(set) var category: Category
-    /// An optional descriptive message providing additional context about the error.
-    public internal(set) var message: String?
-    /// The underlying error that caused this error, if any.
-    public internal(set) var cause: Error?
-    
-    // MARK: - Initialization
-    
-    /// Initializes a new instance of `BleCentralManagerProxyError`.
+    /// Indicates that a timeout occurred during peripheral connection.
     ///
-    /// - Parameters:
-    ///   - category: The category of the error, describing the type of issue encountered.
-    ///   - message: An optional descriptive message providing additional context about the error.
-    ///   - cause: An optional underlying error that provides more details about the cause of the error.
-    public init(category: Category, message: String? = nil, cause: Error? = nil) {
-        self.category = category
-        self.cause = cause
-        self.message = message
-    }
+    /// This error is thrown when a peripheral connection attempt exceeds the allowed time limit.
+    case connectionTimeout
+    
+    /// The central manager proxy instance has been destroyed and is no longer usable.
+    ///
+    /// This error occurs if an operation is attempted on a central manager proxy instance that has been deallocated or is no longer valid.
+    case destroyed
+    
+    /// Indicates that the central manager is in an invalid state for the requested operation.
+    ///
+    /// - Parameter state: The invalid `CBManagerState` that prevented the operation from proceeding.
+    case invalidState(CBManagerState)
+    
+    /// Represents an unknown error condition.
+    ///
+    /// This error is used when an unrecognized or unspecified issue occurs within the central manager proxy.
+    case unknown
+    
 }

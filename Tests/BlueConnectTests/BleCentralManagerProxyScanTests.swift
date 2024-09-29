@@ -149,8 +149,8 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                                 XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
                                 return
                             }
-                            guard case .invalidState(let state) = proxyError.category else {
-                                XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError category 'invalidState', got '\(proxyError.category)' instead")
+                            guard case .invalidState(let state) = proxyError else {
+                                XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(proxyError)' instead")
                                 return
                             }
                             XCTAssertEqual(state, .poweredOff)
@@ -187,8 +187,8 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                                 XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
                                 return
                             }
-                            guard case .destroyed = proxyError.category else {
-                                XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError category 'destroyed', got '\(proxyError.category)' instead")
+                            guard case .destroyed = proxyError else {
+                                XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError 'destroyed', got '\(proxyError)' instead")
                                 return
                             }
                             completionExp.fulfill()

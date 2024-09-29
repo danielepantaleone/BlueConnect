@@ -117,10 +117,10 @@ public class BleCentralManagerProxy: NSObject {
         // Notify callbacks
         connectionCallbacks.values
             .flatMap { $0 }
-            .forEach { $0(.failure(BleCentralManagerProxyError(category: .destroyed))) }
+            .forEach { $0(.failure(BleCentralManagerProxyError.destroyed)) }
         connectionCallbacks.removeAll()
         // Notify scan finished
-        discoverSubject?.send(completion: .failure(BleCentralManagerProxyError(category: .destroyed)))
+        discoverSubject?.send(completion: .failure(BleCentralManagerProxyError.destroyed))
         discoverSubject = nil
     }
     
@@ -204,7 +204,7 @@ extension BleCentralManagerProxy {
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
-            let error = BleCentralManagerProxyError(category: .invalidState(centralManager.state))
+            let error = BleCentralManagerProxyError.invalidState(centralManager.state)
             didFailToConnectSubject.send((peripheral, error))
             callback?(.failure(error))
             return
@@ -270,7 +270,7 @@ extension BleCentralManagerProxy {
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
-            callback?(.failure(BleCentralManagerProxyError(category: .invalidState(centralManager.state))))
+            callback?(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
             return
         }
         
@@ -342,7 +342,7 @@ extension BleCentralManagerProxy {
         
         // Ensure central manager is in a powered-on state.
         guard centralManager.state == .poweredOn else {
-            subject.send(completion: .failure(BleCentralManagerProxyError(category: .invalidState(centralManager.state))))
+            subject.send(completion: .failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
             return subject.eraseToAnyPublisher()
         }
         
@@ -403,7 +403,7 @@ extension BleCentralManagerProxy {
                 notifyCallbacks(
                     store: &connectionCallbacks,
                     uuid: peripheralIdentifier,
-                    value: .failure(BleCentralManagerProxyError(category: .timeout)))
+                    value: .failure(BleCentralManagerProxyError.connectionTimeout))
                 return
             }
             // We attempt to disconnect the peripheral.
@@ -416,7 +416,7 @@ extension BleCentralManagerProxy {
             connectionTimers[peripheralIdentifier] = nil
             disconnect(peripheral: peripheral) { _ in
                 guard let callbacks else { return }
-                callbacks.forEach { $0(.failure(BleCentralManagerProxyError(category: .timeout))) }
+                callbacks.forEach { $0(.failure(BleCentralManagerProxyError.connectionTimeout)) }
             }
           
         }
@@ -483,7 +483,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             // Stop discover timer.
             stopDiscoverTimer()
             // Send publisher failure.
-            discoverSubject?.send(completion: .failure(BleCentralManagerProxyError(category: .invalidState(central.state))))
+            discoverSubject?.send(completion: .failure(BleCentralManagerProxyError.invalidState(central.state)))
             discoverSubject = nil
         }
         
@@ -517,7 +517,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         notifyCallbacks(
             store: &connectionCallbacks,
             uuid: peripheral.identifier,
-            value: .failure(error ?? BleCentralManagerProxyError(category: .unknown)))
+            value: .failure(error ?? BleCentralManagerProxyError.unknown))
         
         // Notify publisher
         didDisconnectSubject.send((peripheral, error))
@@ -549,7 +549,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         notifyCallbacks(
             store: &connectionCallbacks,
             uuid: peripheral.identifier,
-            value: .failure(error ?? BleCentralManagerProxyError(category: .unknown)))
+            value: .failure(error ?? BleCentralManagerProxyError.unknown))
         
     }
     

@@ -116,8 +116,8 @@ extension BleCharacteristicReadProxyTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .peripheralNotConnected = proxyError.category else {
-                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                    guard case .peripheralNotConnected = proxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
                     readExp.fulfill()
@@ -155,8 +155,8 @@ extension BleCharacteristicReadProxyTests {
                         XCTFail("characteristic read was expected to fail with BleCharacteristicProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .decodingError = proxyError.category else {
-                        XCTFail("characteristic read was expected to fail with BleCharacteristicProxyError category 'decodingError', got '\(proxyError.category)' instead")
+                    guard case .decodingError = proxyError else {
+                        XCTFail("characteristic read was expected to fail with BleCharacteristicProxyError 'decodingError', got '\(proxyError)' instead")
                         return
                     }
                     readExp.fulfill()
@@ -194,8 +194,8 @@ extension BleCharacteristicReadProxyTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .timeout = proxyError.category else {
-                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'timeout', got '\(proxyError.category)' instead")
+                    guard case .readTimeout = proxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'readTimeout', got '\(proxyError)' instead")
                         return
                     }
                     readExp.fulfill()
@@ -233,8 +233,8 @@ extension BleCharacteristicReadProxyTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError.category else {
-                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(proxyError.category)' instead")
+                    guard case .serviceNotFound = proxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
                     readExp.fulfill()
@@ -272,8 +272,8 @@ extension BleCharacteristicReadProxyTests {
                         XCTFail("characteristic read was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError.category else {
-                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                    guard case .characteristicNotFound = proxyError else {
+                        XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
                     readExp.fulfill()
@@ -310,10 +310,10 @@ extension BleCharacteristicReadProxyTests {
         do {
             _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .never)
             XCTFail("characteristic read was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+        } catch BlePeripheralProxyError.peripheralNotConnected {
             // NO OP
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -328,10 +328,10 @@ extension BleCharacteristicReadProxyTests {
         do {
             _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .never)
             XCTFail("characteristic read was expected to fail but succeeded instead")
-        } catch let proxyError as BleCharacteristicProxyError where proxyError.category == .decodingError {
+        } catch BleCharacteristicProxyError.decodingError {
             // NO OP
         } catch {
-            XCTFail("characteristic read was expected to fail with BleCharacteristicProxyError category 'decodingError', got '\(error)' instead")
+            XCTFail("characteristic read was expected to fail with BleCharacteristicProxyError 'decodingError', got '\(error)' instead")
         }
     }
     
@@ -346,10 +346,10 @@ extension BleCharacteristicReadProxyTests {
         do {
             _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
             XCTFail("characteristic read was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
+        } catch BlePeripheralProxyError.readTimeout {
             // NO OP
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'readTimeout', got '\(error)' instead")
         }
     }
     
@@ -364,10 +364,10 @@ extension BleCharacteristicReadProxyTests {
         do {
             _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
             XCTFail("characteristic read was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+        } catch BlePeripheralProxyError.serviceNotFound {
             // NO OP
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
     }
     
@@ -382,10 +382,10 @@ extension BleCharacteristicReadProxyTests {
         do {
             _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
             XCTFail("characteristic read was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound {
             // NO OP
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
     

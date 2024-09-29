@@ -27,53 +27,65 @@
 
 import Foundation
 
-/// A struct representing errors related to interactions with a BLE peripheral.
+/// An enumeration representing various errors that can occur while interacting with a BLE peripheral via the `BlePeripheralProxy`.
 ///
-/// `BlePeripheralProxyError` encapsulates various error categories that might occur during BLE peripheral interactions.
-/// It provides detailed information about the nature of the error, including an optional underlying error and a descriptive message.
-public struct BlePeripheralProxyError: Error {
+/// `BlePeripheralProxyError` is used to signal specific error conditions that arise during BLE operations such as reading, writing,
+/// notifying, or discovering services and characteristics.
+public enum BlePeripheralProxyError: Error {
     
-    // MARK: - Category
-
-    /// An enumeration defining different categories of errors that can occur during BLE peripheral interactions.
-    public enum Category: Equatable {
-        /// The specified characteristic was not found on the peripheral.
-        case characteristicNotFound
-        /// The specified characteristic does not contain any data.
-        case characteristicDataIsNil
-        /// The peripheral proxy instance has been destroyed and is no longer usable.
-        case destroyed
-        /// The requested operation (read/write/notify) is not supported by the characteristic or peripheral.
-        case operationNotSupported
-        /// The BLE peripheral is not connected, and operations cannot be performed.
-        case peripheralNotConnected
-        /// The specified service was not found on the peripheral.
-        case serviceNotFound
-        /// The operation timed out before it could complete.
-        case timeout
-    }
-    
-    // MARK: - Properties
-
-    /// The category of the error, indicating the type of issue encountered.
-    public internal(set) var category: Category
-    /// An optional descriptive message providing additional context about the error.
-    public internal(set) var message: String?
-    /// The underlying error that caused this error, if any.
-    public internal(set) var cause: Error?
-    
-    // MARK: - Initialization
-    
-    /// Initializes a new instance of `BlePeripheralProxyError`.
+    /// The specified characteristic was not found on the peripheral.
     ///
-    /// - Parameters:
-    ///   - category: The category of the error, describing the type of issue encountered.
-    ///   - message: An optional descriptive message providing additional context about the error.
-    ///   - cause: An optional underlying error that provides more details about the cause of the error.
-    public init(category: Category, message: String? = nil, cause: Error? = nil) {
-        self.category = category
-        self.cause = cause
-        self.message = message
-    }
+    /// This error occurs when the desired characteristic is unavailable on the connected peripheral.
+    case characteristicNotFound
+    
+    /// The specified characteristic does not contain any data.
+    ///
+    /// This error is thrown when a characteristic is found, but the data it contains is `nil`.
+    case characteristicDataIsNil
+    
+    /// The peripheral proxy instance has been destroyed and is no longer usable.
+    ///
+    /// This error occurs if an operation is attempted on a peripheral proxy instance that has been deallocated or is no longer valid.
+    case destroyed
+    
+    /// The BLE peripheral is not connected, and operations cannot be performed.
+    ///
+    /// This error occurs when trying to perform an action on a peripheral that is not currently connected.
+    case peripheralNotConnected
+    
+    /// The specified service was not found on the peripheral.
+    ///
+    /// This error is thrown when the required service is unavailable on the connected peripheral.
+    case serviceNotFound
+    
+    /// Notify is not supported on the characteristic.
+    ///
+    /// This error occurs when the characteristic does not support notifications.
+    case notifyNotSupported
+    
+    /// The set notify operation timed out before it could complete.
+    ///
+    /// This error occurs when attempting to enable or disable notifications and the operation exceeds the expected time limit.
+    case notifyTimeout
+    
+    /// Reading data from the characteristic is not supported.
+    ///
+    /// This error is thrown when the characteristic does not support reading operations.
+    case readNotSupported
+    
+    /// The read operation timed out before it could complete.
+    ///
+    /// This error occurs when a read operation takes too long to return data.
+    case readTimeout
+    
+    /// Writing data to the characteristic is not supported.
+    ///
+    /// This error occurs when the characteristic does not support writing operations.
+    case writeNotSupported
+    
+    /// The write operation timed out before it could complete.
+    ///
+    /// This error occurs when a write operation exceeds the allowed time limit.
+    case writeTimeout
     
 }

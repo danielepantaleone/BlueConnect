@@ -132,8 +132,8 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .peripheralNotConnected = proxyError.category else {
-                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                    guard case .peripheralNotConnected = proxyError else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
@@ -176,8 +176,8 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError.category else {
-                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                    guard case .characteristicNotFound = proxyError else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
@@ -222,8 +222,8 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .operationNotSupported = proxyError.category else {
-                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(proxyError.category)' instead")
+                    guard case .writeNotSupported = proxyError else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'writeNotSupported', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
@@ -270,8 +270,8 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .timeout = proxyError.category else {
-                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'timeout', got '\(proxyError.category)' instead")
+                    guard case .writeTimeout = proxyError else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'writeTimeout', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
@@ -318,7 +318,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         XCTFail("characteristic write was expected to fail with MockBleError.mockedError, got '\(error)' instead")
                         return
                     }
-                    guard mockedError == MockBleError.mockedError else {
+                    guard mockedError == .mockedError else {
                         XCTFail("characteristic write was expected to fail with MockBleError.mockedError, got '\(mockedError)' instead")
                         return
                     }
@@ -342,7 +342,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Mock write delay
         try blePeripheral_1.delayOnWrite = .seconds(2)
         // Test write to fail
-        let expectation = expectation(description: "waiting for characteristic read to fail")
+        let expectation = expectation(description: "waiting for characteristic write to fail")
         blePeripheralProxy_1.write(
             data: "ABCD".data(using: .utf8)!,
             to: MockBleDescriptor.secretCharacteristicUUID,
@@ -356,8 +356,8 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .destroyed = proxyError.category else {
-                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'destroyed', got '\(proxyError.category)' instead")
+                    guard case .destroyed = proxyError else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'destroyed', got '\(proxyError)' instead")
                         return
                     }
                     expectation.fulfill()
@@ -417,10 +417,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.secretCharacteristicUUID,
                 timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+        } catch BlePeripheralProxyError.peripheralNotConnected {
             XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -437,10 +437,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.secretCharacteristicUUID,
                 timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound {
             XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
     
@@ -459,10 +459,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.serialNumberCharacteristicUUID,
                 timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
+        } catch BlePeripheralProxyError.writeNotSupported {
             XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'writeNotSupported', got '\(error)' instead")
         }
     }
     
@@ -483,10 +483,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.secretCharacteristicUUID,
                 timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .timeout {
+        } catch BlePeripheralProxyError.writeTimeout {
             XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'timeout', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'writeTimeout', got '\(error)' instead")
         }
     }
     
@@ -510,7 +510,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         } catch MockBleError.mockedError {
             XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
         } catch {
-            XCTFail("characteristic write was expected to fail with MockBleError.mockedError, got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with MockBleError 'mockedError', got '\(error)' instead")
         }
     }
     
@@ -551,10 +551,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Test characteristic write
         do {
             try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.bufferCharacteristicUUID)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+        } catch BlePeripheralProxyError.peripheralNotConnected {
 
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -568,10 +568,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Test characteristic write
         do {
             try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.bufferCharacteristicUUID)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound {
 
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
     
@@ -587,10 +587,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Test characteristic write
         do {
             try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.secretCharacteristicUUID)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .operationNotSupported {
+        } catch BlePeripheralProxyError.writeNotSupported {
 
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'operationNotSupported', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'writeNotSupported', got '\(error)' instead")
         }
     }
     

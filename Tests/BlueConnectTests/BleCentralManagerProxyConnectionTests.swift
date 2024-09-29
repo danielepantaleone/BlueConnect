@@ -145,7 +145,7 @@ extension BleCentralManagerProxyConnectionTests {
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
             .sink { _, error in
                 guard let proxyError = error as? BleCentralManagerProxyError else { return }
-                guard case .invalidState(let state) = proxyError.category else { return }
+                guard case .invalidState(let state) = proxyError else { return }
                 XCTAssertEqual(state, .poweredOff)
                 connectionFailurePublisherExp.fulfill()
             }
@@ -170,8 +170,8 @@ extension BleCentralManagerProxyConnectionTests {
                         XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .invalidState(let state) = proxyError.category else {
-                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError category 'invalidState', got '\(proxyError.category)' instead")
+                    guard case .invalidState(let state) = proxyError else {
+                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertEqual(state, .poweredOff)
@@ -258,8 +258,8 @@ extension BleCentralManagerProxyConnectionTests {
                             XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
                             return
                         }
-                        guard case .timeout = proxyError.category else {
-                            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError category 'timeout', got '\(proxyError.category)' instead")
+                        guard case .connectionTimeout = proxyError else {
+                            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError 'connectionTimeout', got '\(proxyError)' instead")
                             return
                         }
                         connectExp.fulfill()
@@ -346,14 +346,10 @@ extension BleCentralManagerProxyConnectionTests {
                 peripheral: try blePeripheral_1,
                 options: nil,
                 timeout: .never)
-        } catch let proxyError as BleCentralManagerProxyError {
-            guard case .invalidState(let state) = proxyError.category else {
-                XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError category 'invalidState', got '\(proxyError.category)' instead")
-                return
-            }
+        } catch BleCentralManagerProxyError.invalidState(let state) {
             XCTAssertEqual(state, .poweredOff)
         } catch {
-            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError.invalidState, got '\(error)' instead")
         }
     }
     
@@ -370,10 +366,10 @@ extension BleCentralManagerProxyConnectionTests {
                 peripheral: try blePeripheral_1,
                 options: nil,
                 timeout: .seconds(2))
-        } catch let proxyError as BleCentralManagerProxyError where proxyError.category == .timeout {
+        } catch BleCentralManagerProxyError.connectionTimeout {
             XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         } catch {
-            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError category 'timeout', got '\(error)' instead")
+            XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError 'connectionTimeout', got '\(error)' instead")
         }
     }
     

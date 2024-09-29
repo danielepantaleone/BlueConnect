@@ -166,8 +166,8 @@ extension BleCentralManagerProxyDisconnectionTests {
                         XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .invalidState(let state) = proxyError.category else {
-                        XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError category 'invalidState', got '\(proxyError.category)' instead")
+                    guard case .invalidState(let state) = proxyError else {
+                        XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertEqual(state, .poweredOff)
@@ -202,14 +202,10 @@ extension BleCentralManagerProxyDisconnectionTests {
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         do {
             try await bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1)
-        } catch let proxyError as BleCentralManagerProxyError {
-            guard case .invalidState(let state) = proxyError.category else {
-                XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError category 'invalidState', got '\(proxyError.category)' instead")
-                return
-            }
+        } catch BleCentralManagerProxyError.invalidState(let state) {
             XCTAssertEqual(state, .poweredOff)
         } catch {
-            XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+            XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(error)' instead")
         }
     }
     

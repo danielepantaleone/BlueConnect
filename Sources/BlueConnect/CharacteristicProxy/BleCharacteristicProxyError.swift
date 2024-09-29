@@ -27,43 +27,24 @@
 
 import Foundation
 
-/// An struct representing various errors that can occur during interactions with a BLE characteristic.
+/// An enumeration representing errors related to BLE characteristic data handling in the `BleCharacteristicProxy`.
 ///
-/// `BleCharacteristicProxyError` encapsulates various error categories that might occur during BLE characteristic interactions.
-/// It provides detailed information about the nature of the error, including an optional underlying error and a descriptive message.
-public struct BleCharacteristicProxyError: Error {
+/// `BleCharacteristicProxyError` signals issues with encoding or decoding characteristic data during BLE operations,
+/// and includes the underlying cause of the error.
+public enum BleCharacteristicProxyError: Error {
     
-    // MARK: - Category
-
-    /// An enumeration defining different categories of errors that can occur during BLE peripheral interactions.
-    public enum Category: Equatable {
-        /// The characteristic proxy correctly retrieved characteristic data but data conversion towards characteristic managed type failed.
-        case decodingError
-        /// The characteristic proxy didn't manage to encode characteristic value type into raw data to be written on the BLE peripheral.
-        case encodingError
-    }
-    
-    // MARK: - Properties
-
-    /// The category of the error, indicating the type of issue encountered.
-    public internal(set) var category: Category
-    /// An optional descriptive message providing additional context about the error.
-    public internal(set) var message: String?
-    /// The underlying error that caused this error, if any.
-    public internal(set) var cause: Error?
-    
-    // MARK: - Initialization
-    
-    /// Initializes a new instance of `BleCharacteristicProxyError`.
+    /// The characteristic proxy successfully retrieved the characteristic data, but data conversion to the expected type failed.
     ///
-    /// - Parameters:
-    ///   - category: The category of the error, describing the type of issue encountered.
-    ///   - message: An optional descriptive message providing additional context about the error.
-    ///   - cause: An optional underlying error that provides more details about the cause of the error.
-    public init(category: Category, message: String? = nil, cause: Error? = nil) {
-        self.category = category
-        self.cause = cause
-        self.message = message
-    }
+    /// - Parameter cause: The underlying error that caused the decoding to fail.
+    ///
+    /// This error occurs when the raw data received from the characteristic cannot be decoded into the format expected by the proxy.
+    case decodingError(cause: Error)
+    
+    /// The characteristic proxy failed to encode the characteristic value into the raw data format required for writing to the BLE peripheral.
+    ///
+    /// - Parameter cause: The underlying error that caused the encoding to fail.
+    ///
+    /// This error occurs when encoding the characteristic value type into a binary format fails, preventing the data from being sent to the peripheral.
+    case encodingError(cause: Error)
     
 }

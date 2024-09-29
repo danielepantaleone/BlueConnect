@@ -228,8 +228,8 @@ extension BlePeripheralProxyDiscoverServiceTests {
                         XCTFail("service discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .peripheralNotConnected = proxyError.category else {
-                        XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                    guard case .peripheralNotConnected = proxyError else {
+                        XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
@@ -271,8 +271,8 @@ extension BlePeripheralProxyDiscoverServiceTests {
                         XCTFail("service discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError.category else {
-                        XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(proxyError.category)' instead")
+                    guard case .serviceNotFound = proxyError else {
+                        XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
@@ -314,8 +314,8 @@ extension BlePeripheralProxyDiscoverServiceTests {
                         XCTFail("service discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError.category else {
-                        XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(proxyError.category)' instead")
+                    guard case .serviceNotFound = proxyError else {
+                        XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
@@ -348,8 +348,8 @@ extension BlePeripheralProxyDiscoverServiceTests {
                         XCTFail("service discovery was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .destroyed = proxyError.category else {
-                        XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'destroyed', got '\(proxyError.category)' instead")
+                    guard case .destroyed = proxyError else {
+                        XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'destroyed', got '\(proxyError)' instead")
                         return
                     }
                     expectation.fulfill()
@@ -392,11 +392,11 @@ extension BlePeripheralProxyDiscoverServiceTests {
             try await blePeripheralProxy_1.discover(
                 serviceUUID: MockBleDescriptor.heartRateServiceUUID,
                 timeout: .never)
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+        } catch BlePeripheralProxyError.peripheralNotConnected {
             XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
         } catch {
-            XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -412,11 +412,11 @@ extension BlePeripheralProxyDiscoverServiceTests {
             try await blePeripheralProxy_1.discover(
                 serviceUUID: MockBleDescriptor.heartRateServiceUUID,
                 timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+        } catch BlePeripheralProxyError.serviceNotFound {
             XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
         } catch {
-            XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+            XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
     }
     
@@ -432,11 +432,11 @@ extension BlePeripheralProxyDiscoverServiceTests {
             try await blePeripheralProxy_1.discover(
                 serviceUUID: MockBleDescriptor.heartRateServiceUUID,
                 timeout: .seconds(2))
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+        } catch BlePeripheralProxyError.serviceNotFound {
             XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.discoverServiceTimers[MockBleDescriptor.heartRateServiceUUID])
         } catch {
-            XCTFail("service discovery was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+            XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
     }
     

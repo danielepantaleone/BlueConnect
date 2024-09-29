@@ -100,8 +100,8 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .peripheralNotConnected = proxyError.category else {
-                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(proxyError.category)' instead")
+                    guard case .peripheralNotConnected = proxyError else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
                     writeExp.fulfill()
@@ -132,8 +132,8 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .serviceNotFound = proxyError.category else {
-                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(proxyError.category)' instead")
+                    guard case .serviceNotFound = proxyError else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(proxyError)' instead")
                         return
                     }
                     writeExp.fulfill()
@@ -164,8 +164,8 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .characteristicNotFound = proxyError.category else {
-                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(proxyError.category)' instead")
+                    guard case .characteristicNotFound = proxyError else {
+                        XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
                         return
                     }
                     writeExp.fulfill()
@@ -205,10 +205,10 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                 value: Data([0x00, 0x01, 0x02, 0x03]),
                 timeout: .never)
             XCTFail("characteristic write was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .peripheralNotConnected {
+        } catch BlePeripheralProxyError.peripheralNotConnected {
             // NO OP
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -225,10 +225,10 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                 value: Data([0x00, 0x01, 0x02, 0x03]),
                 timeout: .seconds(2))
             XCTFail("characteristic write was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .serviceNotFound {
+        } catch BlePeripheralProxyError.serviceNotFound {
             // NO OP
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'serviceNotFound', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
     }
     
@@ -245,10 +245,10 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
                 value: Data([0x00, 0x01, 0x02, 0x03]),
                 timeout: .seconds(2))
             XCTFail("characteristic write was expected to fail but succeeded instead")
-        } catch let proxyError as BlePeripheralProxyError where proxyError.category == .characteristicNotFound {
+        } catch BlePeripheralProxyError.characteristicNotFound {
             // NO OP
         } catch {
-            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError category 'characteristicNotFound', got '\(error)' instead")
+            XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
     
