@@ -4,15 +4,16 @@ on:
     branches:
       - 'master'
     paths-ignore:
-      - 'Documentation/**'
-      - 'README.md'
       - 'BlueConnect.podspec'
+      - 'Documentation/**'
       - 'README.md'
       - 'LICENSE'
       - 'swift-generate-documentation.sh'
   pull_request:
     branches: 
       - '*'
+    types: [opened, reopened]
+  workflow_dispatch:
 jobs:
   tests:
     name: Swift ${{ matrix.swift }} on ${{ matrix.platform }}
