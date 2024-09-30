@@ -178,7 +178,7 @@ centralManagerProxy.didDisconnectPublisher
 
 do {
     // The following will disconnect a BLE peripheral.
-    // If the connection cannot be performed established then nothing is advertised on the combine publisher.
+    // If the connection cannot be established then nothing is advertised on the combine publisher.
     try await centralManagerProxy.disconnect(peripheral: peripheral)
     print("peripheral '\(peripheral.identifier)' disconnected")
 } catch {
@@ -203,7 +203,8 @@ struct SerialNumberProxy: BleCharacteristicReadProxy {
     
     var characteristicUUID: CBUUID = CBUUID(string: "2A25")
     var serviceUUID: CBUUID = CBUUID(string: "180A")
-    var peripheralProxy: BlePeripheralProxy
+
+    weak var peripheralProxy: BlePeripheralProxy?
     
     init(peripheralProxy: BlePeripheralProxy) {
         self.peripheralProxy = peripheralProxy
@@ -221,7 +222,7 @@ let serialNumberProxy = SerialNumberProxy(peripheralProxy: peripheralProxy)
 
 // You can optionally subscribe a publisher to be notified when data is read from the characteristic.
 // The publisher sink method won't be triggered when reading data from local cache.
-serialNumberProxy.didUpdateValuePublisher?
+serialNumberProxy.didUpdateValuePublisher
     .receive(on: DispatchQueue.main)
     .sink { serialNumber in 
         print("serial number is \(serialNumber)")
@@ -256,7 +257,8 @@ struct PinProxy: BleCharacteristicWriteProxy {
     
     var characteristicUUID: CBUUID = CBUUID(string: "5A8F2E01-58D9-4B0B-83B8-843402E49293")
     var serviceUUID: CBUUID = CBUUID(string: "C5405A74-7C07-4702-A631-9D5EBF007DAE")
-    var peripheralProxy: BlePeripheralProxy
+
+    weak var peripheralProxy: BlePeripheralProxy?
     
     init(peripheralProxy: BlePeripheralProxy) {
         self.peripheralProxy = peripheralProxy
@@ -273,7 +275,7 @@ let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
 let pinProxy = PinProxy(peripheralProxy: peripheralProxy)
 
 // You can optionally subscribe a publisher to be notified when data is written to the characteristic.
-pinProxy.didWriteValuePublisher?
+pinProxy.didWriteValuePublisher
     .receive(on: DispatchQueue.main)
     .sink {  
         print("data was written to the characteristic")
@@ -311,7 +313,8 @@ struct HeartRateProxy: BleCharacteristicReadProxy, BleCharacteristicNotifyProxy 
     
     var characteristicUUID: CBUUID = CBUUID(string: "2A37")
     var serviceUUID: CBUUID = CBUUID(string: "180D")
-    var peripheralProxy: BlePeripheralProxy
+
+    weak var peripheralProxy: BlePeripheralProxy?
     
     init(peripheralProxy: BlePeripheralProxy) {
         self.peripheralProxy = peripheralProxy
@@ -336,7 +339,7 @@ heartRateProxy.didUpdateNotificationStatePublisher
     .store(in: &subscriptions)
 
 // You can optionally subscribe a publisher to be notified when data is received from the characteristic.
-heartRateProxy.didUpdateValuePublisher?
+heartRateProxy.didUpdateValuePublisher
     .receive(on: DispatchQueue.main)
     .sink { heartRate in 
         print("heart rate is \(heartRate)")
