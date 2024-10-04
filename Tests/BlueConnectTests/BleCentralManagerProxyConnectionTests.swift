@@ -144,10 +144,13 @@ extension BleCentralManagerProxyConnectionTests {
             .receive(on: DispatchQueue.main)
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
             .sink { _, error in
-                guard let proxyError = error as? BleCentralManagerProxyError else { return }
-                guard case .invalidState(let state) = proxyError else { return }
-                XCTAssertEqual(state, .poweredOff)
-                connectionFailurePublisherExp.fulfill()
+                switch error {
+                    case BleCentralManagerProxyError.invalidState(let state):
+                        XCTAssertEqual(state, .poweredOff)
+                        connectionFailurePublisherExp.fulfill()
+                    default:
+                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                }
             }
             .store(in: &subscriptions)
         // Test connection publisher not called
@@ -237,6 +240,7 @@ extension BleCentralManagerProxyConnectionTests {
         let connectExp = expectation(description: "waiting for peripheral connection to fail")
         let publisherExp = expectation(description: "waiting for publisher not to be called")
         publisherExp.isInverted = true
+        let connectionFailurePublisherExp = expectation(description: "waiting for connection failure publisher to be called")
         // Mock connection timeout
         bleCentralManager.delayOnConnection = .seconds(10)
         // Test publisher not called
@@ -244,6 +248,19 @@ extension BleCentralManagerProxyConnectionTests {
             .receive(on: DispatchQueue.main)
             .filter { $0.identifier == MockBleDescriptor.peripheralUUID_1 }
             .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test connection failure publisher to be called
+        bleCentralManagerProxy.didFailToConnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _, error in
+                switch error {
+                    case BleCentralManagerProxyError.connectionTimeout:
+                        connectionFailurePublisherExp.fulfill()
+                    default:
+                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                }
+            }
             .store(in: &subscriptions)
         // Test connection failure on callback
         bleCentralManagerProxy.connect(
@@ -265,7 +282,7 @@ extension BleCentralManagerProxyConnectionTests {
                         connectExp.fulfill()
                 }
             }
-        wait(for: [connectExp, publisherExp], timeout: 4.0)
+        wait(for: [connectExp, publisherExp, connectionFailurePublisherExp], timeout: 4.0)
         // Assert final peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
@@ -277,8 +294,8 @@ extension BleCentralManagerProxyConnectionTests {
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         let connectExp = expectation(description: "waiting for peripheral connection to fail")
         let connectionPublisherExp = expectation(description: "waiting for connection publisher not to be called")
-        let connectionFailurePublisherExp = expectation(description: "waiting for connection failure publisher to be called")
         connectionPublisherExp.isInverted = true
+        let connectionFailurePublisherExp = expectation(description: "waiting for connection failure publisher to be called")
         // Mock connection timeout
         bleCentralManager.errorOnConnection = MockBleError.mockedError
         // Test connection publisher not called
