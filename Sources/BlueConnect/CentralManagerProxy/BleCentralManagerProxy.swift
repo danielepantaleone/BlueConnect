@@ -69,6 +69,7 @@ public class BleCentralManagerProxy: NSObject {
     // MARK: - Internal properties
     
     var connectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
+    var connectionState: [UUID: CBPeripheralState] = [:]
     var connectionTimers: [UUID: DispatchSourceTimer] = [:]
     var connectionTimeouts: Set<UUID> = []
     var disconnectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
@@ -231,7 +232,9 @@ extension BleCentralManagerProxy {
             return
         }
         
-        // Initiate connection
+        // Track connection state.
+        connectionState[peripheral.identifier] = .connecting
+        // Initiate connection.
         centralManager.connect(peripheral, options: options)
         
     }
@@ -469,17 +472,45 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
-        // Notify publisher.
-        didUpdateStateSubject.send(central.state)
-        
         // Notify scan termination (if scanning)
         if central.state != .poweredOn {
+            
             // Stop discover timer.
             stopDiscoverTimer()
             // Send publisher failure.
             discoverSubject?.send(completion: .failure(BleCentralManagerProxyError.invalidState(central.state)))
             discoverSubject = nil
+            
+            // Notify connection failures.
+            for (peripheralIdentifier, state) in connectionState where state == .connecting {
+                guard let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first else { continue }
+                // Stop timer
+                stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
+                // Notify publisher
+                didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
+                // Notify registered callbacks
+                notifyCallbacks(
+                    store: &connectionCallbacks,
+                    uuid: peripheral.identifier,
+                    value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
+            }
+            
+            // Notify disconnect.
+            for (peripheralIdentifier, state) in connectionState where state == .connected {
+                guard let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first else { continue }
+                // Notify publisher
+                didDisconnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
+                // Notify registered callbacks
+                notifyCallbacks(
+                    store: &disconnectionCallbacks,
+                    uuid: peripheral.identifier,
+                    value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
+            }
+            
         }
+        
+        // Notify state publisher.
+        didUpdateStateSubject.send(central.state)
         
     }
     
@@ -488,6 +519,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
+        // Track connection state.
+        connectionState[peripheral.identifier] = .connected
         // Stop timer.
         stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
         // Notify publisher.
@@ -517,19 +550,32 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
                 store: &connectionCallbacks,
                 uuid: peripheral.identifier,
                 value: .failure(BleCentralManagerProxyError.connectionTimeout))
-        } else {
+        }
+        // Here the peripheral did not connect at all so we route this over the connection failed publisher.
+        else if connectionState[peripheral.identifier] == .connecting {
+            // Notify publisher.
+            didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
+            // Notify callbacks.
+            notifyCallbacks(
+                store: &connectionCallbacks,
+                uuid: peripheral.identifier,
+                value: .failure(error ?? BleCentralManagerProxyError.unknown))
+        }
+        // Regular disconnection.
+        else {
             // Notify publisher.
             didDisconnectSubject.send((peripheral, error))
             // Notify registered callbacks (only if disconnection initiated by calling disconnect() else no callback is set).
             notifyCallbacks(
                 store: &disconnectionCallbacks,
                 uuid: peripheral.identifier,
-                value: .success(()))
+                value: error != nil ? .failure(error!) : .success(()))
         }
         
-        // Remove tracked timeout.
+        // Track connection state.
+        connectionState[peripheral.identifier] = .disconnected
         connectionTimeouts.remove(peripheral.identifier)
-        
+
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: Int) {
@@ -544,7 +590,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
-        // Remove tracked timeout if any.
+        // Track connection state.
+        connectionState[peripheral.identifier] = .disconnected
         connectionTimeouts.remove(peripheral.identifier)
         // Stop timer
         stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
@@ -559,7 +606,20 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     }
     
     public func bleCentralManager(_ central: BleCentralManager, willRestoreState dict: [String: Any]) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // Track connection state.
+        if let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] {
+            for peripheral in peripherals {
+                connectionState[peripheral.identifier] = peripheral.state
+            }
+        }
+        
+        // Notify publisher.
         willRestoreStateSubject.send(dict)
+        
     }
     
 }
