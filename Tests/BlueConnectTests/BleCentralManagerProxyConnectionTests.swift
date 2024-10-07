@@ -193,6 +193,7 @@ extension BleCentralManagerProxyConnectionTests {
         let connectExp = expectation(description: "waiting for peripheral connection to fail")
         let publisherExp = expectation(description: "waiting for publisher not to be called")
         publisherExp.isInverted = true
+        let connectionFailurePublisherExp = expectation(description: "waiting for connection failure publisher to be called")
         // Mock connection delay
         bleCentralManager.delayOnConnection = .seconds(2)
         // Test publisher not called
@@ -200,6 +201,20 @@ extension BleCentralManagerProxyConnectionTests {
             .receive(on: DispatchQueue.main)
             .filter { $0.identifier == MockBleDescriptor.peripheralUUID_1 }
             .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Test connection failure publisher to be called
+        bleCentralManagerProxy.didFailToConnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _, error in
+                switch error {
+                    case BleCentralManagerProxyError.invalidState(let state):
+                        XCTAssertEqual(state, .poweredOff)
+                        connectionFailurePublisherExp.fulfill()
+                    default:
+                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                }
+            }
             .store(in: &subscriptions)
         // Test connection failure on callback
         bleCentralManagerProxy.connect(
@@ -212,12 +227,12 @@ extension BleCentralManagerProxyConnectionTests {
                 case .success:
                     XCTFail("peripheral connection was expected to fail but succeeded instead")
                 case .failure(let error):
-                    guard let mockedError = error as? MockBleError else {
-                        XCTFail("peripheral connection was expected to fail with MockBleError, got '\(error)' instead")
+                    guard let proxyError = error as? BleCentralManagerProxyError else {
+                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
                         return
                     }
-                    guard case .bluetoothIsOff = mockedError else {
-                        XCTFail("peripheral connection was expected to fail with MockBleError.bluetoothIsOff, got '\(mockedError)' instead")
+                    guard case .invalidState = proxyError else {
+                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError.invalidState, got '\(proxyError)' instead")
                         return
                     }
                     XCTAssertEqual(bleCentralManager.state, .poweredOff)
@@ -228,7 +243,7 @@ extension BleCentralManagerProxyConnectionTests {
         // Turn of ble central manager
         centralManager(state: .poweredOff)
         // Await expectations
-        wait(for: [connectExp, publisherExp], timeout: 4.0)
+        wait(for: [connectExp, connectionFailurePublisherExp, publisherExp], timeout: 4.0)
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
     

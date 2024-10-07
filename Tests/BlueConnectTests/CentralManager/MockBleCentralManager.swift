@@ -56,8 +56,8 @@ class MockBleCentralManager: BleCentralManager {
         didSet {
             queue.async { [weak self] in
                 guard let self else { return }
-                centraManagerDelegate?.bleCentralManagerDidUpdateState(self)
                 disconnectAllPeripheralsIfNotPoweredOn()
+                centraManagerDelegate?.bleCentralManagerDidUpdateState(self)
             }
         }
     }
@@ -215,20 +215,7 @@ class MockBleCentralManager: BleCentralManager {
         guard state != .poweredOn else { return }
         for peripheral in peripherals {
             guard let mockPeripheral = peripheral as? MockBlePeripheral else { continue }
-            guard mockPeripheral.state != .disconnected else { continue }
-            if mockPeripheral.state == .connecting {
-                mockPeripheral.state = .disconnected
-                centraManagerDelegate?.bleCentralManager(
-                    self,
-                    didFailToConnect: peripheral,
-                    error: MockBleError.bluetoothIsOff)
-            } else {
-                mockPeripheral.state = .disconnected
-                centraManagerDelegate?.bleCentralManager(
-                    self,
-                    didDisconnectPeripheral: mockPeripheral,
-                    error: MockBleError.bluetoothIsOff)
-            }
+            mockPeripheral.state = .disconnected
         }
     }
     
