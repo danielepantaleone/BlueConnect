@@ -41,6 +41,7 @@ This combination of asynchronous communication, event-driven architecture, and t
 - Provides direct interaction with **`CBPeripheral`** characteristics with no need to manage **`CBPeripheral`** data.
 - Provides an optional cache policy for **`CBPeripheral`** data retrieval, ideal for scenarios where characteristic data remains static over time.
 - Provides automatic service/characteristic discovery when characteristic operations are requested (read, write, set notify).
+- Correct routing of **`CBCentralManager`** disconnection events towards connection failure publisher and callbacks if the connection didn't happen at all.
 - Facilitates unit testing by supporting BLE central and peripheral mocks, enabling easier testing for libraries and apps that interact with BLE peripherals.
 
 ## Usage
