@@ -138,7 +138,7 @@ extension BleCentralManagerProxyDisconnectionTests {
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
             .sink { _ in expectation.fulfill() }
             .store(in: &subscriptions)
-        // Turn of ble central manager
+        // Turn off ble central manager
         centralManager(state: .poweredOff)
         // Check final state
         wait(for: [expectation], timeout: 2.0)

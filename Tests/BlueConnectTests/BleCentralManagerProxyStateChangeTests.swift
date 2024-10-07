@@ -46,4 +46,82 @@ final class BleCentralManagerProxyStateChangeTests: BlueConnectTests {
         XCTAssertEqual(bleCentralManager.state, .poweredOff)
     }
     
+    func testPeripheralConnectFailAndDisconnectDueToBleCentralManagerGoingOff() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Assert initial peripheral state
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(try blePeripheral_2.state, .disconnected)
+        // Connect peripheral 1
+        connect(peripheral: try blePeripheral_1)
+        XCTAssertEqual(try blePeripheral_1.state, .connected)
+        // Mock connection delay
+        bleCentralManager.delayOnConnection = .seconds(2)
+        // Configure assertions
+        let disconnectPublisherExp = expectation(description: "waiting for disconnection publisher to be called on blePeripheral_1")
+        let connectFailPublisherExp = expectation(description: "waiting for connection failure publisher to be called on blePeripheral_2")
+        let connectExp = expectation(description: "waiting for blePeripheral_2 connection to fail")
+        // Test disconnection publisher to be called on blePeripheral_1
+        bleCentralManagerProxy.didDisconnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _, error in
+                guard let error else {
+                    XCTFail("expected BleCentralManagerProxyError, got nil instead")
+                    return
+                }
+                switch error {
+                    case BleCentralManagerProxyError.invalidState(let state):
+                        XCTAssertEqual(state, .poweredOff)
+                        disconnectPublisherExp.fulfill()
+                    default:
+                        XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                }
+            }
+            .store(in: &subscriptions)
+        // Test connection failure publisher to be called on blePeripheral_2
+        bleCentralManagerProxy.didFailToConnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_2 }
+            .sink { _, error in
+                switch error {
+                    case BleCentralManagerProxyError.invalidState(let state):
+                        XCTAssertEqual(state, .poweredOff)
+                        connectFailPublisherExp.fulfill()
+                    default:
+                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                }
+            }
+            .store(in: &subscriptions)
+        // Test connection failure on callback
+        bleCentralManagerProxy.connect(
+            peripheral: try blePeripheral_2,
+            options: nil,
+            timeout: .never
+        ) { [weak self] result in
+            guard let self else { return }
+            switch result {
+                case .success:
+                    XCTFail("peripheral connection was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BleCentralManagerProxyError else {
+                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .invalidState = proxyError else {
+                        XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError.invalidState, got '\(proxyError)' instead")
+                        return
+                    }
+                    XCTAssertEqual(bleCentralManager.state, .poweredOff)
+                    XCTAssertNil(bleCentralManagerProxy.connectionTimers[MockBleDescriptor.peripheralUUID_1])
+                    connectExp.fulfill()
+            }
+        }
+        // Turn off ble central manager
+        centralManager(state: .poweredOff)
+        // Await expectations
+        wait(for: [connectExp, connectFailPublisherExp, disconnectPublisherExp], timeout: 4.0)
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+    }
+    
 }

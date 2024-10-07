@@ -240,7 +240,7 @@ extension BleCentralManagerProxyConnectionTests {
                     connectExp.fulfill()
             }
         }
-        // Turn of ble central manager
+        // Turn off ble central manager
         centralManager(state: .poweredOff)
         // Await expectations
         wait(for: [connectExp, connectionFailurePublisherExp, publisherExp], timeout: 4.0)
