@@ -116,11 +116,16 @@ public class BleCentralManagerProxy: NSObject {
         connectionTimers.removeAll()
         discoverTimer?.cancel()
         discoverTimer = nil
-        // Notify callbacks
+        // Notify connection callbacks
         connectionCallbacks.values
             .flatMap { $0 }
             .forEach { $0(.failure(BleCentralManagerProxyError.destroyed)) }
         connectionCallbacks.removeAll()
+        // Notify disconnection callbacks
+        disconnectionCallbacks.values
+            .flatMap { $0 }
+            .forEach { $0(.failure(BleCentralManagerProxyError.destroyed)) }
+        disconnectionCallbacks.removeAll()
         // Notify scan finished
         discoverSubject?.send(completion: .failure(BleCentralManagerProxyError.destroyed))
         discoverSubject = nil
