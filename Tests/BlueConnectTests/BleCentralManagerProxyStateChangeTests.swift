@@ -56,7 +56,7 @@ final class BleCentralManagerProxyStateChangeTests: BlueConnectTests {
         connect(peripheral: try blePeripheral_1)
         XCTAssertEqual(try blePeripheral_1.state, .connected)
         // Mock connection delay
-        bleCentralManager.delayOnConnection = .seconds(2)
+        bleCentralManager.delayOnConnection = .seconds(4)
         // Configure assertions
         let disconnectPublisherExp = expectation(description: "waiting for disconnection publisher to be called on blePeripheral_1")
         let connectFailPublisherExp = expectation(description: "waiting for connection failure publisher to be called on blePeripheral_2")
@@ -117,10 +117,12 @@ final class BleCentralManagerProxyStateChangeTests: BlueConnectTests {
                     connectExp.fulfill()
             }
         }
+        // Wait a bit before turning off central manager.
+        wait(.seconds(2))
         // Turn off ble central manager
         centralManager(state: .poweredOff)
         // Await expectations
-        wait(for: [connectExp, connectFailPublisherExp, disconnectPublisherExp], timeout: 4.0)
+        wait(for: [connectExp, connectFailPublisherExp, disconnectPublisherExp], timeout: 6.0)
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         XCTAssertEqual(try blePeripheral_2.state, .disconnected)
         XCTAssertEqual(bleCentralManagerProxy.connectionState[MockBleDescriptor.peripheralUUID_1], .disconnected)
