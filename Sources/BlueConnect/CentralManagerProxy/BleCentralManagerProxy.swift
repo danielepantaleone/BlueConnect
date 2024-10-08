@@ -593,15 +593,10 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: Int) {
-        
-        mutex.lock()
-        defer { mutex.unlock() }
-        
         discoverSubject?.send((
             peripheral: peripheral,
             advertisementData: advertisementData,
             RSSI: RSSI))
-        
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didFailToConnect peripheral: BlePeripheral, error: Error?) {
