@@ -479,7 +479,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
-        // Notify scan termination (if scanning)
+        // Kill peripheral discovery and notify connection failures and disconnections.
         if central.state != .poweredOn {
             
             // Stop discover timer.
@@ -491,11 +491,13 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             // Notify connection failures.
             for (peripheralIdentifier, state) in connectionState where state == .connecting {
                 guard let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first else { continue }
-                // Stop timer
+                // Track disconnected state.
+                connectionState[peripheral.identifier] = .disconnected
+                // Stop timer.
                 stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
-                // Notify publisher
+                // Notify publisher.
                 didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
-                // Notify registered callbacks
+                // Notify registered callbacks.
                 notifyCallbacks(
                     store: &connectionCallbacks,
                     uuid: peripheral.identifier,
@@ -505,14 +507,19 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             // Notify disconnect.
             for (peripheralIdentifier, state) in connectionState where state == .connected {
                 guard let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first else { continue }
-                // Notify publisher
+                // Track disconnected state.
+                connectionState[peripheral.identifier] = .disconnected
+                // Notify publisher.
                 didDisconnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
-                // Notify registered callbacks
+                // Notify registered callbacks.
                 notifyCallbacks(
                     store: &disconnectionCallbacks,
                     uuid: peripheral.identifier,
                     value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
             }
+            
+            // Remove any tracked connection timeout.
+            connectionTimeouts.removeAll()
             
         }
         

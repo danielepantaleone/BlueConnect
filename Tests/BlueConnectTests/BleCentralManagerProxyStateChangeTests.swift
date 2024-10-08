@@ -122,6 +122,10 @@ final class BleCentralManagerProxyStateChangeTests: BlueConnectTests {
         // Await expectations
         wait(for: [connectExp, connectFailPublisherExp, disconnectPublisherExp], timeout: 4.0)
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(try blePeripheral_2.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionState[MockBleDescriptor.peripheralUUID_1], .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionState[MockBleDescriptor.peripheralUUID_2], .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionTimeouts.count, 0 )
     }
     
 }
