@@ -289,12 +289,14 @@ extension BleCentralManagerProxy {
             uuid: peripheral.identifier,
             callback: callback)
 
-        // If already disconnecting, no need to reinitiate disconnection
+        // If already disconnecting, no need to reinitiate disconnection.
         guard peripheral.state != .disconnecting else {
             return
         }
         
-        // Initiate disconnection
+        // Track connection state.
+        connectionState[peripheral.identifier] = .disconnecting
+        // Initiate disconnection.
         centralManager.cancelConnection(peripheral)
         
     }
