@@ -199,6 +199,22 @@ public class BlePeripheralProxy: NSObject {
         return nil
     }
     
+    /// Retrieves a characteristic by its UUID from the peripheral's service matching the provided service UUID..
+    ///
+    /// - Parameters:
+    ///   - uuid: The UUID of the characteristic to retrieve.
+    ///   - serviceUUID: The UUID of the service where to search the characteristic.
+    /// - Returns: The `CBCharacteristic` if found, otherwise `nil`.
+    func getCharacteristic(_ uuid: CBUUID, serviceUUID: CBUUID) -> CBCharacteristic? {
+        guard let service = getService(serviceUUID) else {
+            return nil
+        }
+        guard let characteristic = service.characteristics?.first(where: { $0.uuid == uuid }) else {
+            return nil
+        }
+        return characteristic
+    }
+    
     /// Register a callback for a specific characteristic or service to the provided store.
     ///
     /// - Parameters:
@@ -253,8 +269,19 @@ extension BlePeripheralProxy {
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<CBService, Error>) -> Void
     ) {
+        
         mutex.lock()
         defer { mutex.unlock() }
+        
+        guard peripheral.state == .connected else {
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            return
+        }
+        
+        if let service = getService(serviceUUID) {
+            callback(.success(service))
+            return
+        }
         
         registerCallback(
             store: &discoverServiceCallbacks,
@@ -353,6 +380,21 @@ extension BlePeripheralProxy {
         
         mutex.lock()
         defer { mutex.unlock() }
+        
+        guard peripheral.state == .connected else {
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            return
+        }
+        
+        guard getService(serviceUUID) != nil else {
+            callback(.failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
+            return
+        }
+        
+        if let characteristic = getCharacteristic(characteristicUUID, serviceUUID: serviceUUID) {
+            callback(.success(characteristic))
+            return
+        }
         
         registerCallback(
             store: &discoverCharacteristicCallbacks,
@@ -802,180 +844,6 @@ extension BlePeripheralProxy {
         defer { mutex.unlock() }
         characteristicWriteTimers[characteristicUUID]?.cancel()
         characteristicWriteTimers[characteristicUUID] = nil
-    }
-    
-}
-
-// MARK: - BlePeripheralDelegate conformance
-
-extension BlePeripheralProxy: BlePeripheralDelegate {
-    
-    public func blePeripheralDidUpdateName(_ peripheral: BlePeripheral) {
-        didUpdateNameSubject.send(peripheral.name)
-    }
-    
-    public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverServices error: Error?) {
-        
-        mutex.lock()
-        defer { mutex.unlock() }
-        
-        guard error == nil else {
-            // If the discovery is unsuccessful, the error parameter returns the cause of the failure.
-            // However we will be missing the UUID of the service for which the error was generated since
-            // we won't find it among the peripheral services property, hence we discard the error and
-            // rely only on timeouts to notify errors to the caller.
-            return
-        }
-        
-        let services = peripheral.services.emptyIfNil
-        let serviceUUIDs = services.map { $0.uuid }
-        
-        // Stop all the discover timers for all the services that have been discovered
-        stopDiscoverServiceTimers(serviceUUIDs: serviceUUIDs)
-        
-        // Notify on the publisher
-        didDiscoverServicesSubject.send(services)
-        
-        // Notify on the callbacks (for each service already discovered)
-        services.forEach { service in
-            notifyCallbacks(
-                store: &discoverServiceCallbacks,
-                uuid: service.uuid,
-                value: .success(service))
-        }
-    
-    }
-    
-    public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-      
-        mutex.lock()
-        defer { mutex.unlock() }
-        
-        guard error == nil else {
-            // If the discovery is unsuccessful, the error parameter returns the cause of the failure.
-            // However we will be missing the UUID of the characteristic for which the error was generated
-            // since we won't find it among the service characteristics property, hence we discard the error
-            // and rely only on timeouts to notify errors to the caller.
-            return
-        }
-        
-        let characteristics = service.characteristics.emptyIfNil
-        let characteristicUUIDs = characteristics.map { $0.uuid }
-        
-        // Stop all the discover timers for all the characteristics that have been discovered
-        stopDiscoverCharacteristicTimers(characteristicUUIDs: characteristicUUIDs)
-        
-        // Notify on the publisher
-        didDiscoverCharacteristicsSubject.send((service, characteristics))
-        
-        // Notify on the callbacks (for each service already discovered)
-        characteristics.forEach { characteristic in
-            notifyCallbacks(
-                store: &discoverCharacteristicCallbacks,
-                uuid: characteristic.uuid,
-                value: .success(characteristic))
-        }
-        
-    }
-    
-    public func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
-        guard error == nil else { return }
-        didUpdateRSSISubject.send(RSSI)
-    }
-    
-    public func blePeripheral(_ peripheral: BlePeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
-      
-        mutex.lock()
-        defer { mutex.unlock() }
-        
-        stopCharacteristicNotifyTimer(characteristicUUID: characteristic.uuid)
-        
-        // Notify any error on awaiting callbacks
-        if let error {
-            notifyCallbacks(
-                store: &characteristicNotifyCallbacks,
-                uuid: characteristic.uuid,
-                value: .failure(error))
-            return
-        }
-        
-        // Notify on the publisher
-        didUpdateNotificationStateSubject.send((characteristic, characteristic.isNotifying))
-
-        // Notify callbacks
-        notifyCallbacks(
-            store: &characteristicNotifyCallbacks,
-            uuid: characteristic.uuid,
-            value: .success(characteristic.isNotifying))
-        
-    }
-    
-    public func blePeripheral(_ peripheral: BlePeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
-        
-        mutex.lock()
-        defer { mutex.unlock() }
-        
-        // Stop reading timer and remove currently reading characteristics even if it errored
-        readingCharacteristics.remove(characteristic.uuid)
-        stopCharacteristicReadTimer(characteristicUUID: characteristic.uuid)
-        
-        // Notify any error on awaiting callbacks
-        if let error {
-            notifyCallbacks(
-                store: &characteristicReadCallbacks,
-                uuid: characteristic.uuid,
-                value: .failure(error))
-            return
-        }
-        
-        // Notify missing data error on awaiting callbacks
-        guard let data = characteristic.value else {
-            notifyCallbacks(
-                store: &characteristicReadCallbacks,
-                uuid: characteristic.uuid,
-                value: .failure(BlePeripheralProxyError.characteristicDataIsNil(characteristicUUID: characteristic.uuid)))
-            return
-        }
-        
-        // Save to local cache (will be reused in the future according with the provided read policy)
-        cache[characteristic.uuid] = .init(data: data)
-        
-        // Notify on the publisher
-        didUpdateValueSubject.send((characteristic, data))
-
-        // Notify callbacks
-        notifyCallbacks(
-            store: &characteristicReadCallbacks,
-            uuid: characteristic.uuid,
-            value: .success(data))
-
-    }
-    
-    public func blePeripheral(_ peripheral: BlePeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
-        
-        mutex.lock()
-        defer { mutex.unlock() }
-        
-        stopCharacteristicWriteTimer(characteristicUUID: characteristic.uuid)
-        
-        // Notify any error on awaiting callbacks
-        if let error {
-            notifyCallbacks(
-                store: &characteristicWriteCallbacks,
-                uuid: characteristic.uuid,
-                value: .failure(error))
-            return
-        }
-        
-        // Notify on the publisher
-        didWriteValueSubject.send(characteristic)
-        
-        // Notify callbacks
-        notifyCallbacks(
-            store: &characteristicWriteCallbacks,
-            uuid: characteristic.uuid,
-            value: .success(()))
-        
     }
     
 }
