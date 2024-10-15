@@ -98,8 +98,8 @@ extension BleCentralManagerProxyDisconnectionTests {
         centralManager(state: .poweredOn)
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
-        // Delay connection to mock connecting state
-        bleCentralManager.delayOnDisconnection = .seconds(4)
+        // Delay disconnection to mock disconnecting state
+        bleCentralManager.delayOnDisconnection = .seconds(2)
         // Test disconnection or disconnected peripheral
         let disconnectExp = expectation(description: "waiting for peripheral to disconnect")
         disconnectExp.expectedFulfillmentCount = 3
