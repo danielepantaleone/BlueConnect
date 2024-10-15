@@ -583,7 +583,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             notifyCallbacks(
                 store: &disconnectionCallbacks,
                 uuid: peripheral.identifier,
-                value: error != nil ? .failure(error!) : .success(()))
+                value: .success(()))
         }
         
         // Track connection state.
