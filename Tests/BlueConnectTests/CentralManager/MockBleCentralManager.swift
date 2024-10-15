@@ -127,21 +127,12 @@ class MockBleCentralManager: BleCentralManager {
             guard let self else { return }
             mutex.lock()
             defer { mutex.unlock() }
-            guard state == .poweredOn else {
-                centraManagerDelegate?.bleCentralManager(
-                    self,
-                    didFailToConnect: peripheral,
-                    error: MockBleError.bluetoothIsOff)
-                errorOnDisconnection = nil
-                return
-            }
-            guard errorOnDisconnection == nil else {
-                centraManagerDelegate?.bleCentralManager(
-                    self,
-                    didDisconnectPeripheral: peripheral,
-                    error: errorOnDisconnection)
-                errorOnDisconnection = nil
-                return
+            var error: Error? = nil
+            if state == .poweredOn {
+                error = MockBleError.bluetoothIsOff
+            } else if let errorOnDisconnection {
+                error = errorOnDisconnection
+                self.errorOnDisconnection = nil
             }
             func _disconnectInternal() {
                 mutex.lock()
@@ -151,7 +142,7 @@ class MockBleCentralManager: BleCentralManager {
                 centraManagerDelegate?.bleCentralManager(
                     self,
                     didDisconnectPeripheral: mockPeripheral,
-                    error: nil)
+                    error: error)
             }
             if let delayOnDisconnection {
                 queue.asyncAfter(deadline: .now() + delayOnDisconnection) {
