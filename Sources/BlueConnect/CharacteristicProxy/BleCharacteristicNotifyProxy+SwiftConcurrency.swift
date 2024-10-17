@@ -54,6 +54,7 @@ public extension BleCharacteristicNotifyProxy {
     ///
     /// - Returns: A boolean indicating whether the notification was successfully enabled (true) or disabled (false).
     /// - Throws: An error if the characteristic cannot be discovered or notify state changed within the specified timeout.
+    @discardableResult
     func setNotify(enabled: Bool, timeout: DispatchTimeInterval = .seconds(10)) async throws -> Bool {
         try await withCheckedThrowingContinuation { continuation in
             setNotify(enabled: enabled, timeout: timeout) { result in
