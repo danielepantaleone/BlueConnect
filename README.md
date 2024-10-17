@@ -81,8 +81,7 @@ import Combine
 import CoreBluetooth
 
 var subscriptions: Set<AnyCancellable> = []
-let centralManager = CBCentralManager()
-let centralManagerProxy = BleCentralManagerProxy(centralManager: centralManager)
+let centralManagerProxy = BleCentralManagerProxy()
 centralManagerProxy.scanForPeripherals(timeout: .seconds(30))
     .receive(on: DispatchQueue.main)
     .sink(
@@ -120,8 +119,7 @@ import Combine
 import CoreBluetooth
 
 var subscriptions: Set<AnyCancellable> = []
-let centralManager = CBCentralManager()
-let centralManagerProxy = BleCentralManagerProxy(centralManager: centralManager)
+let centralManagerProxy = BleCentralManagerProxy()
 
 // You can optionally subscribe a publisher to be notified when a connection is established.
 centralManagerProxy.didConnectPublisher
@@ -166,8 +164,7 @@ import Combine
 import CoreBluetooth
 
 var subscriptions: Set<AnyCancellable> = []
-let centralManager = CBCentralManager()
-let centralManagerProxy = BleCentralManagerProxy(centralManager: centralManager)
+let centralManagerProxy = BleCentralManagerProxy()
 
 // You can optionally subscribe a publisher to be notified when a peripheral is disconnected.
 centralManagerProxy.didDisconnectPublisher
@@ -179,7 +176,6 @@ centralManagerProxy.didDisconnectPublisher
 
 do {
     // The following will disconnect a BLE peripheral.
-    // If the connection cannot be established then nothing is advertised on the combine publisher.
     try await centralManagerProxy.disconnect(peripheral: peripheral)
     print("peripheral '\(peripheral.identifier)' disconnected")
 } catch {
