@@ -462,11 +462,11 @@ extension BleCentralManagerProxy {
             guard let self else { return }
             mutex.lock()
             defer { mutex.unlock() }
+            // Stop scanning for peripherals.
+            centralManager.stopScan()
             // Kill the timer and reset.
             discoverTimer?.cancel()
             discoverTimer = nil
-            // Stop scanning for peripherals.
-            centralManager.stopScan()
             // Send out completion on the publisher.
             discoverSubject?.send(completion: .finished)
             discoverSubject = nil
