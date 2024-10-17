@@ -37,7 +37,7 @@ public class BleCentralManagerProxy: NSObject {
     // MARK: - Public properties
     
     /// The instance of the `BleCentralManager` that this proxy manages.
-    public let centralManager: BleCentralManager
+    public var centralManager: BleCentralManager!
     
     // MARK: - Publishers
     
@@ -95,12 +95,25 @@ public class BleCentralManagerProxy: NSObject {
     
     /// Initializes the proxy with the provided `BleCentralManager`.
     ///
-    /// - Parameter centralManager: The `BleCentralManager` instance that this proxy will manage.
+    /// - Parameter CentralManager: The `BleCentralManager` instance that this proxy will manage.
     ///
-    /// - Important: When passing an instance of `CBCentralManager` as the `BleCentralManager` implementation, you can set its delegate to `nil` because it will be assigned to the proxy right after initialization.
+    /// - Important: You must use this initializer when running unit tests, passing your `BleCentralManager` implementation.
     public init(centralManager: BleCentralManager) {
-        self.centralManager = centralManager
         super.init()
+        self.centralManager = centralManager
+        self.centralManager.centraManagerDelegate = self
+    }
+
+    /// Initializes the proxy by instantiating a `CBCentralManager` using the provided queue and options.
+    ///
+    /// - Parameters:
+    ///   - queue:  The dispatch queue on which the events will be dispatched.
+    ///   - options: An optional dictionary specifying options for the `CBCentralManager`.
+    ///
+    /// - Important: By using this initializer, a `CBCentralManager` will be implicitly initialized, so you must not use this initializer when running unit tests.
+    public init(queue: DispatchQueue?, options: [String: Any]?) {
+        super.init()
+        self.centralManager = CBCentralManager(delegate: self, queue: queue, options: options)
         self.centralManager.centraManagerDelegate = self
     }
     
