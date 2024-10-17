@@ -111,7 +111,7 @@ public class BleCentralManagerProxy: NSObject {
     ///   - options: An optional dictionary specifying options for the `CBCentralManager`.
     ///
     /// - Important: By using this initializer, a `CBCentralManager` will be implicitly initialized, so you must not use this initializer when running unit tests.
-    public init(queue: DispatchQueue?, options: [String: Any]?) {
+    public init(queue: DispatchQueue? = nil, options: [String: Any]? = nil) {
         super.init()
         self.centralManager = CBCentralManager(delegate: self, queue: queue, options: options)
         self.centralManager.centraManagerDelegate = self
