@@ -88,9 +88,9 @@ public class BleCentralManagerProxy: NSObject {
     
     // MARK: - Initialization
     
-    /// Unavailable initializer. Use `init(centralManager:)` instead.
+    /// Unavailable initializer.
     public override init() {
-        fatalError("use init(centralManager:)")
+        fatalError("please use other available initializers")
     }
     
     /// Initializes the proxy with the provided `BleCentralManager`.
