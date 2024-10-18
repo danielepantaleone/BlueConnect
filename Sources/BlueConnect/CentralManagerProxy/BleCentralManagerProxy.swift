@@ -37,7 +37,7 @@ public class BleCentralManagerProxy: NSObject {
     // MARK: - Public properties
     
     /// The instance of the `BleCentralManager` that this proxy manages.
-    public var centralManager: BleCentralManager!
+    public private(set) var centralManager: BleCentralManager!
     
     // MARK: - Publishers
     
