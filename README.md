@@ -1,5 +1,7 @@
 # BlueConnect
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
 ![Cocoapods Version](https://img.shields.io/cocoapods/v/BlueConnect)
 ![GitHub Release](https://img.shields.io/github/v/release/danielepantaleone/BlueConnect)
 ![GitHub License](https://img.shields.io/github/license/danielepantaleone/BlueConnect)
