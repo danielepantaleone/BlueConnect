@@ -5,10 +5,10 @@ on:
       - 'master'
     paths-ignore:
       - 'BlueConnect.podspec'
-      - 'Documentation/**'
       - 'README.md'
       - 'LICENSE'
       - 'swift-generate-documentation.sh'
+      - 'docs/**'
   pull_request:
     branches: 
       - '*'

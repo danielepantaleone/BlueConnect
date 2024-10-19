@@ -3,9 +3,9 @@
 swift build
 
 swift package \
-     --allow-writing-to-directory ./Documentation \
+     --allow-writing-to-directory ./docs \
      generate-documentation \
      --target BlueConnect \
      --transform-for-static-hosting \
      --hosting-base-path BlueConnect \
-     --output-path ./Documentation
+     --output-path ./docs
