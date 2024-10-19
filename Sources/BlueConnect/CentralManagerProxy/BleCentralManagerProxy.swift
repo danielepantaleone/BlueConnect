@@ -51,12 +51,12 @@ public class BleCentralManagerProxy: NSObject {
         didConnectSubject.eraseToAnyPublisher()
     }()
     
-    /// A publisher that emits when a peripheral disconnects, optionally including an error if the disconnection was unexpected.
+    /// A publisher that emits when a BLE peripheral disconnects, optionally including an error if the disconnection was unexpected.
     public lazy var didDisconnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error?), Never> = {
         didDisconnectSubject.eraseToAnyPublisher()
     }()
     
-    /// A publisher that emits when the central manager fails to connect to a peripheral, optionally including the error that occurred.
+    /// A publisher that emits when the central manager fails to connect to a BLE peripheral, optionally including the error that occurred.
     public lazy var didFailToConnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error), Never> = {
         didFailToConnectSubject.eraseToAnyPublisher()
     }()

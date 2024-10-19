@@ -135,7 +135,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         else {
             // Notify publisher.
             didDisconnectSubject.send((peripheral, error))
-            // Notify registered callbacks (only if disconnection initiated by calling disconnect() else no callback is set).
+            // Notify registered callbacks.
             notifyCallbacks(
                 store: &disconnectionCallbacks,
                 uuid: peripheral.identifier,
