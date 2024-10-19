@@ -27,6 +27,7 @@ This combination of asynchronous communication, event-driven architecture, and t
 * [Installation](#installation)
     * [Cocoapods](#cocoapods)
     * [Swift package manager](#swift-package-manager)
+* [Documentation](https://danielepantaleone.github.io/BlueConnect/documentation/blueconnect/)
 * [Contributing](#contributing)
 * [License](#license)
 
