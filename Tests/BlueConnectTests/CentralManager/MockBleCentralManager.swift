@@ -30,7 +30,7 @@ import Foundation
 
 @testable import BlueConnect
 
-class MockBleCentralManager: BleCentralManager {
+class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     
     // MARK: - Properties
     
@@ -87,7 +87,7 @@ class MockBleCentralManager: BleCentralManager {
                 mockPeripheral.state = .disconnected
                 centraManagerDelegate?.bleCentralManager(
                     self,
-                    didFailToConnect: peripheral,
+                    didFailToConnect: mockPeripheral,
                     error: MockBleError.bluetoothIsOff)
                 return
             }
@@ -95,12 +95,12 @@ class MockBleCentralManager: BleCentralManager {
                 mockPeripheral.state = .disconnected
                 centraManagerDelegate?.bleCentralManager(
                     self,
-                    didFailToConnect: peripheral,
+                    didFailToConnect: mockPeripheral,
                     error: errorOnConnection)
                 errorOnConnection = nil
                 return
             }
-            func _connectInternal() {
+            @Sendable func _connectInternal() {
                 mutex.lock()
                 defer { mutex.unlock() }
                 guard state == .poweredOn else { return }
@@ -127,14 +127,16 @@ class MockBleCentralManager: BleCentralManager {
             guard let self else { return }
             mutex.lock()
             defer { mutex.unlock() }
-            var error: Error? = nil
+            let error: Error?
             if state == .poweredOn {
                 error = MockBleError.bluetoothIsOff
             } else if let errorOnDisconnection {
                 error = errorOnDisconnection
                 self.errorOnDisconnection = nil
+            } else {
+                error = nil
             }
-            func _disconnectInternal() {
+            @Sendable func _disconnectInternal() {
                 mutex.lock()
                 defer { mutex.unlock() }
                 guard mockPeripheral.state == .disconnecting else { return }

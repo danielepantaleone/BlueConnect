@@ -94,6 +94,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         XCTAssertNotNil(bleCentralManagerProxy.discoverSubject)
     }
     
+    @MainActor
     func testScanWithNoTimeoutManuallyStopped() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -121,8 +122,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
             .store(in: &subscriptions)
         // Manually stop the scan
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(4)) { [weak self] in
-            guard let self else { return }
-            bleCentralManagerProxy.stopScan()
+            self?.bleCentralManagerProxy.stopScan()
         }
         // Await expectation
         wait(for: [completionExp, publisherExp], timeout: 5.0)
