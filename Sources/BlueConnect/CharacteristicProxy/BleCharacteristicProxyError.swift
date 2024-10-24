@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 /// An enumeration representing errors related to BLE characteristic data handling in the `BleCharacteristicProxy`.

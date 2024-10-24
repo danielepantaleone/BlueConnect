@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 
 /// An enumeration representing various errors that can occur in the `BleCentralManagerProxy`.
 ///

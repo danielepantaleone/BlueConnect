@@ -26,7 +26,7 @@
 //
 
 import Combine
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 extension BleCentralManagerProxy {
