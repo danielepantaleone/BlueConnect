@@ -80,4 +80,18 @@ class RecursiveMutex {
         pthread_mutex_unlock(&mutex)
     }
     
+    /// Perform work inside the mutex by acquiring the specified lock type and executing the given closure.
+    ///
+    /// - Parameters:
+    ///   - action: The closure to execute inside the critical section.
+    ///
+    /// - Returns: The result of the closure execution.
+    /// - Throws: Any error thrown by the closure.
+    @discardableResult
+    @inline(never) func sync<T>(_ action: () throws -> T) rethrows -> T {
+        lock()
+        defer { unlock() }
+        return try action()
+    }
+    
 }
