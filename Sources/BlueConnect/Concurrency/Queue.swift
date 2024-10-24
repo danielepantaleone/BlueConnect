@@ -1,5 +1,5 @@
 //
-//  BleCharacteristicProxy+SwiftConcurrency.swift
+//  Queue.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,27 +25,7 @@
 //  THE SOFTWARE.
 //
 
-@preconcurrency import CoreBluetooth
 import Foundation
 
-public extension BleCharacteristicProxy {
-    
-    /// Discover the service and then characteristic.
-    ///
-    /// - Parameters:
-    ///   - timeout: The timeout duration for the characteristic discovery operation. Defaults to 10 seconds.
-    ///
-    /// - Throws: An error if the discovery fails within the specified timeout.
-    /// - Returns: The discovered `CBCharacteristic`.
-    @discardableResult
-    func discover(timeout: DispatchTimeInterval = .seconds(10)) async throws -> CBCharacteristic {
-        try await withCheckedThrowingContinuation { continuation in
-            discover(timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
-                }
-            }
-        }
-    }
-    
-}
+/// A global dispatch queue to ensure that the `continuation.resume(with:)` is only called on a single thread.
+let globalQueue = DispatchQueue(label: "com.blueconnect.global-queue")

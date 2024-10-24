@@ -46,7 +46,9 @@ public extension BleCharacteristicReadProxy {
     func read(cachePolicy: BlePeripheralCachePolicy = .never, timeout: DispatchTimeInterval = .seconds(10)) async throws -> ValueType {
         try await withCheckedThrowingContinuation { continuation in
             read(cachePolicy: cachePolicy, timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }

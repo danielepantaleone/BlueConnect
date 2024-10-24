@@ -43,7 +43,9 @@ public extension BleCharacteristicWriteWithoutResponseProxy {
     func writeWithoutResponse(value: ValueType, timeout: DispatchTimeInterval = .seconds(10)) async throws {
         try await withCheckedThrowingContinuation { continuation in
             writeWithoutResponse(value: value, timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }
