@@ -20,7 +20,7 @@ jobs:
     strategy:
       matrix:
         platform: ['macOS', 'iOS']
-        swift: ["5.9"]
+        swift: ["5.9", "6.0"]
     runs-on: macos-latest
     steps:
       - name: Repository checkout
