@@ -68,6 +68,8 @@ public class BleCentralManagerProxy: NSObject {
     
     // MARK: - Internal properties
     
+    var waitUntilReadyCallbacks: [(Result<Void, Error>) -> Void] = []
+    var waitUntilReadyTimer: DispatchSourceTimer?
     var connectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
     var connectionState: [UUID: CBPeripheralState] = [:]
     var connectionTimers: [UUID: DispatchSourceTimer] = [:]
@@ -164,7 +166,16 @@ public class BleCentralManagerProxy: NSObject {
         store[uuid]?.append(callback)
     }
     
-    /// Notifies all registered callbacks for a peripheral and clears the callbacks.
+    /// Registers a callback.
+    ///
+    /// - Parameters:
+    ///   - store: The callback store to register the callback in.
+    ///   - callback: The callback to register.
+    func registerCallback<T>(store: inout [(Result<T, Error>) -> Void], callback: @escaping ((Result<T, Error>) -> Void)) {
+        store.append(callback)
+    }
+    
+    /// Notifies all registered callbacks for a peripheral and clears the callbacks store.
     ///
     /// - Parameters:
     ///   - store: The callback store to notify.
@@ -179,6 +190,17 @@ public class BleCentralManagerProxy: NSObject {
             return
         }
         store[uuid] = []
+        callbacks.forEach { $0(value) }
+    }
+    
+    /// Notifies all registered callbacks and clears the callbacks store.
+    ///
+    /// - Parameters:
+    ///   - store: The callback store to notify.
+    ///   - value: The result to pass to the callbacks.
+    func notifyCallbacks<T>(store: inout [(Result<T, Error>) -> Void], value: Result<T, Error>) {
+        let callbacks = store
+        store.removeAll()
         callbacks.forEach { $0(value) }
     }
     
@@ -396,6 +418,66 @@ extension BleCentralManagerProxy {
     
 }
 
+// MARK: - State change
+
+extension BleCentralManagerProxy {
+    
+    /// Waits until the central manager is in the `.poweredOn` state, executing the callback upon success or failure.
+    ///
+    /// This method registers a callback that is invoked when the central manager's state changes to `.poweredOn`, or an error occurs.
+    /// The method also verifies that the central manager is authorized and supported.
+    ///
+    /// Example usage:
+    ///
+    /// ```swift
+    /// bleCentralManagerProxy.waitUntilReady(timeout: .seconds(10)) { result in
+    ///     switch result {
+    ///         case .success:
+    ///             print("Central manager is ready")
+    ///         case .failure(let error):
+    ///             print("Central manager is not ready: \(error)")
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - timeout: The maximum time to wait for the central manager to become ready. Default is `.never`.
+    ///   - callback: A closure that receives a `Result` indicating success or an error if the central manager is unauthorized or unsupported.
+    ///
+    /// - Note: If the state is already `.poweredOn`, the callback is called immediately with success.
+    public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // Ensure central manager is not already powered on.
+        guard centralManager.state != .poweredOn else {
+            callback(.success(()))
+            return
+        }
+        
+        // Ensure central manager is authorized.
+        guard centralManager.state != .unauthorized else {
+            let error = BleCentralManagerProxyError.invalidState(centralManager.state)
+            callback(.failure(error))
+            return
+        }
+        
+        // Ensure central manager is supported.
+        guard centralManager.state != .unsupported else {
+            let error = BleCentralManagerProxyError.invalidState(centralManager.state)
+            callback(.failure(error))
+            return
+        }
+        
+        registerCallback(store: &waitUntilReadyCallbacks, callback: callback)
+        
+        startWaitUntilReadyTimer(timeout: timeout)
+        
+    }
+    
+}
+
 // MARK: - Timers
 
 extension BleCentralManagerProxy {
@@ -479,6 +561,37 @@ extension BleCentralManagerProxy {
         defer { mutex.unlock() }
         discoverTimer?.cancel()
         discoverTimer = nil
+    }
+    
+    func startWaitUntilReadyTimer(timeout: DispatchTimeInterval) {
+        mutex.lock()
+        defer { mutex.unlock() }
+        guard timeout != .never else {
+            waitUntilReadyTimer?.cancel()
+            waitUntilReadyTimer = nil
+            return
+        }
+        waitUntilReadyTimer?.cancel()
+        waitUntilReadyTimer = DispatchSource.makeTimerSource()
+        waitUntilReadyTimer?.schedule(deadline: .now() + timeout, repeating: .never)
+        waitUntilReadyTimer?.setEventHandler { [weak self] in
+            guard let self else { return }
+            mutex.lock()
+            defer { mutex.unlock() }
+            // Kill the timer and reset.
+            waitUntilReadyTimer?.cancel()
+            waitUntilReadyTimer = nil
+            // Notify callbacks.
+            notifyCallbacks(store: &waitUntilReadyCallbacks, value: .failure(BleCentralManagerProxyError.readyTimeout))
+        }
+        waitUntilReadyTimer?.resume()
+    }
+    
+    func stopWaitUntilReadyTimer() {
+        mutex.lock()
+        defer { mutex.unlock() }
+        waitUntilReadyTimer?.cancel()
+        waitUntilReadyTimer = nil
     }
     
 }
