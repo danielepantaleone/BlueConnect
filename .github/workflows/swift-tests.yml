@@ -9,6 +9,8 @@ on:
       - 'LICENSE'
       - 'swift-generate-documentation.sh'
       - 'docs/**'
+      - '.spy.yml'
+      - '.gitignore'
   pull_request:
     branches: 
       - '*'
