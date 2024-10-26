@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 public extension BleCharacteristicProxy {
@@ -41,7 +41,9 @@ public extension BleCharacteristicProxy {
     func discover(timeout: DispatchTimeInterval = .seconds(10)) async throws -> CBCharacteristic {
         try await withCheckedThrowingContinuation { continuation in
             discover(timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }

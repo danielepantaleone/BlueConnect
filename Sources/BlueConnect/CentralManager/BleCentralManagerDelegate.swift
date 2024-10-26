@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 
 /// A protocol defining the delegate methods for handling Bluetooth Central Manager events.
 ///

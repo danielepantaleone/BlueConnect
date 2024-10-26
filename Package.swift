@@ -30,5 +30,9 @@ let package = Package(
                 "BlueConnect"
             ]
         ),
+    ],
+    swiftLanguageVersions: [
+        .v5,
+        .version("6")
     ]
 )

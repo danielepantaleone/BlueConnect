@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 
 /// A convenience class that helps interpret and access Bluetooth Low Energy (BLE) advertisement data.
 ///

@@ -25,16 +25,16 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 @testable import BlueConnect
 
-class MockBlePeripheral: BlePeripheral {
+class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
         
     // MARK: - Protocol properties
     
-    var identifier: UUID
+    let identifier: UUID
     var name: String? {
         didSet {
             queue.async { [weak self] in
@@ -124,7 +124,7 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnDiscoverServices = nil
                 return
             }
-            func _discoverServicesInternal() {
+            @Sendable func _discoverServicesInternal() {
                 mutex.lock()
                 defer { mutex.unlock() }
                 services = services.emptyIfNil
@@ -167,7 +167,7 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnDiscoverCharacteristics = nil
                 return
             }
-            func _discoverCharacteristicsInternal() {
+            @Sendable func _discoverCharacteristicsInternal() {
                 if service == deviceInformationService {
                     discoverDeviceInformationServiceCharacteristics(characteristicUUIDs)
                 } else if service == batteryService {
@@ -227,7 +227,7 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnRead = nil
                 return
             }
-            func _readInternal() {
+            @Sendable func _readInternal() {
                 mutex.lock()
                 defer { mutex.unlock() }
                 peripheralDelegate?.blePeripheral(
@@ -297,7 +297,7 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnWrite = nil
                 return
             }
-            func _writeInternal() {
+            @Sendable func _writeInternal() {
                 mutex.lock()
                 defer { mutex.unlock() }
                 internalCharacteristic.value = data
@@ -354,7 +354,7 @@ class MockBlePeripheral: BlePeripheral {
                 errorOnNotify = nil
                 return
             }
-            func _notifyInternal() {
+            @Sendable func _notifyInternal() {
                 mutex.lock()
                 defer { mutex.unlock() }
                 internalCharacteristic.internalIsNotifying = enabled

@@ -26,7 +26,7 @@
 //
 
 import Combine
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 /// A protocol representing a proxy that handles notifications for a BLE characteristic.

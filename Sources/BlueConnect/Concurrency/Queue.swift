@@ -1,5 +1,5 @@
 //
-//  MockCharacteristicSerialNumberProxy.swift
+//  Queue.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,30 +25,7 @@
 //  THE SOFTWARE.
 //
 
-@preconcurrency import CoreBluetooth
 import Foundation
 
-@testable import BlueConnect
-
-struct MockCharacteristicSerialNumberProxy: BleCharacteristicReadProxy {
-    
-    typealias ValueType = String
-    
-    var characteristicUUID: CBUUID = MockBleDescriptor.serialNumberCharacteristicUUID
-    var serviceUUID: CBUUID = MockBleDescriptor.deviceInformationServiceUUID
-    var decodingError: Error?
-    
-    weak var peripheralProxy: BlePeripheralProxy?
-    
-    init(peripheralProxy: BlePeripheralProxy) {
-        self.peripheralProxy = peripheralProxy
-    }
-    
-    func decode(_ data: Data) throws -> String {
-        if let decodingError {
-            throw decodingError
-        }
-        return String(data: data, encoding: .utf8) ?? ""
-    }
-        
-}
+/// A global dispatch queue to ensure that the `continuation.resume(with:)` is only called on a single thread.
+let globalQueue = DispatchQueue(label: "com.blueconnect.global-queue")

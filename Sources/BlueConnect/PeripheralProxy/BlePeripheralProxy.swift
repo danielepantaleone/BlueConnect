@@ -26,7 +26,7 @@
 //
 
 import Combine
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 /// `BlePeripheralProxy` provides an interface for interacting with a BLE peripheral and managing BLE operations.

@@ -38,7 +38,7 @@ class RecursiveMutex {
     
     /// The underlying POSIX mutex used for synchronization.
     /// This mutex is initialized as a recursive mutex to support reentrant locking.
-    var mutex = pthread_mutex_t()
+    let mutex: UnsafeMutablePointer<pthread_mutex_t>
     
     // MARK: - Initialization
     
@@ -47,11 +47,13 @@ class RecursiveMutex {
     /// This constructor sets up the mutex attributes to support recursive locking,
     /// initializes the mutex with these attributes, and then destroys the attribute object.
     init() {
-        var attr = pthread_mutexattr_t()
-        pthread_mutexattr_init(&attr)
-        pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE)
-        pthread_mutex_init(&mutex, &attr)
-        pthread_mutexattr_destroy(&attr)
+        let mutexAttr = UnsafeMutablePointer<pthread_mutexattr_t>.allocate(capacity: 1)
+        pthread_mutexattr_init(mutexAttr)
+        pthread_mutexattr_settype(mutexAttr, Int32(PTHREAD_MUTEX_RECURSIVE))
+        mutex = UnsafeMutablePointer<pthread_mutex_t>.allocate(capacity: 1)
+        pthread_mutex_init(mutex, mutexAttr)
+        pthread_mutexattr_destroy(mutexAttr)
+        mutexAttr.deallocate()
     }
     
     /// Deinitializes and destroys the `RecursiveMutex`.
@@ -59,7 +61,8 @@ class RecursiveMutex {
     /// This method is called automatically when the instance is deallocated.
     /// It cleans up and releases the resources used by the mutex.
     deinit {
-        pthread_mutex_destroy(&mutex)
+        pthread_mutex_destroy(mutex)
+        mutex.deallocate()
     }
     
     // MARK: - Functions
@@ -69,7 +72,7 @@ class RecursiveMutex {
     /// This method locks the mutex, blocking the current thread until the lock is acquired.
     /// It allows reentrant locking by the same thread due to the recursive nature of the mutex.
     @inline(__always) func lock() {
-        pthread_mutex_lock(&mutex)
+        pthread_mutex_lock(mutex)
     }
     
     /// Releases the mutex lock.
@@ -77,7 +80,21 @@ class RecursiveMutex {
     /// This method unlocks the mutex, allowing other threads to acquire the lock.
     /// It must be called after acquiring the lock to ensure proper synchronization.
     @inline(__always) func unlock() {
-        pthread_mutex_unlock(&mutex)
+        pthread_mutex_unlock(mutex)
+    }
+    
+    /// Perform work inside the mutex by acquiring the specified lock type and executing the given closure.
+    ///
+    /// - Parameters:
+    ///   - action: The closure to execute inside the critical section.
+    ///
+    /// - Returns: The result of the closure execution.
+    /// - Throws: Any error thrown by the closure.
+    @discardableResult
+    @inline(never) func sync<T>(_ action: () throws -> T) rethrows -> T {
+        lock()
+        defer { unlock() }
+        return try action()
     }
     
 }

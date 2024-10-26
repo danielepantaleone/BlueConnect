@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 /// A protocol defining the interaction with a BLE characteristic.
@@ -37,7 +37,7 @@ import Foundation
 public protocol BleCharacteristicProxy {
     
     /// Associated type representing the value of the BLE characteristic.
-    associatedtype ValueType
+    associatedtype ValueType: Sendable
     
     /// The UUID of the characteristic this proxy works with.
     var characteristicUUID: CBUUID { get }

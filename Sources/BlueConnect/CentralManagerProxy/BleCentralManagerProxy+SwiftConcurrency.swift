@@ -26,7 +26,7 @@
 //
 
 import Combine
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 extension BleCentralManagerProxy {
@@ -57,7 +57,9 @@ extension BleCentralManagerProxy {
     ) async throws {
         try await withCheckedThrowingContinuation { continuation in
             connect(peripheral: peripheral, options: options, timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }
@@ -83,7 +85,9 @@ extension BleCentralManagerProxy {
     public func disconnect(peripheral: BlePeripheral) async throws {
         try await withCheckedThrowingContinuation { continuation in
             disconnect(peripheral: peripheral) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }
