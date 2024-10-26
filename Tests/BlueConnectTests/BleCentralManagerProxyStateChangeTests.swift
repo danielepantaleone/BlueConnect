@@ -26,13 +26,19 @@
 //
 
 import Combine
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 import XCTest
 
 @testable import BlueConnect
     
 final class BleCentralManagerProxyStateChangeTests: BlueConnectTests {
+    
+}
+
+// MARK: - Test our mock
+
+extension BleCentralManagerProxyStateChangeTests {
     
     func testCentralManagerPowerOn() throws {
         centralManager(state: .poweredOn)
@@ -45,6 +51,12 @@ final class BleCentralManagerProxyStateChangeTests: BlueConnectTests {
         centralManager(state: .poweredOff)
         XCTAssertEqual(bleCentralManager.state, .poweredOff)
     }
+    
+}
+
+// MARK: - Test disconnection with central manager off
+
+extension BleCentralManagerProxyStateChangeTests {
     
     func testPeripheralConnectFailAndDisconnectDueToBleCentralManagerGoingOff() throws {
         // Turn on ble central manager
@@ -128,6 +140,193 @@ final class BleCentralManagerProxyStateChangeTests: BlueConnectTests {
         XCTAssertEqual(bleCentralManagerProxy.connectionState[MockBleDescriptor.peripheralUUID_1], .disconnected)
         XCTAssertEqual(bleCentralManagerProxy.connectionState[MockBleDescriptor.peripheralUUID_2], .disconnected)
         XCTAssertEqual(bleCentralManagerProxy.connectionTimeouts.count, 0 )
+    }
+    
+}
+
+// MARK: - Test wait until ready
+
+extension BleCentralManagerProxyStateChangeTests {
+    
+    func testWaitUntilReadySuccess() throws {
+        XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
+        // Turn it on.
+        bleCentralManager.state = .poweredOn
+        // Await state change.
+        let expectation = expectation(description: "waiting for central to be ready")
+        bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1)) { result in
+            switch result {
+                case .success:
+                    expectation.fulfill()
+                case .failure(let error):
+                    XCTFail("waiting for central manager to be ready failed with error: \(error)")
+            }
+        }
+        // Await expectation fullfilment.
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+    func testWaitUntilReadySuccessWithCentralAlreadyPoweredOn() throws {
+        // Turn it on.
+        centralManager(state: .poweredOn)
+        // Await state change.
+        let expectation = expectation(description: "waiting for central to notify already on state")
+        bleCentralManagerProxy.waitUntilReady(timeout: .never) { result in
+            switch result {
+                case .success:
+                    expectation.fulfill()
+                case .failure(let error):
+                    XCTFail("waiting for central manager to be ready failed with error: \(error)")
+            }
+        }
+        // Await expectation fullfilment.
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+    func testWaitUntilReadyFailDueToUnauthorized() throws {
+        // Make it unauthorized.
+        centralManager(state: .unauthorized)
+        // Await state not to change.
+        let expectation = expectation(description: "waiting for central NOT to be ready")
+        bleCentralManagerProxy.waitUntilReady(timeout: .never) { result in
+            switch result {
+                case .success:
+                    XCTFail("central manager ready await was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BleCentralManagerProxyError else {
+                        XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .invalidState(let state) = proxyError else {
+                        XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(proxyError)' instead")
+                        return
+                    }
+                    XCTAssertEqual(state, .unauthorized)
+                    expectation.fulfill()
+            }
+        }
+        // Await expectation fullfilment.
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+    func testWaitUntilReadyFailDueToUnsupported() throws {
+        // Make it unsupported.
+        centralManager(state: .unsupported)
+        // Await state not to change.
+        let expectation = expectation(description: "waiting for central NOT to be ready")
+        bleCentralManagerProxy.waitUntilReady(timeout: .never) { result in
+            switch result {
+                case .success:
+                    XCTFail("central manager ready await was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BleCentralManagerProxyError else {
+                        XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .invalidState(let state) = proxyError else {
+                        XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(proxyError)' instead")
+                        return
+                    }
+                    XCTAssertEqual(state, .unsupported)
+                    expectation.fulfill()
+            }
+        }
+        // Await expectation fullfilment.
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+    func testWaitUntilReadyFailedDueToTimeout() throws {
+        XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
+        // Set state to simulate central manager taking time to be ready.
+        centralManager(state: .resetting)
+        // Await state change.
+        let expectation = expectation(description: "waiting for central NOT to be ready")
+        bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1)) { result in
+            switch result {
+                case .success:
+                    XCTFail("central manager ready await was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BleCentralManagerProxyError else {
+                        XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .readyTimeout = proxyError else {
+                        XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError 'readyTimeout', got '\(proxyError)' instead")
+                        return
+                    }
+                    expectation.fulfill()
+                    
+            }
+        }
+        // Await expectation fullfilment.
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+}
+
+// MARK: - Test wait until ready (async)
+
+extension BleCentralManagerProxyStateChangeTests {
+    
+    func testWaitUntilReadySuccessAsync() async throws {
+        XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
+        // Turn it on.
+        bleCentralManager.state = .poweredOn
+        do {
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+        } catch {
+            XCTFail("waiting for central manager to be ready failed with error: \(error)")
+        }
+    }
+    
+    func testWaitUntilReadySuccessWithCentralAlreadyPoweredOnAsync() async throws {
+        // Turn it on.
+        centralManager(state: .poweredOn)
+        // Await state change (even if already changed).
+        do {
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+        } catch {
+            XCTFail("waiting for central manager to be ready failed with error: \(error)")
+        }
+    }
+    
+    func testWaitUntilReadyFailDueToUnauthorizedAsync() async throws {
+        // Make it unauthorized.
+        centralManager(state: .unauthorized)
+        // Await state change failure.
+        do {
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+        } catch BleCentralManagerProxyError.invalidState(let state) {
+            XCTAssertEqual(state, .unauthorized)
+        } catch {
+            XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(error)' instead")
+        }
+    }
+    
+    func testWaitUntilReadyFailDueToUnsupportedAsync() async throws {
+        // Make it unsupported.
+        centralManager(state: .unsupported)
+        // Await state change failure.
+        do {
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+        } catch BleCentralManagerProxyError.invalidState(let state) {
+            XCTAssertEqual(state, .unsupported)
+        } catch {
+            XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(error)' instead")
+        }
+    }
+    
+    func testWaitUntilReadyFailedDueToTimeoutAsync() async throws {
+        // Set state to simulate central manager taking time to be ready.
+        centralManager(state: .resetting)
+        // Await state change failure.
+        do {
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+        } catch BleCentralManagerProxyError.readyTimeout {
+            // OK
+        } catch {
+            XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError 'readyTimeout', got '\(error)' instead")
+        }
     }
     
 }

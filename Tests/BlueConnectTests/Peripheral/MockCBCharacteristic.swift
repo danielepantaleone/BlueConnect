@@ -25,13 +25,14 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 @testable import BlueConnect
 
-class MockCBCharacteristic: CBMutableCharacteristic {
+class MockCBCharacteristic: CBMutableCharacteristic, @unchecked Sendable {
     
+    @Atomic
     var internalIsNotifying: Bool = false
     
     override var isNotifying: Bool { internalIsNotifying }

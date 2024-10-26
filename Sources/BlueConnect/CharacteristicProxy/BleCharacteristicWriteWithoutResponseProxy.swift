@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 /// A protocol defining the ability to write data to a BLE characteristic without expecting a response.

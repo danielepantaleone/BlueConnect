@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 public extension BlePeripheralProxy {
@@ -47,7 +47,9 @@ public extension BlePeripheralProxy {
     ) async throws -> CBService {
         try await withCheckedThrowingContinuation { continuation in
             discover(serviceUUID: serviceUUID, timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }
@@ -71,7 +73,9 @@ public extension BlePeripheralProxy {
     ) async throws -> CBCharacteristic {
         try await withCheckedThrowingContinuation { continuation in
             discover(characteristicUUID: characteristicUUID, in: serviceUUID, timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }
@@ -95,7 +99,9 @@ public extension BlePeripheralProxy {
     ) async throws -> Data {
         try await withCheckedThrowingContinuation { continuation in
             read(characteristicUUID: characteristicUUID, cachePolicy: cachePolicy, timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }
@@ -117,7 +123,9 @@ public extension BlePeripheralProxy {
     ) async throws {
         try await withCheckedThrowingContinuation { continuation in
             write(data: data, to: characteristicUUID, timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }
@@ -142,7 +150,9 @@ public extension BlePeripheralProxy {
     ) async throws -> Bool {
         try await withCheckedThrowingContinuation { continuation in
             setNotify(enabled: enabled, for: characteristicUUID, timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }

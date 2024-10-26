@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 
 /// A protocol extending `CBPeripheralDelegate` to provide additional functionality for unit testing BLE peripherals.
 ///

@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 /// An enumeration representing various errors that can occur while interacting with a BLE peripheral via the `BlePeripheralProxy`.

@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 
 /// A protocol to mimic the capabilities of a `CBCentralManager`.
 ///

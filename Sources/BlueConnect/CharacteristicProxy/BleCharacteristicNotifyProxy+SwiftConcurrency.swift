@@ -25,7 +25,7 @@
 //  THE SOFTWARE.
 //
 
-import CoreBluetooth
+@preconcurrency import CoreBluetooth
 import Foundation
 
 public extension BleCharacteristicNotifyProxy {
@@ -58,7 +58,9 @@ public extension BleCharacteristicNotifyProxy {
     func setNotify(enabled: Bool, timeout: DispatchTimeInterval = .seconds(10)) async throws -> Bool {
         try await withCheckedThrowingContinuation { continuation in
             setNotify(enabled: enabled, timeout: timeout) { result in
-                continuation.resume(with: result)
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
             }
         }
     }

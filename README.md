@@ -35,17 +35,17 @@ This combination of asynchronous communication, event-driven architecture, and t
 
 ## Feature Highlights
 
-- Supports both iOS and macOS.
-- Fully covered by unit tests.
-- Replaces the delegate-based interface of **`CBCentralManager`** and **`CBPeripheral`** with closures and Swift concurrency (async/await).
-- Delivers event notifications via Combine publishers for both **`CBCentralManager`** and **`CBPeripheral`**.
-- Includes connection timeout handling for **`CBPeripheral`**.
-- Includes characteristic operations timeout handling for **`CBPeripheral`** (discovery, read, write, set notify).
-- Provides direct interaction with **`CBPeripheral`** characteristics with no need to manage **`CBPeripheral`** data.
-- Provides an optional cache policy for **`CBPeripheral`** data retrieval, ideal for scenarios where characteristic data remains static over time.
-- Provides automatic service/characteristic discovery when characteristic operations are requested (read, write, set notify).
-- Correct routing of **`CBCentralManager`** disconnection events towards connection failure publisher and callbacks if the connection didn't happen at all.
-- Facilitates unit testing by supporting BLE central and peripheral mocks, enabling easier testing for libraries and apps that interact with BLE peripherals.
+- [x] Supports both iOS and macOS.
+- [x] Fully covered by unit tests.
+- [x] Replaces the delegate-based interface of **`CBCentralManager`** and **`CBPeripheral`** with closures and Swift concurrency (async/await).
+- [x] Delivers event notifications via Combine publishers for both **`CBCentralManager`** and **`CBPeripheral`**.
+- [x] Includes connection timeout handling for **`CBPeripheral`**.
+- [x] Includes characteristic operations timeout handling for **`CBPeripheral`** (discovery, read, write, set notify).
+- [x] Provides direct interaction with **`CBPeripheral`** characteristics with no need to manage **`CBPeripheral`** data.
+- [x] Provides an optional cache policy for **`CBPeripheral`** data retrieval, ideal for scenarios where characteristic data remains static over time.
+- [x] Provides automatic service/characteristic discovery when characteristic operations are requested (read, write, set notify).
+- [x] Correct routing of **`CBCentralManager`** disconnection events towards connection failure publisher and callbacks if the connection didn't happen at all.
+- [x] Facilitates unit testing by supporting BLE central and peripheral mocks, enabling easier testing for libraries and apps that interact with BLE peripherals.
 
 ## Usage
 
@@ -376,14 +376,14 @@ You can create mock versions of your central manager and peripheral(s) and suppl
 ### Cocoapods
 
 ```ruby
-pod 'BlueConnect', '~> 1.0.0'
+pod 'BlueConnect', '~> 1.1.0'
 ```
 
 ### Swift Package Manager
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.0.0"))
+    .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.1.0"))
 ]
 ```
 
