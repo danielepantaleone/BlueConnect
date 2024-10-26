@@ -470,8 +470,9 @@ extension BleCentralManagerProxy {
             return
         }
         
+        // Register a callback to be executed when the central state is powered on.
         registerCallback(store: &waitUntilReadyCallbacks, callback: callback)
-        
+        // Start tracking state change timeout.
         startWaitUntilReadyTimer(timeout: timeout)
         
     }
