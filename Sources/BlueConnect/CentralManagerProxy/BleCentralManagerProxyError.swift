@@ -48,6 +48,11 @@ public enum BleCentralManagerProxyError: Error {
     /// - Parameter state: The invalid `CBManagerState` that prevented the operation from proceeding.
     case invalidState(CBManagerState)
     
+    /// Indicates that a timeout occurred while awaiting for the central manager to turn on.
+    ///
+    /// This error is thrown when someone starts awaiting for the central manager to be ready but the state change is not triggered within a provided timeout.
+    case readyTimeout
+    
     /// Represents an unknown error condition.
     ///
     /// This error is used when an unrecognized or unspecified issue occurs within the central manager proxy.

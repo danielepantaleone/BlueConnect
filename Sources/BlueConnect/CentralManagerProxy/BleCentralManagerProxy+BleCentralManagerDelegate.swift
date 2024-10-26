@@ -77,6 +77,13 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             // Remove any tracked connection timeout.
             connectionTimeouts.removeAll()
             
+        } else {
+            
+            // Kill the timer waiting for central to be ready.
+            stopWaitUntilReadyTimer()
+            // Notify any registered callback.
+            notifyCallbacks(store: &waitUntilReadyCallbacks, value: .success(()))
+            
         }
         
         // Notify state publisher.
