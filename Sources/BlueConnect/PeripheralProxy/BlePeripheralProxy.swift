@@ -199,7 +199,7 @@ public class BlePeripheralProxy: NSObject {
         return nil
     }
     
-    /// Retrieves a characteristic by its UUID from the peripheral's service matching the provided service UUID..
+    /// Retrieves a characteristic by its UUID from the peripheral's service matching the provided service UUID.
     ///
     /// - Parameters:
     ///   - uuid: The UUID of the characteristic to retrieve.
