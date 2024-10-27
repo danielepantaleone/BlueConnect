@@ -60,7 +60,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         services.forEach { service in
             notifyCallbacks(
                 store: &discoverServiceCallbacks,
-                uuid: service.uuid,
+                key: service.uuid,
                 value: .success(service))
         }
     
@@ -92,7 +92,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         characteristics.forEach { characteristic in
             notifyCallbacks(
                 store: &discoverCharacteristicCallbacks,
-                uuid: characteristic.uuid,
+                key: characteristic.uuid,
                 value: .success(characteristic))
         }
         
@@ -114,7 +114,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         if let error {
             notifyCallbacks(
                 store: &characteristicNotifyCallbacks,
-                uuid: characteristic.uuid,
+                key: characteristic.uuid,
                 value: .failure(error))
             return
         }
@@ -125,7 +125,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         // Notify callbacks
         notifyCallbacks(
             store: &characteristicNotifyCallbacks,
-            uuid: characteristic.uuid,
+            key: characteristic.uuid,
             value: .success(characteristic.isNotifying))
         
     }
@@ -143,7 +143,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         if let error {
             notifyCallbacks(
                 store: &characteristicReadCallbacks,
-                uuid: characteristic.uuid,
+                key: characteristic.uuid,
                 value: .failure(error))
             return
         }
@@ -152,7 +152,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         guard let data = characteristic.value else {
             notifyCallbacks(
                 store: &characteristicReadCallbacks,
-                uuid: characteristic.uuid,
+                key: characteristic.uuid,
                 value: .failure(BlePeripheralProxyError.characteristicDataIsNil(characteristicUUID: characteristic.uuid)))
             return
         }
@@ -166,7 +166,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         // Notify callbacks
         notifyCallbacks(
             store: &characteristicReadCallbacks,
-            uuid: characteristic.uuid,
+            key: characteristic.uuid,
             value: .success(data))
 
     }
@@ -182,7 +182,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         if let error {
             notifyCallbacks(
                 store: &characteristicWriteCallbacks,
-                uuid: characteristic.uuid,
+                key: characteristic.uuid,
                 value: .failure(error))
             return
         }
@@ -193,7 +193,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         // Notify callbacks
         notifyCallbacks(
             store: &characteristicWriteCallbacks,
-            uuid: characteristic.uuid,
+            key: characteristic.uuid,
             value: .success(()))
         
     }

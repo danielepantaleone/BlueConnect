@@ -215,41 +215,6 @@ public class BlePeripheralProxy: NSObject {
         return characteristic
     }
     
-    /// Register a callback for a specific characteristic or service to the provided store.
-    ///
-    /// - Parameters:
-    ///   - store: The dictionary storing arrays of callback closures associated with their respective UUIDs.
-    ///   - uuid: The UUID of the characteristic or service.
-    ///   - callback: A closure that will be invoked when a `Result<T, Error>` is available for the specified UUID.
-    func registerCallback<T>(
-        store: inout [CBUUID: [(Result<T, Error>) -> Void]],
-        uuid: CBUUID,
-        callback: @escaping (Result<T, Error>) -> Void
-    ) {
-        if store[uuid] == nil {
-            store[uuid] = []
-        }
-        store[uuid]?.append(callback)
-    }
-    
-    /// Notifies registered callbacks with a result for a specific characteristic or service.
-    ///
-    /// - Parameters:
-    ///   - store: The dictionary holding the callbacks for the characteristic or service.
-    ///   - uuid: The UUID of the characteristic or service.
-    ///   - value: The result to pass to the callbacks.
-    func notifyCallbacks<T>(
-        store: inout [CBUUID: [(Result<T, Error>) -> Void]],
-        uuid: CBUUID,
-        value: Result<T, Error>
-    ) {
-        guard let callbacks = store[uuid] else {
-            return
-        }
-        store[uuid] = []
-        callbacks.forEach { $0(value) }
-    }
-    
 }
 
 // MARK: - Discovery of services
@@ -285,7 +250,7 @@ extension BlePeripheralProxy {
         
         registerCallback(
             store: &discoverServiceCallbacks,
-            uuid: serviceUUID,
+            key: serviceUUID,
             callback: callback)
         
         discover(serviceUUIDs: [serviceUUID], timeout: timeout)
@@ -319,7 +284,7 @@ extension BlePeripheralProxy {
             serviceUUIDs?.forEach { serviceUUID in
                 notifyCallbacks(
                     store: &discoverServiceCallbacks,
-                    uuid: serviceUUID,
+                    key: serviceUUID,
                     value: .failure(BlePeripheralProxyError.peripheralNotConnected))
             }
             return
@@ -338,7 +303,7 @@ extension BlePeripheralProxy {
             alreadyDiscovered.forEach { service in
                 notifyCallbacks(
                     store: &discoverServiceCallbacks,
-                    uuid: service.uuid,
+                    key: service.uuid,
                     value: .success(service))
             }
         }
@@ -398,7 +363,7 @@ extension BlePeripheralProxy {
         
         registerCallback(
             store: &discoverCharacteristicCallbacks,
-            uuid: characteristicUUID,
+            key: characteristicUUID,
             callback: callback)
         
         discover(characteristicUUIDs: [characteristicUUID], in: serviceUUID, timeout: timeout)
@@ -432,7 +397,7 @@ extension BlePeripheralProxy {
             characteristicUUIDs?.forEach { characteristicUUID in
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
-                    uuid: characteristicUUID,
+                    key: characteristicUUID,
                     value: .failure(BlePeripheralProxyError.peripheralNotConnected))
             }
             return
@@ -442,7 +407,7 @@ extension BlePeripheralProxy {
             characteristicUUIDs?.forEach { characteristicUUID in
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
-                    uuid: characteristicUUID,
+                    key: characteristicUUID,
                     value: .failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
             }
             return
@@ -461,7 +426,7 @@ extension BlePeripheralProxy {
             alreadyDiscovered.forEach { characteristic in
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
-                    uuid: characteristic.uuid,
+                    key: characteristic.uuid,
                     value: .success(characteristic))
             }
         }
@@ -528,7 +493,7 @@ extension BlePeripheralProxy {
         
         registerCallback(
             store: &characteristicReadCallbacks,
-            uuid: characteristicUUID,
+            key: characteristicUUID,
             callback: callback)
         
         startCharacteristicReadTimer(
@@ -590,7 +555,7 @@ extension BlePeripheralProxy {
         
         registerCallback(
             store: &characteristicWriteCallbacks,
-            uuid: characteristicUUID,
+            key: characteristicUUID,
             callback: callback)
         
         startCharacteristicWriteTimer(
@@ -681,7 +646,7 @@ extension BlePeripheralProxy {
         
         registerCallback(
             store: &characteristicNotifyCallbacks,
-            uuid: characteristicUUID,
+            key: characteristicUUID,
             callback: callback)
         
         startCharacteristicNotifyTimer(
@@ -714,7 +679,7 @@ extension BlePeripheralProxy {
                 discoverCharacteristicTimers[characteristicUUID] = nil
                 notifyCallbacks(
                     store: &discoverCharacteristicCallbacks,
-                    uuid: characteristicUUID,
+                    key: characteristicUUID,
                     value: .failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
             }
             discoverCharacteristicTimers[characteristicUUID]?.resume()
@@ -737,7 +702,7 @@ extension BlePeripheralProxy {
                 discoverServiceTimers[serviceUUID] = nil
                 notifyCallbacks(
                     store: &discoverServiceCallbacks,
-                    uuid: serviceUUID,
+                    key: serviceUUID,
                     value: .failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
             }
             discoverServiceTimers[serviceUUID]?.resume()
@@ -759,7 +724,7 @@ extension BlePeripheralProxy {
             characteristicReadTimers[characteristicUUID] = nil
             notifyCallbacks(
                 store: &characteristicReadCallbacks,
-                uuid: characteristicUUID,
+                key: characteristicUUID,
                 value: .failure(BlePeripheralProxyError.readTimeout(characteristicUUID: characteristicUUID)))
         }
         characteristicReadTimers[characteristicUUID]?.resume()
@@ -780,7 +745,7 @@ extension BlePeripheralProxy {
             characteristicNotifyTimers[characteristicUUID] = nil
             notifyCallbacks(
                 store: &characteristicNotifyCallbacks,
-                uuid: characteristicUUID,
+                key: characteristicUUID,
                 value: .failure(BlePeripheralProxyError.notifyTimeout(characteristicUUID: characteristicUUID)))
         }
         characteristicNotifyTimers[characteristicUUID]?.resume()
@@ -801,7 +766,7 @@ extension BlePeripheralProxy {
             characteristicWriteTimers[characteristicUUID] = nil
             notifyCallbacks(
                 store: &characteristicWriteCallbacks,
-                uuid: characteristicUUID,
+                key: characteristicUUID,
                 value: .failure(BlePeripheralProxyError.writeTimeout(characteristicUUID: characteristicUUID)))
         }
         characteristicWriteTimers[characteristicUUID]?.resume()

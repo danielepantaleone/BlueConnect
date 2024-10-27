@@ -56,7 +56,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
                 // Notify registered callbacks.
                 notifyCallbacks(
                     store: &connectionCallbacks,
-                    uuid: peripheral.identifier,
+                    key: peripheral.identifier,
                     value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
             }
             
@@ -70,7 +70,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
                 // Notify registered callbacks.
                 notifyCallbacks(
                     store: &disconnectionCallbacks,
-                    uuid: peripheral.identifier,
+                    key: peripheral.identifier,
                     value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
             }
             
@@ -105,7 +105,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         // Notify registered callbacks.
         notifyCallbacks(
             store: &connectionCallbacks,
-            uuid: peripheral.identifier,
+            key: peripheral.identifier,
             value: .success(()))
         
     }
@@ -125,7 +125,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             // Notify callbacks.
             notifyCallbacks(
                 store: &connectionCallbacks,
-                uuid: peripheral.identifier,
+                key: peripheral.identifier,
                 value: .failure(BleCentralManagerProxyError.connectionTimeout))
         }
         // Here the peripheral did not connect at all so we route this over the connection failed publisher.
@@ -135,7 +135,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             // Notify callbacks.
             notifyCallbacks(
                 store: &connectionCallbacks,
-                uuid: peripheral.identifier,
+                key: peripheral.identifier,
                 value: .failure(error ?? BleCentralManagerProxyError.unknown))
         }
         // Regular disconnection.
@@ -145,7 +145,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             // Notify registered callbacks.
             notifyCallbacks(
                 store: &disconnectionCallbacks,
-                uuid: peripheral.identifier,
+                key: peripheral.identifier,
                 value: .success(()))
         }
         
@@ -177,7 +177,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         // Notify registered callbacks
         notifyCallbacks(
             store: &connectionCallbacks,
-            uuid: peripheral.identifier,
+            key: peripheral.identifier,
             value: .failure(error ?? BleCentralManagerProxyError.unknown))
         
     }

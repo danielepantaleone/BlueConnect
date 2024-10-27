@@ -145,65 +145,7 @@ public class BleCentralManagerProxy: NSObject {
         discoverSubject?.send(completion: .failure(BleCentralManagerProxyError.destroyed))
         discoverSubject = nil
     }
-    
-    // MARK: - Internal methods
-    
-    /// Registers a callback for a peripheral, associating it with the peripheral's UUID.
-    ///
-    /// - Parameters:
-    ///   - store: The callback store to register the callback in.
-    ///   - uuid: The UUID of the peripheral.
-    ///   - callback: The callback to register.
-    func registerCallback<T>(
-        store: inout [UUID: [(Result<T, Error>) -> Void]],
-        uuid: UUID,
-        callback: ((Result<T, Error>) -> Void)?
-    ) {
-        guard let callback else { return }
-        if store[uuid] == nil {
-            store[uuid] = []
-        }
-        store[uuid]?.append(callback)
-    }
-    
-    /// Registers a callback.
-    ///
-    /// - Parameters:
-    ///   - store: The callback store to register the callback in.
-    ///   - callback: The callback to register.
-    func registerCallback<T>(store: inout [(Result<T, Error>) -> Void], callback: @escaping ((Result<T, Error>) -> Void)) {
-        store.append(callback)
-    }
-    
-    /// Notifies all registered callbacks for a peripheral and clears the callbacks store.
-    ///
-    /// - Parameters:
-    ///   - store: The callback store to notify.
-    ///   - uuid: The UUID of the peripheral.
-    ///   - value: The result to pass to the callbacks.
-    func notifyCallbacks<T>(
-        store: inout [UUID: [(Result<T, Error>) -> Void]],
-        uuid: UUID,
-        value: Result<T, Error>
-    ) {
-        guard let callbacks = store[uuid] else {
-            return
-        }
-        store[uuid] = []
-        callbacks.forEach { $0(value) }
-    }
-    
-    /// Notifies all registered callbacks and clears the callbacks store.
-    ///
-    /// - Parameters:
-    ///   - store: The callback store to notify.
-    ///   - value: The result to pass to the callbacks.
-    func notifyCallbacks<T>(store: inout [(Result<T, Error>) -> Void], value: Result<T, Error>) {
-        let callbacks = store
-        store.removeAll()
-        callbacks.forEach { $0(value) }
-    }
-    
+
 }
 
 // MARK: - Peripheral connection
@@ -260,7 +202,7 @@ extension BleCentralManagerProxy {
         
         registerCallback(
             store: &connectionCallbacks,
-            uuid: peripheral.identifier,
+            key: peripheral.identifier,
             callback: callback)
         
         startConnectionTimer(
@@ -326,7 +268,7 @@ extension BleCentralManagerProxy {
         
         registerCallback(
             store: &disconnectionCallbacks,
-            uuid: peripheral.identifier,
+            key: peripheral.identifier,
             callback: callback)
 
         // If already disconnecting, no need to reinitiate disconnection.
@@ -510,7 +452,7 @@ extension BleCentralManagerProxy {
                 // We cannot notify the publisher in this case since we are missing the peripheral.
                 notifyCallbacks(
                     store: &connectionCallbacks,
-                    uuid: peripheralIdentifier,
+                    key: peripheralIdentifier,
                     value: .failure(BleCentralManagerProxyError.connectionTimeout))
                 return
             }
