@@ -27,6 +27,58 @@
 
 import Foundation
 
+// MARK: - Atomic property wrapper
+
+/// A property wrapper that provides atomic access to a wrapped value using a mutex.
+///
+/// This wrapper ensures that reads and writes to the wrapped value are thread-safe by using a
+/// mutex to synchronize access. It is useful in concurrent programming where multiple threads
+/// may access the same property, preventing data races and ensuring consistency.
+///
+/// - Parameter ValueType: The type of the value to be wrapped. This can be any type that is not inherently thread-safe.
+@propertyWrapper
+class Atomic<ValueType> {
+    
+    /// The mutex used for read/write access.
+    private let mutex: RecursiveMutex
+    /// The wrapped value
+    private var value: ValueType
+    
+    /// The projected value, which returns the wrapper itself for access to its functions.
+    var projectedValue: Atomic<ValueType> {
+        return self
+    }
+    
+    /// Wraps a property around a mutex for atomic access.
+    ///
+    /// - Parameters:
+    ///   - wrappedValue: The value to protect with the mutex.
+    ///   - mutex: The mutex used to protect the wrapped value.
+    init(wrappedValue: ValueType, mutex: RecursiveMutex = RecursiveMutex()) {
+        self.value = wrappedValue
+        self.mutex = mutex
+    }
+    
+    /// The value wrapped within the mutex.
+    ///
+    /// - Returns: The current value of the wrapped property, synchronized for read access.
+    /// - Parameter newValue: The new value to set for the wrapped property, synchronized for write access.
+    var wrappedValue: ValueType {
+        get { mutex.withLock { value } }
+        set { mutex.withLock { value = newValue } }
+    }
+    
+    /// Mutates the wrapped value in a thread-safe manner.
+    ///
+    /// - Parameter mutation: A closure that receives an inout reference to the wrapped value for mutation, synchronized for write access.
+    func mutate(_ mutation: (inout ValueType) throws -> Void) rethrows {
+        return try mutex.withLock { try mutation(&value) }
+    }
+    
+}
+
+// MARK: - Recursive mutex implementation
+
 /// A mutex implementation that uses the low-level `pthread_mutex_t` for thread synchronization.
 ///
 /// `RecursiveMutex` provides a simple way to handle mutual exclusion with recursive locking capabilities.
