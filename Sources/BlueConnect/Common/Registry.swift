@@ -192,15 +192,15 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
     /// - Parameters:
     ///   - key: The key with which to associate the subscription.
     ///   - callback: A closure to be invoked when the subscription is notified with a result.
-    ///   - timeout: The duration after which the subscription times out if not notified.
-    ///   - timeoutHandler: A closure to be called when the subscription times out.
+    ///   - timeout: The duration after which the subscription times out if not notified, defaults to `.never`.
+    ///   - timeoutHandler: A closure to be called when the subscription times out, defaults to empty closure.
     ///
     /// - Note: The subscription is started immediately, which begins tracking its timeout if one is set.
     func register(
         key: KeyType,
         callback: @escaping ((Result<ValueType, Error>) -> Void),
-        timeout: DispatchTimeInterval,
-        timeoutHandler: @escaping (Subscription<ValueType>) -> Void
+        timeout: DispatchTimeInterval = .never,
+        timeoutHandler: @escaping (Subscription<ValueType>) -> Void = { _ in }
     ) {
         
         registryLock.lock()
