@@ -77,8 +77,7 @@ extension BleCharacteristicReadProxyTests {
         bleSerialNumberProxy.read(
             cachePolicy: .never,
             timeout: .never
-        ) { [weak self] result in
-            guard let self else { return }
+        ) { result in
             switch result {
                 case .success(let serialNumber):
                     XCTAssertEqual(serialNumber, "12345678")
