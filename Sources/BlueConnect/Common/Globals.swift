@@ -1,5 +1,5 @@
 //
-//  Queue.swift
+//  Globals.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
