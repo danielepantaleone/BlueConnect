@@ -128,7 +128,7 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
             mutex.lock()
             defer { mutex.unlock() }
             let error: Error?
-            if state == .poweredOn {
+            if state != .poweredOn {
                 error = MockBleError.bluetoothIsOff
             } else if let errorOnDisconnection {
                 error = errorOnDisconnection
