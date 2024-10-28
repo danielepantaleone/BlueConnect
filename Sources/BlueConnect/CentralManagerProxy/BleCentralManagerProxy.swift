@@ -180,9 +180,7 @@ extension BleCentralManagerProxy {
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
-            let error = BleCentralManagerProxyError.invalidState(centralManager.state)
-            didFailToConnectSubject.send((peripheral, error)) // TODO: RECONSIDER SINCE ATTEMPT DIDN'T EVEN START
-            callback(.failure(error))
+            callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
             return
         }
         
