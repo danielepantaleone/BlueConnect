@@ -1,5 +1,5 @@
 //
-//  RecursiveMutex.swift
+//  Locking.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -32,7 +32,7 @@ import Foundation
 /// `RecursiveMutex` provides a simple way to handle mutual exclusion with recursive locking capabilities.
 /// This is useful when a thread needs to acquire the mutex multiple times without causing a deadlock.
 /// The mutex is implemented using POSIX threads and is initialized as a recursive mutex to allow reentrant locking.
-class RecursiveMutex {
+class RecursiveMutex: NSLocking {
     
     // MARK: - Properties
     
@@ -81,20 +81,6 @@ class RecursiveMutex {
     /// It must be called after acquiring the lock to ensure proper synchronization.
     @inline(__always) func unlock() {
         pthread_mutex_unlock(mutex)
-    }
-    
-    /// Perform work inside the mutex by acquiring the specified lock type and executing the given closure.
-    ///
-    /// - Parameters:
-    ///   - action: The closure to execute inside the critical section.
-    ///
-    /// - Returns: The result of the closure execution.
-    /// - Throws: Any error thrown by the closure.
-    @discardableResult
-    @inline(never) func sync<T>(_ action: () throws -> T) rethrows -> T {
-        lock()
-        defer { unlock() }
-        return try action()
     }
     
 }

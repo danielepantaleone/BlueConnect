@@ -62,15 +62,15 @@ class Atomic<ValueType> {
     /// - Returns: The current value of the wrapped property, synchronized for read access.
     /// - Parameter newValue: The new value to set for the wrapped property, synchronized for write access.
     var wrappedValue: ValueType {
-        get { mutex.sync { value } }
-        set { mutex.sync { value = newValue } }
+        get { mutex.withLock { value } }
+        set { mutex.withLock { value = newValue } }
     }
     
     /// Mutates the wrapped value in a thread-safe manner.
     ///
     /// - Parameter mutation: A closure that receives an inout reference to the wrapped value for mutation, synchronized for write access.
     func mutate(_ mutation: (inout ValueType) throws -> Void) rethrows {
-        return try mutex.sync { try mutation(&value) }
+        return try mutex.withLock { try mutation(&value) }
     }
     
 }
