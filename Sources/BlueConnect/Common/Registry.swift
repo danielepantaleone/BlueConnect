@@ -145,7 +145,7 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
     // MARK: - Properties
     
     /// A dictionary that stores subscriptions grouped by a unique key.
-    private var subscriptions: [KeyType: [Subscription<ValueType>]] = [:]
+    private var registry: [KeyType: [Subscription<ValueType>]] = [:]
     
     // MARK: - Interface
     
@@ -154,8 +154,8 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
     /// - Parameter value: The result to pass to each subscription's callback.
     func notifyAll(_ value: Result<ValueType, Error>) {
         registryLock.lock()
-        let locals = subscriptions.values.flatMap { $0 }
-        subscriptions.removeAll()
+        let locals = registry.values.flatMap { $0 }
+        registry.removeAll()
         registryLock.unlock()
         for subscription in locals {
             subscription.notify(value)
@@ -169,8 +169,8 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
     ///   - value: The result to pass to the callback of each subscription associated with the key.
     func notify(key: KeyType, value: Result<ValueType, Error>) {
         registryLock.lock()
-        let locals = subscriptions[key].emptyIfNil
-        subscriptions[key] = []
+        let locals = registry[key].emptyIfNil
+        registry[key] = []
         registryLock.unlock()
         for subscription in locals {
             subscription.notify(value)
@@ -184,7 +184,7 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
     func subscriptions(with key: KeyType) -> [Subscription<ValueType>] {
         registryLock.lock()
         defer { registryLock.unlock() }
-        return subscriptions[key].emptyIfNil
+        return registry[key].emptyIfNil
     }
     
     /// Registers a new subscription with the specified key, callback, timeout, and timeout handler.
@@ -213,14 +213,89 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
         ) { [weak self] subscription in
             guard let self else { return }
             registryLock.lock()
-            subscriptions[key] = subscriptions[key]?.filter { $0 != subscription }
+            registry[key] = registry[key]?.filter { $0 != subscription }
             registryLock.unlock()
             timeoutHandler(subscription)
         }
-        if subscriptions[key] == nil {
-            subscriptions[key] = []
+        if registry[key] == nil {
+            registry[key] = []
         }
-        subscriptions[key]?.append(subscription)
+        registry[key]?.append(subscription)
+        
+        // Start tracking the subscription's timeout (if any).
+        subscription.start()
+        
+    }
+    
+}
+
+// MARK: - ListRegistry
+
+/// A registry that manages a list of subscriptions.
+///
+/// `ListRegistry` allows you to register subscriptions, notify them with a result, and retrieve
+/// all active subscriptions. Each subscription includes a callback and an optional timeout
+/// with a handler that is invoked if the subscription is not notified within the specified time.
+class ListRegistry<ValueType> {
+    
+    // MARK: - Properties
+    
+    /// The internal list of subscriptions.
+    private var registry: [Subscription<ValueType>] = []
+    
+    // MARK: - Interface
+    
+    /// Notifies all registered subscriptions with the given result and clears the registry.
+    ///
+    /// - Parameter value: The result to pass to each subscription's callback.
+    func notifyAll(_ value: Result<ValueType, Error>) {
+        registryLock.lock()
+        let locals = registry
+        registry.removeAll()
+        registryLock.unlock()
+        for subscription in locals {
+            subscription.notify(value)
+        }
+    }
+    
+    /// Retrieves all active subscriptions in the registry.
+    ///
+    /// - Returns: An array of active `Subscription` instances.
+    func subscriptions() -> [Subscription<ValueType>] {
+        registryLock.lock()
+        defer { registryLock.unlock() }
+        return registry
+    }
+    
+    /// Registers a new subscription with the specified callback, timeout, and timeout handler.
+    ///
+    /// - Parameters:
+    ///   - callback: A closure that is invoked when the subscription is notified with a result.
+    ///   - timeout: The duration after which the subscription times out if not notified. Defaults to `.never`.
+    ///   - timeoutHandler: A closure that is called if the subscription times out. Defaults to a no-op.
+    ///
+    /// - Note: The subscription starts immediately, beginning timeout tracking if a timeout is specified.
+    func register(
+        callback: @escaping ((Result<ValueType, Error>) -> Void),
+        timeout: DispatchTimeInterval = .never,
+        timeoutHandler: @escaping (Subscription<ValueType>) -> Void = { _ in }
+    ) {
+        
+        registryLock.lock()
+        defer { registryLock.unlock() }
+        
+        // Create and store the subscription in the registry.
+        let subscription = Subscription(
+            callback: callback,
+            timeout: timeout
+        ) { [weak self] subscription in
+            guard let self else { return }
+            registryLock.lock()
+            registry.removeAll { $0 != subscription }
+            registryLock.unlock()
+            timeoutHandler(subscription)
+        }
+        registry.append(subscription)
         
         // Start tracking the subscription's timeout (if any).
         subscription.start()

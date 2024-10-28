@@ -83,10 +83,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             
         } else {
             
-            // Kill the timer waiting for central to be ready.
-            stopWaitUntilReadyTimer()
             // Notify any registered callback.
-            notifyCallbacks(store: &waitUntilReadyCallbacks, value: .success(()))
+            waitUntilReadyRegistry.notifyAll(.success(()))
             
         }
         
