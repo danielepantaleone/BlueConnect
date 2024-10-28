@@ -82,7 +82,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             switch result {
                 case .success(let characteristic):
                     XCTAssertEqual(characteristic.uuid, MockBleDescriptor.heartRateCharacteristicUUID)
-                    XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
                     discoveryExp.fulfill()
                 case .failure(let error):
                     XCTFail("characteristic discovery failed with error: \(error)")
@@ -121,7 +121,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             switch result {
                 case .success(let characteristic):
                     XCTAssertEqual(characteristic.uuid, MockBleDescriptor.serialNumberCharacteristicUUID)
-                    XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
                     discoveryExp.fulfill()
                 case .failure(let error):
                     XCTFail("characteristic discovery failed with error: \(error)")
@@ -160,7 +160,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             switch result {
                 case .success(let characteristic):
                     XCTAssertEqual(characteristic.uuid, MockBleDescriptor.firmwareRevisionCharacteristicUUID)
-                    XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.firmwareRevisionCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.firmwareRevisionCharacteristicUUID), [])
                     discoveryExp.fulfill()
                 case .failure(let error):
                     XCTFail("characteristic discovery failed with error: \(error)")
@@ -196,6 +196,8 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID))
         XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.hardwareRevisionCharacteristicUUID))
+        XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
+        XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.firmwareRevisionCharacteristicUUID), [])
     }
     
     func testDiscoverCharacteristicsWithNoArguments() throws {
@@ -221,6 +223,9 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID))
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.hardwareRevisionCharacteristicUUID))
+        XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
+        XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.firmwareRevisionCharacteristicUUID), [])
+        XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.hardwareRevisionCharacteristicUUID), [])
     }
     
     func testDiscoverCharacteristicFailDueToPeripheralDisconnected() throws {
@@ -262,7 +267,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                     }
                     XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
                     XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-                    XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
                     discoveryExp.fulfill()
             }
         }
@@ -306,7 +311,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                     XCTAssertEqual(serviceUUID, MockBleDescriptor.deviceInformationServiceUUID)
                     XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
                     XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-                    XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
                     discoveryExp.fulfill()
             }
         }
@@ -354,7 +359,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                     XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
                     XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
                     XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-                    XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
                     discoveryExp.fulfill()
             }
         }
@@ -402,7 +407,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                     XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
                     XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
                     XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-                    XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
                     discoveryExp.fulfill()
             }
         }
@@ -467,7 +472,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
                 in: MockBleDescriptor.heartRateServiceUUID,
                 timeout: .never)
             XCTAssertEqual(characteristic.uuid, MockBleDescriptor.heartRateCharacteristicUUID)
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic discovery failed with error: \(error)")
         }
@@ -491,7 +496,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         } catch BlePeripheralProxyError.peripheralNotConnected {
             XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
@@ -512,7 +517,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             XCTAssertEqual(serviceUUID, MockBleDescriptor.deviceInformationServiceUUID)
             XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
@@ -537,7 +542,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
             XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
@@ -562,7 +567,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
             XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
             XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
-            XCTAssertNil(blePeripheralProxy_1.discoverCharacteristicTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.discoverCharacteristicRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }

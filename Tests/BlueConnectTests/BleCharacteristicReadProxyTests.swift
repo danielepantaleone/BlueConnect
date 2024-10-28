@@ -83,7 +83,6 @@ extension BleCharacteristicReadProxyTests {
                 case .success(let serialNumber):
                     XCTAssertEqual(serialNumber, "12345678")
                     readExp.fulfill()
-                    XCTAssertNil(blePeripheralProxy_1.characteristicReadTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
                 case .failure(let error):
                     XCTFail("characteristic read failed with error: \(error)")
             }

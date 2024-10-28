@@ -93,7 +93,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                     let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
                     XCTAssertTrue(enabled)
                     XCTAssertEqual(enabled, characteristic?.isNotifying)
-                    XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
                     notifyExp.fulfill()
                 case .failure(let error):
                     XCTFail("characteristic set notify failed with error: \(error)")
@@ -136,7 +136,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                     let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
                     XCTAssertTrue(enabled)
                     XCTAssertEqual(enabled, characteristic?.isNotifying)
-                    XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
                     notifyExp.fulfill()
                 case .failure(let error):
                     XCTFail("characteristic set notify failed with error: \(error)")
@@ -186,7 +186,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
-                    XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
                     notifyExp.fulfill()
             }
         }
@@ -231,7 +231,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         return
                     }
                     XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
-                    XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
                     notifyExp.fulfill()
             }
         }
@@ -278,7 +278,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         return
                     }
                     XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
-                    XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
                     notifyExp.fulfill()
             }
         }
@@ -327,7 +327,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         return
                     }
                     XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
-                    XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
                     notifyExp.fulfill()
             }
         }
@@ -375,7 +375,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                         XCTFail("characteristic set notify was expected to fail with MockBleError.mockedError, got '\(mockedError)' instead")
                         return
                     }
-                    XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
                     notifyExp.fulfill()
             }
         }
@@ -447,7 +447,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
             let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
             XCTAssertTrue(enabled)
             XCTAssertEqual(enabled, characteristic?.isNotifying)
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic set notify failed with error: \(error)")
         }
@@ -471,7 +471,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
                 timeout: .never)
         } catch BlePeripheralProxyError.peripheralNotConnected {
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
@@ -492,7 +492,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 timeout: .never)
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
@@ -515,7 +515,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 timeout: .seconds(2))
         } catch BlePeripheralProxyError.notifyNotSupported(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'notifyNotSupported', got '\(error)' instead")
         }
@@ -540,7 +540,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 timeout: .seconds(2))
         } catch BlePeripheralProxyError.notifyTimeout(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic set notify was expected to fail with BlePeripheralProxyError 'notifyTimeout', got '\(error)' instead")
         }
@@ -564,7 +564,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
                 timeout: .seconds(2))
         } catch MockBleError.mockedError {
-            XCTAssertNil(blePeripheralProxy_1.characteristicNotifyTimers[MockBleDescriptor.heartRateCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic set notify was expected to fail with MockBleError.mockedError, got '\(error)' instead")
         }

@@ -90,16 +90,11 @@ public class BlePeripheralProxy: NSObject {
     var readingCharacteristics: Set<CBUUID> = []
     let mutex = RecursiveMutex()
     
-    var characteristicReadCallbacks: [CBUUID: [(Result<Data, Error>) -> Void]] = [:]
-    var characteristicReadTimers: [CBUUID: DispatchSourceTimer] = [:]
-    var characteristicNotifyCallbacks: [CBUUID: [(Result<Bool, Error>) -> Void]] = [:]
-    var characteristicNotifyTimers: [CBUUID: DispatchSourceTimer] = [:]
-    var characteristicWriteCallbacks: [CBUUID: [(Result<Void, Error>) -> Void]] = [:]
-    var characteristicWriteTimers: [CBUUID: DispatchSourceTimer] = [:]
-    var discoverCharacteristicCallbacks: [CBUUID: [(Result<CBCharacteristic, Error>) -> Void]] = [:]
-    var discoverCharacteristicTimers: [CBUUID: DispatchSourceTimer] = [:]
-    var discoverServiceCallbacks: [CBUUID: [(Result<CBService, Error>) -> Void]] = [:]
-    var discoverServiceTimers: [CBUUID: DispatchSourceTimer] = [:]
+    let characteristicReadRegistry: KeyedRegistry<CBUUID, Data> = .init()
+    let characteristicNotifyRegistry: KeyedRegistry<CBUUID, Bool> = .init()
+    let characteristicWriteRegistry: KeyedRegistry<CBUUID, Void> = .init()
+    let discoverCharacteristicRegistry: KeyedRegistry<CBUUID, CBCharacteristic> = .init()
+    let discoverServiceRegistry: KeyedRegistry<CBUUID, CBService> = .init()
 
     lazy var didDiscoverCharacteristicsSubject: PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never> = .init()
     lazy var didDiscoverServicesSubject: PassthroughSubject<[CBService], Never> = .init()
@@ -128,44 +123,22 @@ public class BlePeripheralProxy: NSObject {
     
     /// Perform `BlePeripheralProxy` graceful deinitialization.
     deinit {
+        
         mutex.lock()
         defer { mutex.unlock() }
+        
         peripheral.peripheralDelegate = nil
         readingCharacteristics.removeAll()
         cache.removeAll()
-        // Stop timers
-        discoverServiceTimers.forEach { $1.cancel() }
-        discoverServiceTimers.removeAll()
-        discoverCharacteristicTimers.forEach { $1.cancel() }
-        discoverCharacteristicTimers.removeAll()
-        characteristicReadTimers.forEach { $1.cancel() }
-        characteristicReadTimers.removeAll()
-        characteristicWriteTimers.forEach { $1.cancel() }
-        characteristicWriteTimers.removeAll()
-        characteristicNotifyTimers.forEach { $1.cancel() }
-        characteristicNotifyTimers.removeAll()
-        // Notify callbacks
-        discoverServiceCallbacks.values
-            .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
-        discoverServiceCallbacks.removeAll()
-        discoverCharacteristicCallbacks.values
-            .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
-        discoverCharacteristicCallbacks.removeAll()
-        characteristicReadCallbacks.values
-            .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
-        characteristicReadCallbacks.removeAll()
-        characteristicNotifyCallbacks.values
-            .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
-        characteristicNotifyCallbacks.removeAll()
-        characteristicWriteCallbacks.values
-            .flatMap { $0 }
-            .forEach { $0(.failure(BlePeripheralProxyError.destroyed)) }
-        characteristicWriteCallbacks.removeAll()
-        // Notify publishers
+        
+        // Notify registries about shutdown.
+        characteristicReadRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
+        characteristicNotifyRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
+        characteristicWriteRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
+        discoverServiceRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
+        discoverCharacteristicRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
+    
+        // Notify publishers.
         didDiscoverCharacteristicsSubject.send(completion: .finished)
         didDiscoverServicesSubject.send(completion: .finished)
         didUpdateNameSubject.send(completion: .finished)
@@ -173,6 +146,7 @@ public class BlePeripheralProxy: NSObject {
         didUpdateRSSISubject.send(completion: .finished)
         didUpdateValueSubject.send(completion: .finished)
         didWriteValueSubject.send(completion: .finished)
+        
     }
     
     // MARK: - Internals
@@ -248,13 +222,16 @@ extension BlePeripheralProxy {
             return
         }
         
-        registerCallback(
-            store: &discoverServiceCallbacks,
+        discoverServiceRegistry.register(
             key: serviceUUID,
-            callback: callback)
+            callback: callback,
+            timeout: timeout
+        ) {
+            $0.notify(.failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
+        }
         
-        discover(serviceUUIDs: [serviceUUID], timeout: timeout)
-        
+        peripheral.discoverServices([serviceUUID])
+                
     }
     
     /// Initiates the discovery of a set of services, or discovers all available services if `nil` is specified as `serviceUUIDs`.
@@ -264,61 +241,16 @@ extension BlePeripheralProxy {
     /// - Parameters:
     ///   - serviceUUIDs: The UUIDs of the services to discover, or `nil` to discover all services on the peripheral.
     public func discover(serviceUUIDs: [CBUUID]?) {
-        discover(serviceUUIDs: serviceUUIDs, timeout: .never)
-    }
-    
-    /// Initiates the discovery of a set of services, or discovers all available services if `nil` is specified as `serviceUUIDs`.
-    ///
-    /// The discovered services will trigger the `didDiscoverServicesPublisher` multiple times as services are discovered.
-    ///
-    /// - Parameters:
-    ///   - serviceUUIDs: The UUIDs of the services to discover, or `nil` to discover all services on the peripheral.
-    ///   - timeout: The timeout for the service discovery operation. This is ignored if no service UUIDs are provided.
-    func discover(serviceUUIDs: [CBUUID]?, timeout: DispatchTimeInterval) {
         
         mutex.lock()
         defer { mutex.unlock() }
         
         guard peripheral.state == .connected else {
-            // Notify on the callbacks (for each provided service)
-            serviceUUIDs?.forEach { serviceUUID in
-                notifyCallbacks(
-                    store: &discoverServiceCallbacks,
-                    key: serviceUUID,
-                    value: .failure(BlePeripheralProxyError.peripheralNotConnected))
-            }
             return
         }
         
-        guard let UUIDs = serviceUUIDs else {
-            // Cannot lookup in cache if no UUID is provided => active search
-            // Cannot start discovery timer if no UUID is provided
-            peripheral.discoverServices(serviceUUIDs)
-            return
-        }
-        
-        let alreadyDiscovered = peripheral.services.emptyIfNil.filter { UUIDs.contains($0.uuid) }
-        if !alreadyDiscovered.isEmpty {
-            // Notify on the callbacks (for each service already discovered)
-            alreadyDiscovered.forEach { service in
-                notifyCallbacks(
-                    store: &discoverServiceCallbacks,
-                    key: service.uuid,
-                    value: .success(service))
-            }
-        }
-        
-        // Discover the remaining ones
-        let toDiscover = serviceUUIDs.emptyIfNil.filter { !alreadyDiscovered.map { $0.uuid }.contains($0) }
-        if !toDiscover.isEmpty {
-            
-            startDiscoverServiceTimers(
-                serviceUUIDs: toDiscover,
-                timeout: timeout)
-            
-            peripheral.discoverServices(toDiscover)
-            
-        }
+        // Will eventually rediscover already discovered services and notify on the publisher.
+        peripheral.discoverServices(serviceUUIDs)
         
     }
     
@@ -351,7 +283,7 @@ extension BlePeripheralProxy {
             return
         }
         
-        guard getService(serviceUUID) != nil else {
+        guard let service = getService(serviceUUID) else {
             callback(.failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
             return
         }
@@ -361,13 +293,16 @@ extension BlePeripheralProxy {
             return
         }
         
-        registerCallback(
-            store: &discoverCharacteristicCallbacks,
+        discoverCharacteristicRegistry.register(
             key: characteristicUUID,
-            callback: callback)
+            callback: callback,
+            timeout: timeout
+        ) {
+            $0.notify(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+        }
         
-        discover(characteristicUUIDs: [characteristicUUID], in: serviceUUID, timeout: timeout)
-        
+        peripheral.discoverCharacteristics([characteristicUUID], for: service)
+      
     }
     
     /// Discover a set of characteristics for the provided service, or all available characteristics if `nil` is specified for `characteristicUUIDs`.
@@ -378,70 +313,20 @@ extension BlePeripheralProxy {
     ///   - characteristicUUIDs: An array of UUIDs representing the characteristics to discover, or `nil` to discover all characteristics for the service.
     ///   - serviceUUID: The UUID of the service containing the characteristics.
     public func discover(characteristicUUIDs: [CBUUID]?, in serviceUUID: CBUUID) {
-        discover(characteristicUUIDs: characteristicUUIDs, in: serviceUUID, timeout: .never)
-    }
-    
-    /// Discover a set of characteristics for the provided service, or all available characteristics if `nil` is specified for `characteristicUUIDs`.
-    /// The discovered characteristics will be notified via the `didDiscoverCharacteristicsPublisher`, which can trigger multiple times during discovery.
-    ///
-    /// - Parameters:
-    ///   - characteristicUUIDs: An array of UUIDs representing the characteristics to discover, or `nil` to discover all characteristics for the service.
-    ///   - serviceUUID: The UUID of the service containing the characteristics.
-    ///   - timeout: The timeout duration for the characteristics discovery operation. If no characteristic UUIDs are provided, the `timeout` parameter is ignored.
-    func discover(characteristicUUIDs: [CBUUID]?, in serviceUUID: CBUUID, timeout: DispatchTimeInterval) {
-        
+  
         mutex.lock()
         defer { mutex.unlock() }
         
         guard peripheral.state == .connected else {
-            characteristicUUIDs?.forEach { characteristicUUID in
-                notifyCallbacks(
-                    store: &discoverCharacteristicCallbacks,
-                    key: characteristicUUID,
-                    value: .failure(BlePeripheralProxyError.peripheralNotConnected))
-            }
             return
         }
-        
+
         guard let service = getService(serviceUUID) else {
-            characteristicUUIDs?.forEach { characteristicUUID in
-                notifyCallbacks(
-                    store: &discoverCharacteristicCallbacks,
-                    key: characteristicUUID,
-                    value: .failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
-            }
             return
         }
         
-        guard let UUIDs = characteristicUUIDs else {
-            // Cannot lookup in cache if no UUID is provided => active search
-            // Cannot start discovery timer if no UUID is provided
-            peripheral.discoverCharacteristics(nil, for: service)
-            return
-        }
-        
-        let alreadyDiscovered = service.characteristics.emptyIfNil.filter { UUIDs.contains($0.uuid) }
-        if !alreadyDiscovered.isEmpty {
-            // Notify on the callbacks (for each characteristic already discovered)
-            alreadyDiscovered.forEach { characteristic in
-                notifyCallbacks(
-                    store: &discoverCharacteristicCallbacks,
-                    key: characteristic.uuid,
-                    value: .success(characteristic))
-            }
-        }
-        
-        // Discover the remaining ones
-        let toDiscover = characteristicUUIDs.emptyIfNil.filter { !alreadyDiscovered.map { $0.uuid }.contains($0) }
-        if !toDiscover.isEmpty {
-            
-            startDiscoverCharacteristicTimers(
-                characteristicUUIDs: toDiscover,
-                timeout: timeout)
-            
-            peripheral.discoverCharacteristics(toDiscover, for: service)
-            
-        }
+        // Will eventually rediscover already discovered characteristics and notify on the publisher.
+        peripheral.discoverCharacteristics(characteristicUUIDs, for: service)
         
     }
     
@@ -491,21 +376,20 @@ extension BlePeripheralProxy {
             return
         }
         
-        registerCallback(
-            store: &characteristicReadCallbacks,
+        characteristicReadRegistry.register(
             key: characteristicUUID,
-            callback: callback)
-        
-        startCharacteristicReadTimer(
-            characteristicUUID: characteristicUUID,
-            timeout: timeout)
+            callback: callback,
+            timeout: timeout
+        ) {
+            $0.notify(.failure(BlePeripheralProxyError.readTimeout(characteristicUUID: characteristicUUID)))
+        }
         
         guard !readingCharacteristics.contains(characteristicUUID) else {
             // Characteristic is already being read from the peripheral so avoid sending multiple read requests
             return
         }
         
-        // Read from the peripheral
+        // Read from the peripheral.
         readingCharacteristics.insert(characteristicUUID)
         peripheral.readValue(for: characteristic)
         
@@ -553,14 +437,13 @@ extension BlePeripheralProxy {
             return
         }
         
-        registerCallback(
-            store: &characteristicWriteCallbacks,
+        characteristicWriteRegistry.register(
             key: characteristicUUID,
-            callback: callback)
-        
-        startCharacteristicWriteTimer(
-            characteristicUUID: characteristicUUID,
-            timeout: timeout)
+            callback: callback,
+            timeout: timeout
+        ) {
+            $0.notify(.failure(BlePeripheralProxyError.writeTimeout(characteristicUUID: characteristicUUID)))
+        }
         
         peripheral.writeValue(data, for: characteristic, type: .withResponse)
         
@@ -644,171 +527,16 @@ extension BlePeripheralProxy {
             return
         }
         
-        registerCallback(
-            store: &characteristicNotifyCallbacks,
+        characteristicNotifyRegistry.register(
             key: characteristicUUID,
-            callback: callback)
-        
-        startCharacteristicNotifyTimer(
-            characteristicUUID: characteristicUUID,
-            timeout: timeout)
+            callback: callback,
+            timeout: timeout
+        ) {
+            $0.notify(.failure(BlePeripheralProxyError.notifyTimeout(characteristicUUID: characteristicUUID)))
+        }
         
         peripheral.setNotifyValue(enabled, for: characteristic)
         
-    }
-    
-}
-
-// MARK: - Timers
-
-extension BlePeripheralProxy {
-    
-    func startDiscoverCharacteristicTimers(characteristicUUIDs: [CBUUID], timeout: DispatchTimeInterval) {
-        guard timeout != .never else { return }
-        mutex.lock()
-        defer { mutex.unlock() }
-        for characteristicUUID in characteristicUUIDs {
-            discoverCharacteristicTimers[characteristicUUID]?.cancel()
-            discoverCharacteristicTimers[characteristicUUID] = DispatchSource.makeTimerSource()
-            discoverCharacteristicTimers[characteristicUUID]?.schedule(deadline: .now() + timeout, repeating: .never)
-            discoverCharacteristicTimers[characteristicUUID]?.setEventHandler { [weak self] in
-                guard let self else { return }
-                mutex.lock()
-                defer { mutex.unlock() }
-                discoverCharacteristicTimers[characteristicUUID]?.cancel()
-                discoverCharacteristicTimers[characteristicUUID] = nil
-                notifyCallbacks(
-                    store: &discoverCharacteristicCallbacks,
-                    key: characteristicUUID,
-                    value: .failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
-            }
-            discoverCharacteristicTimers[characteristicUUID]?.resume()
-        }
-    }
-    
-    func startDiscoverServiceTimers(serviceUUIDs: [CBUUID], timeout: DispatchTimeInterval) {
-        guard timeout != .never else { return }
-        mutex.lock()
-        defer { mutex.unlock() }
-        for serviceUUID in serviceUUIDs {
-            discoverServiceTimers[serviceUUID]?.cancel()
-            discoverServiceTimers[serviceUUID] = DispatchSource.makeTimerSource()
-            discoverServiceTimers[serviceUUID]?.schedule(deadline: .now() + timeout, repeating: .never)
-            discoverServiceTimers[serviceUUID]?.setEventHandler { [weak self] in
-                guard let self else { return }
-                mutex.lock()
-                defer { mutex.unlock() }
-                discoverServiceTimers[serviceUUID]?.cancel()
-                discoverServiceTimers[serviceUUID] = nil
-                notifyCallbacks(
-                    store: &discoverServiceCallbacks,
-                    key: serviceUUID,
-                    value: .failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
-            }
-            discoverServiceTimers[serviceUUID]?.resume()
-        }
-    }
-    
-    func startCharacteristicReadTimer(characteristicUUID: CBUUID, timeout: DispatchTimeInterval) {
-        guard timeout != .never else { return }
-        mutex.lock()
-        defer { mutex.unlock() }
-        characteristicReadTimers[characteristicUUID]?.cancel()
-        characteristicReadTimers[characteristicUUID] = DispatchSource.makeTimerSource()
-        characteristicReadTimers[characteristicUUID]?.schedule(deadline: .now() + timeout, repeating: .never)
-        characteristicReadTimers[characteristicUUID]?.setEventHandler { [weak self] in
-            guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
-            characteristicReadTimers[characteristicUUID]?.cancel()
-            characteristicReadTimers[characteristicUUID] = nil
-            notifyCallbacks(
-                store: &characteristicReadCallbacks,
-                key: characteristicUUID,
-                value: .failure(BlePeripheralProxyError.readTimeout(characteristicUUID: characteristicUUID)))
-        }
-        characteristicReadTimers[characteristicUUID]?.resume()
-    }
-    
-    func startCharacteristicNotifyTimer(characteristicUUID: CBUUID, timeout: DispatchTimeInterval) {
-        guard timeout != .never else { return }
-        mutex.lock()
-        defer { mutex.unlock() }
-        characteristicNotifyTimers[characteristicUUID]?.cancel()
-        characteristicNotifyTimers[characteristicUUID] = DispatchSource.makeTimerSource()
-        characteristicNotifyTimers[characteristicUUID]?.schedule(deadline: .now() + timeout, repeating: .never)
-        characteristicNotifyTimers[characteristicUUID]?.setEventHandler { [weak self] in
-            guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
-            characteristicNotifyTimers[characteristicUUID]?.cancel()
-            characteristicNotifyTimers[characteristicUUID] = nil
-            notifyCallbacks(
-                store: &characteristicNotifyCallbacks,
-                key: characteristicUUID,
-                value: .failure(BlePeripheralProxyError.notifyTimeout(characteristicUUID: characteristicUUID)))
-        }
-        characteristicNotifyTimers[characteristicUUID]?.resume()
-    }
-    
-    func startCharacteristicWriteTimer(characteristicUUID: CBUUID, timeout: DispatchTimeInterval) {
-        guard timeout != .never else { return }
-        mutex.lock()
-        defer { mutex.unlock() }
-        characteristicWriteTimers[characteristicUUID]?.cancel()
-        characteristicWriteTimers[characteristicUUID] = DispatchSource.makeTimerSource()
-        characteristicWriteTimers[characteristicUUID]?.schedule(deadline: .now() + timeout, repeating: .never)
-        characteristicWriteTimers[characteristicUUID]?.setEventHandler { [weak self] in
-            guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
-            characteristicWriteTimers[characteristicUUID]?.cancel()
-            characteristicWriteTimers[characteristicUUID] = nil
-            notifyCallbacks(
-                store: &characteristicWriteCallbacks,
-                key: characteristicUUID,
-                value: .failure(BlePeripheralProxyError.writeTimeout(characteristicUUID: characteristicUUID)))
-        }
-        characteristicWriteTimers[characteristicUUID]?.resume()
-    }
-    
-    func stopDiscoverCharacteristicTimers(characteristicUUIDs: [CBUUID]) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        for characteristicUUID in characteristicUUIDs {
-            discoverCharacteristicTimers[characteristicUUID]?.cancel()
-            discoverCharacteristicTimers[characteristicUUID] = nil
-        }
-    }
-    
-    func stopDiscoverServiceTimers(serviceUUIDs: [CBUUID]) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        for serviceUUID in serviceUUIDs {
-            discoverServiceTimers[serviceUUID]?.cancel()
-            discoverServiceTimers[serviceUUID] = nil
-        }
-    }
-    
-    func stopCharacteristicReadTimer(characteristicUUID: CBUUID) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        characteristicReadTimers[characteristicUUID]?.cancel()
-        characteristicReadTimers[characteristicUUID] = nil
-    }
-    
-    func stopCharacteristicNotifyTimer(characteristicUUID: CBUUID) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        characteristicNotifyTimers[characteristicUUID]?.cancel()
-        characteristicNotifyTimers[characteristicUUID] = nil
-    }
-    
-    func stopCharacteristicWriteTimer(characteristicUUID: CBUUID) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        characteristicWriteTimers[characteristicUUID]?.cancel()
-        characteristicWriteTimers[characteristicUUID] = nil
     }
     
 }
