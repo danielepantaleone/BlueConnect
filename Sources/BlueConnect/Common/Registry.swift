@@ -27,7 +27,7 @@
 
 import Foundation
 
-/// A globack lock to manage registry thread safety.
+/// A global lock to manage registry thread safety.
 nonisolated(unsafe) let registryLock = RecursiveMutex()
 
 // MARK: - Subscription
