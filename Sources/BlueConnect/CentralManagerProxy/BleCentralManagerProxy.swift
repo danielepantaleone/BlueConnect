@@ -68,13 +68,12 @@ public class BleCentralManagerProxy: NSObject {
     
     // MARK: - Internal properties
     
-    var waitUntilReadyCallbacks: [(Result<Void, Error>) -> Void] = []
-    var waitUntilReadyTimer: DispatchSourceTimer?
-    var connectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
     var connectionState: [UUID: CBPeripheralState] = [:]
-    var connectionTimers: [UUID: DispatchSourceTimer] = [:]
     var connectionTimeouts: Set<UUID> = []
-    var disconnectionCallbacks: [UUID: [(Result<Void, Error>) -> Void]] = [:]
+    let connectionRegistry: KeyedRegistry<UUID, Void> = .init()
+    let disconnectionRegistry: KeyedRegistry<UUID, Void> = .init()
+    var waitUntilReadyRegistry: ListRegistry<Void> = .init()
+   
     var discoverSubject: PassthroughSubject<(
         peripheral: BlePeripheral,
         advertisementData: BleAdvertisementData,
@@ -126,21 +125,13 @@ public class BleCentralManagerProxy: NSObject {
         centralManager.centraManagerDelegate = nil
         // Stop ongoing scan (if any)
         centralManager.stopScan()
+        // Notify registries about shutdown.
+        connectionRegistry.notifyAll(.failure(BleCentralManagerProxyError.destroyed))
+        disconnectionRegistry.notifyAll(.failure(BleCentralManagerProxyError.destroyed))
+        waitUntilReadyRegistry.notifyAll(.failure(BleCentralManagerProxyError.destroyed))
         // Stop timers
-        connectionTimers.forEach { $1.cancel() }
-        connectionTimers.removeAll()
         discoverTimer?.cancel()
         discoverTimer = nil
-        // Notify connection callbacks
-        connectionCallbacks.values
-            .flatMap { $0 }
-            .forEach { $0(.failure(BleCentralManagerProxyError.destroyed)) }
-        connectionCallbacks.removeAll()
-        // Notify disconnection callbacks
-        disconnectionCallbacks.values
-            .flatMap { $0 }
-            .forEach { $0(.failure(BleCentralManagerProxyError.destroyed)) }
-        disconnectionCallbacks.removeAll()
         // Notify scan finished
         discoverSubject?.send(completion: .failure(BleCentralManagerProxyError.destroyed))
         discoverSubject = nil
@@ -171,7 +162,7 @@ extension BleCentralManagerProxy {
     ///   - peripheral: The `BlePeripheral` to connect to.
     ///   - options: A dictionary of options to customize the connection behavior, such as `CBConnectPeripheralOptionNotifyOnConnectionKey`. Defaults to `nil`.
     ///   - timeout: A `DispatchTimeInterval` specifying how long to wait before considering the connection as failed due to timeout. Defaults to `.never`, meaning no timeout.
-    ///   - callback: An optional closure called with a `Result<Void, Error>` indicating the success or failure of the connection attempt. If the connection is successful,
+    ///   - callback: A closure called with a `Result<Void, Error>` indicating the success or failure of the connection attempt. If the connection is successful,
     ///     `.success(())` is passed. If it fails, `.failure(Error)` is passed with an appropriate error.
     ///
     /// - Note: If the peripheral is already in a `.connected` state, the callback is immediately invoked with success.
@@ -180,7 +171,7 @@ extension BleCentralManagerProxy {
         peripheral: BlePeripheral,
         options: [String: Any]? = nil,
         timeout: DispatchTimeInterval = .never,
-        callback: ((Result<Void, Error>) -> Void)? = nil
+        callback: @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
         
         mutex.lock()
@@ -188,26 +179,38 @@ extension BleCentralManagerProxy {
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
-            let error = BleCentralManagerProxyError.invalidState(centralManager.state)
-            didFailToConnectSubject.send((peripheral, error))
-            callback?(.failure(error))
+            callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
             return
         }
         
         // If already connected, notify success on callback (not on publisher since it's not a new connection)
         guard peripheral.state != .connected else {
-            callback?(.success(()))
+            callback(.success(()))
             return
         }
         
-        registerCallback(
-            store: &connectionCallbacks,
+        connectionRegistry.register(
             key: peripheral.identifier,
-            callback: callback)
-        
-        startConnectionTimer(
-            peripheralIdentifier: peripheral.identifier,
-            timeout: timeout)
+            callback: callback,
+            timeout: timeout
+        ) { [weak self, weak peripheral] subscription in
+            
+            guard let self else { return }
+            guard let peripheral else { return }
+            
+            mutex.lock()
+            defer { mutex.unlock() }
+            
+            // We track the connection timeout for this peripheral to trigger the correct
+            // callbacks and publisher after disconnecting the peripheral from the central.
+            connectionTimeouts.insert(peripheral.identifier)
+            
+            // We attempt to disconnect the peripheral prior notifying.
+            disconnect(peripheral: peripheral) { _ in
+                subscription.notify(.failure(BleCentralManagerProxyError.connectionTimeout))
+            }
+            
+        }
         
         // If already connecting, no need to reinitiate connection
         guard peripheral.state != .connecting else {
@@ -244,30 +247,29 @@ extension BleCentralManagerProxy {
     ///
     /// - Parameters:
     ///   - peripheral: The `BlePeripheral` to disconnect.
-    ///   - callback: An optional closure that is called with a `Result<Void, Error>`, providing success or failure of the disconnection attempt.
+    ///   - callback: A closure called with a `Result<Void, Error>`, providing success or failure of the disconnection attempt.
     ///     If the disconnection is successful, `.success(())` is passed. If the operation fails, `.failure(Error)` is passed with an appropriate error.
     ///
     /// - Note: If the peripheral is already in a `.disconnected` state, the callback is immediately called with success.
     /// - Note: If the peripheral is already in the process of disconnecting (`.disconnecting` state), the method does not reinitiate the disconnection.
-    public func disconnect(peripheral: BlePeripheral, callback: ((Result<Void, Error>) -> Void)? = nil) {
+    public func disconnect(peripheral: BlePeripheral, callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
         
         mutex.lock()
         defer { mutex.unlock() }
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
-            callback?(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
+            callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
             return
         }
         
         // If already disconnected, notify success (not on publisher since it's already disconnected)
         guard peripheral.state != .disconnected else {
-            callback?(.success(()))
+            callback(.success(()))
             return
         }
         
-        registerCallback(
-            store: &disconnectionCallbacks,
+        disconnectionRegistry.register(
             key: peripheral.identifier,
             callback: callback)
 
@@ -400,22 +402,23 @@ extension BleCentralManagerProxy {
         
         // Ensure central manager is authorized.
         guard centralManager.state != .unauthorized else {
-            let error = BleCentralManagerProxyError.invalidState(centralManager.state)
-            callback(.failure(error))
+            callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
             return
         }
         
         // Ensure central manager is supported.
         guard centralManager.state != .unsupported else {
-            let error = BleCentralManagerProxyError.invalidState(centralManager.state)
-            callback(.failure(error))
+            callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
             return
         }
         
-        // Register a callback to be executed when the central state is powered on.
-        registerCallback(store: &waitUntilReadyCallbacks, callback: callback)
-        // Start tracking state change timeout.
-        startWaitUntilReadyTimer(timeout: timeout)
+        // Register a callback to be notified when central manager is powered on.
+        waitUntilReadyRegistry.register(
+            callback: callback,
+            timeout: timeout
+        ) {
+            $0.notify(.failure(BleCentralManagerProxyError.readyTimeout))
+        }
         
     }
     
@@ -424,53 +427,6 @@ extension BleCentralManagerProxy {
 // MARK: - Timers
 
 extension BleCentralManagerProxy {
-    
-    func startConnectionTimer(peripheralIdentifier: UUID, timeout: DispatchTimeInterval) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        guard timeout != .never else {
-            connectionTimers[peripheralIdentifier]?.cancel()
-            connectionTimers[peripheralIdentifier] = nil
-            return
-        }
-        connectionTimers[peripheralIdentifier]?.cancel()
-        connectionTimers[peripheralIdentifier] = DispatchSource.makeTimerSource()
-        connectionTimers[peripheralIdentifier]?.schedule(deadline: .now() + timeout, repeating: .never)
-        connectionTimers[peripheralIdentifier]?.setEventHandler { [weak self] in
-            guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
-            // Kill the timer and reset.
-            connectionTimers[peripheralIdentifier]?.cancel()
-            connectionTimers[peripheralIdentifier] = nil
-            // If the peripheral is not in disconnected state we disconnect it else it will connect at some point.
-            guard let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first,
-                  centralManager.state == .poweredOn,
-                  peripheral.state != .disconnected else {
-                // The peripheral could not be retrieved or it's already disconnected.
-                // We should never end here since peripherals are disconnected when central manager goes off.
-                // We cannot notify the publisher in this case since we are missing the peripheral.
-                notifyCallbacks(
-                    store: &connectionCallbacks,
-                    key: peripheralIdentifier,
-                    value: .failure(BleCentralManagerProxyError.connectionTimeout))
-                return
-            }
-            // We attempt to disconnect the peripheral.
-            // We track the connection timeout for this peripheral to trigger the correct
-            // callbacks and publisher after disconnecting the peripheral from the central.
-            connectionTimeouts.insert(peripheralIdentifier)
-            disconnect(peripheral: peripheral)
-        }
-        connectionTimers[peripheralIdentifier]?.resume()
-    }
-    
-    func stopConnectionTimer(peripheralIdentifier: UUID) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        connectionTimers[peripheralIdentifier]?.cancel()
-        connectionTimers[peripheralIdentifier] = nil
-    }
     
     func startDiscoverTimer(timeout: DispatchTimeInterval) {
         mutex.lock()
@@ -505,36 +461,5 @@ extension BleCentralManagerProxy {
         discoverTimer?.cancel()
         discoverTimer = nil
     }
-    
-    func startWaitUntilReadyTimer(timeout: DispatchTimeInterval) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        guard timeout != .never else {
-            waitUntilReadyTimer?.cancel()
-            waitUntilReadyTimer = nil
-            return
-        }
-        waitUntilReadyTimer?.cancel()
-        waitUntilReadyTimer = DispatchSource.makeTimerSource()
-        waitUntilReadyTimer?.schedule(deadline: .now() + timeout, repeating: .never)
-        waitUntilReadyTimer?.setEventHandler { [weak self] in
-            guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
-            // Kill the timer and reset.
-            waitUntilReadyTimer?.cancel()
-            waitUntilReadyTimer = nil
-            // Notify callbacks.
-            notifyCallbacks(store: &waitUntilReadyCallbacks, value: .failure(BleCentralManagerProxyError.readyTimeout))
-        }
-        waitUntilReadyTimer?.resume()
-    }
-    
-    func stopWaitUntilReadyTimer() {
-        mutex.lock()
-        defer { mutex.unlock() }
-        waitUntilReadyTimer?.cancel()
-        waitUntilReadyTimer = nil
-    }
-    
+
 }

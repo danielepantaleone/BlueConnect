@@ -86,7 +86,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                     let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.secretCharacteristicUUID)
                     let secret = characteristic?.value.map { String(data: $0, encoding: .utf8) }
                     XCTAssertEqual(secret, "ABCD")
-                    XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
                     writeExp.fulfill()
                 case .failure(let error):
                     XCTFail("characteristic write failed with error: \(error)")
@@ -136,7 +136,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
                         return
                     }
-                    XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
                     writeExp.fulfill()
             }
         }
@@ -181,7 +181,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         return
                     }
                     XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
-                    XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
                     writeExp.fulfill()
             }
         }
@@ -228,7 +228,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         return
                     }
                     XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
-                    XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.serialNumberCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
                     writeExp.fulfill()
             }
         }
@@ -277,7 +277,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         return
                     }
                     XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
-                    XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
                     writeExp.fulfill()
             }
         }
@@ -325,7 +325,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                         XCTFail("characteristic write was expected to fail with MockBleError.mockedError, got '\(mockedError)' instead")
                         return
                     }
-                    XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+                    XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
                     writeExp.fulfill()
             }
         }
@@ -397,7 +397,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
             let characteristic = blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.secretCharacteristicUUID)
             let secret = characteristic?.value.map { String(data: $0, encoding: .utf8) }
             XCTAssertEqual(secret, "ABCD")
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic write failed with error: \(error)")
         }
@@ -421,7 +421,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 to: MockBleDescriptor.secretCharacteristicUUID,
                 timeout: .never)
         } catch BlePeripheralProxyError.peripheralNotConnected {
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
@@ -442,7 +442,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 timeout: .never)
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
@@ -465,7 +465,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 timeout: .never)
         } catch BlePeripheralProxyError.writeNotSupported(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'writeNotSupported', got '\(error)' instead")
         }
@@ -490,7 +490,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 timeout: .seconds(2))
         } catch BlePeripheralProxyError.writeTimeout(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic write was expected to fail with BlePeripheralProxyError 'writeTimeout', got '\(error)' instead")
         }
@@ -514,7 +514,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 to: MockBleDescriptor.secretCharacteristicUUID,
                 timeout: .never)
         } catch MockBleError.mockedError {
-            XCTAssertNil(blePeripheralProxy_1.characteristicWriteTimers[MockBleDescriptor.secretCharacteristicUUID])
+            XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
         } catch {
             XCTFail("characteristic write was expected to fail with MockBleError 'mockedError', got '\(error)' instead")
         }

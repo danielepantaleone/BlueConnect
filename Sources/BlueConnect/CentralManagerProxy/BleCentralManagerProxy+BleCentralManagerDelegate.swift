@@ -40,38 +40,42 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             
             // Stop discover timer.
             stopDiscoverTimer()
+
             // Send publisher failure.
             discoverSubject?.send(completion: .failure(BleCentralManagerProxyError.invalidState(central.state)))
             discoverSubject = nil
             
             // Notify connection failures.
-            for (peripheralIdentifier, state) in connectionState where state == .connecting {
-                guard let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first else { continue }
+            for (peripheralIdentifier, state) in connectionState {
+                
+                // Retrieve the peripheral matching the tracked identifier.
+                guard let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first else {
+                    continue
+                }
+                
                 // Track disconnected state.
                 connectionState[peripheral.identifier] = .disconnected
-                // Stop timer.
-                stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
-                // Notify publisher.
-                didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
-                // Notify registered callbacks.
-                notifyCallbacks(
-                    store: &connectionCallbacks,
-                    key: peripheral.identifier,
-                    value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
-            }
-            
-            // Notify disconnect.
-            for (peripheralIdentifier, state) in connectionState where state == .connected {
-                guard let peripheral = centralManager.retrievePeripherals(withIds: [peripheralIdentifier]).first else { continue }
-                // Track disconnected state.
-                connectionState[peripheral.identifier] = .disconnected
-                // Notify publisher.
-                didDisconnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
-                // Notify registered callbacks.
-                notifyCallbacks(
-                    store: &disconnectionCallbacks,
-                    key: peripheral.identifier,
-                    value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
+                
+                if state == .connecting {
+                  
+                    // Notify publisher.
+                    didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
+                    // Notify registered callbacks.
+                    connectionRegistry.notify(
+                        key: peripheral.identifier,
+                        value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
+                    
+                } else if state == .connected {
+                    
+                    // Notify publisher.
+                    didDisconnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
+                    // Notify registered callbacks.
+                    disconnectionRegistry.notify(
+                        key: peripheral.identifier,
+                        value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
+                    
+                }
+                
             }
             
             // Remove any tracked connection timeout.
@@ -79,10 +83,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             
         } else {
             
-            // Kill the timer waiting for central to be ready.
-            stopWaitUntilReadyTimer()
             // Notify any registered callback.
-            notifyCallbacks(store: &waitUntilReadyCallbacks, value: .success(()))
+            waitUntilReadyRegistry.notifyAll(.success(()))
             
         }
         
@@ -98,16 +100,11 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         
         // Track connection state.
         connectionState[peripheral.identifier] = .connected
-        // Stop timer.
-        stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
         // Notify publisher.
         didConnectSubject.send(peripheral)
         // Notify registered callbacks.
-        notifyCallbacks(
-            store: &connectionCallbacks,
-            key: peripheral.identifier,
-            value: .success(()))
-        
+        connectionRegistry.notify(key: peripheral.identifier, value: .success(()))
+      
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didDisconnectPeripheral peripheral: BlePeripheral, error: Error?) {
@@ -115,39 +112,19 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
-        // Stop the connection timer just in case iOS delivers disconnect instead of connection failure.
-        stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
-        
-        // This is a disconnection caused by canceling a peripheral connection after timeout.
         if connectionTimeouts.contains(peripheral.identifier) {
-            // Notify publisher.
+            // This is a disconnection caused by canceling a peripheral connection after timeout.
             didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionTimeout))
-            // Notify callbacks.
-            notifyCallbacks(
-                store: &connectionCallbacks,
-                key: peripheral.identifier,
-                value: .failure(BleCentralManagerProxyError.connectionTimeout))
-        }
-        // Here the peripheral did not connect at all so we route this over the connection failed publisher.
-        else if connectionState[peripheral.identifier] == .connecting {
-            // Notify publisher.
+        } else if connectionState[peripheral.identifier] == .connecting {
+            // Here the peripheral did not connect at all so we route this over the connection failed publisher.
             didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
-            // Notify callbacks.
-            notifyCallbacks(
-                store: &connectionCallbacks,
-                key: peripheral.identifier,
-                value: .failure(error ?? BleCentralManagerProxyError.unknown))
-        }
-        // Regular disconnection.
-        else {
-            // Notify publisher.
+        } else {
+            // Regular disconnection.
             didDisconnectSubject.send((peripheral, error))
-            // Notify registered callbacks.
-            notifyCallbacks(
-                store: &disconnectionCallbacks,
-                key: peripheral.identifier,
-                value: .success(()))
         }
+        
+        // Notify registered callbacks (always notify success since peripheral is disconnected at this point).
+        disconnectionRegistry.notify(key: peripheral.identifier, value: .success(()))
         
         // Track connection state.
         connectionState[peripheral.identifier] = .disconnected
@@ -170,16 +147,11 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         // Track connection state.
         connectionState[peripheral.identifier] = .disconnected
         connectionTimeouts.remove(peripheral.identifier)
-        // Stop timer
-        stopConnectionTimer(peripheralIdentifier: peripheral.identifier)
-        // Notify publisher
+        // Notify publisher.
         didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
-        // Notify registered callbacks
-        notifyCallbacks(
-            store: &connectionCallbacks,
-            key: peripheral.identifier,
-            value: .failure(error ?? BleCentralManagerProxyError.unknown))
-        
+        // Notify registered callbacks.
+        connectionRegistry.notify(key: peripheral.identifier, value: .failure(error ?? BleCentralManagerProxyError.unknown))
+      
     }
     
     public func bleCentralManager(_ central: BleCentralManager, willRestoreState dict: [String: Any]) {

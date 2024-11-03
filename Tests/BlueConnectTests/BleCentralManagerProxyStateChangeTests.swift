@@ -125,7 +125,7 @@ extension BleCentralManagerProxyStateChangeTests {
                         return
                     }
                     XCTAssertEqual(bleCentralManager.state, .poweredOff)
-                    XCTAssertNil(bleCentralManagerProxy.connectionTimers[MockBleDescriptor.peripheralUUID_1])
+                    XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: MockBleDescriptor.peripheralUUID_1), [])
                     connectExp.fulfill()
             }
         }
