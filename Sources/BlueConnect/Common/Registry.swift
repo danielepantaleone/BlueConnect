@@ -291,7 +291,7 @@ class ListRegistry<ValueType> {
         ) { [weak self] subscription in
             guard let self else { return }
             registryLock.lock()
-            registry.removeAll { $0 != subscription }
+            registry.removeAll { $0 == subscription }
             registryLock.unlock()
             timeoutHandler(subscription)
         }

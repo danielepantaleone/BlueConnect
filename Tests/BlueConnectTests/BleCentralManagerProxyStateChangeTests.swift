@@ -241,7 +241,8 @@ extension BleCentralManagerProxyStateChangeTests {
         centralManager(state: .resetting)
         // Await state change.
         let expectation = expectation(description: "waiting for central NOT to be ready")
-        bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1)) { result in
+        bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1)) { [weak self] result in
+            guard let self else { return }
             switch result {
                 case .success:
                     XCTFail("central manager ready await was expected to fail but succeeded instead")
@@ -254,6 +255,7 @@ extension BleCentralManagerProxyStateChangeTests {
                         XCTFail("central manager ready await was expected to fail with BleCentralManagerProxyError 'readyTimeout', got '\(proxyError)' instead")
                         return
                     }
+                    XCTAssertEqual(bleCentralManagerProxy.waitUntilReadyRegistry.subscriptions(), [])
                     expectation.fulfill()
                     
             }
