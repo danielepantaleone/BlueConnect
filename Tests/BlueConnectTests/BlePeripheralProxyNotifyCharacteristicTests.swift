@@ -470,6 +470,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 enabled: true,
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
                 timeout: .never)
+            XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.peripheralNotConnected {
             XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
         } catch {
@@ -490,6 +491,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 enabled: true,
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
                 timeout: .never)
+            XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
             XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
@@ -513,6 +515,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 enabled: true,
                 for: MockBleDescriptor.serialNumberCharacteristicUUID,
                 timeout: .seconds(2))
+            XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.notifyNotSupported(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
             XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
@@ -538,6 +541,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 enabled: true,
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
                 timeout: .seconds(2))
+            XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.notifyTimeout(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
             XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
@@ -563,6 +567,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
                 enabled: true,
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
                 timeout: .seconds(2))
+            XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch MockBleError.mockedError {
             XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
         } catch {

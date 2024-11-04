@@ -420,6 +420,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.secretCharacteristicUUID,
                 timeout: .never)
+            XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.peripheralNotConnected {
             XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
         } catch {
@@ -440,6 +441,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.secretCharacteristicUUID,
                 timeout: .never)
+            XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
             XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
@@ -463,6 +465,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.serialNumberCharacteristicUUID,
                 timeout: .never)
+            XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.writeNotSupported(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
             XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
@@ -488,6 +491,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.secretCharacteristicUUID,
                 timeout: .seconds(2))
+            XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.writeTimeout(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
             XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
@@ -513,6 +517,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.secretCharacteristicUUID,
                 timeout: .never)
+            XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch MockBleError.mockedError {
             XCTAssertEqual(blePeripheralProxy_1.characteristicWriteRegistry.subscriptions(with: MockBleDescriptor.secretCharacteristicUUID), [])
         } catch {
@@ -557,6 +562,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Test characteristic write
         do {
             try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.bufferCharacteristicUUID)
+            XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.peripheralNotConnected {
 
         } catch {
@@ -574,6 +580,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Test characteristic write
         do {
             try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.bufferCharacteristicUUID)
+            XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.bufferCharacteristicUUID)
         } catch {
@@ -593,6 +600,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Test characteristic write
         do {
             try blePeripheralProxy_1.writeWithoutResponse(data: Data([0x00, 0x01]), to: MockBleDescriptor.secretCharacteristicUUID)
+            XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.writeNotSupported(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
         } catch {
