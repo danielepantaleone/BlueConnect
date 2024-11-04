@@ -93,6 +93,16 @@ public enum BlePeripheralProxyError: Error {
     /// This error occurs when a read operation takes too long to return data.
     case readTimeout(characteristicUUID: CBUUID)
     
+    /// The RSSI read operation timed out before it could complete.
+    ///
+    /// This error occurs when a RSSI read operation takes too long to return data.
+    case rssiReadTimeout
+    
+    /// The RSSI read operation is unavailable
+    ///
+    /// This error typically suggests that the signal strength cannot be measured, often due to interference or limitations of the Bluetooth stack.
+    case rssiReadNotAvailable
+    
     /// Writing data to the characteristic is not supported.
     ///
     /// - Parameter characteristicUUID: The UUID of the characteristic that does not support writing.

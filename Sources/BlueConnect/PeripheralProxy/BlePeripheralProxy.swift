@@ -95,6 +95,7 @@ public class BlePeripheralProxy: NSObject {
     let characteristicWriteRegistry: KeyedRegistry<CBUUID, Void> = .init()
     let discoverCharacteristicRegistry: KeyedRegistry<CBUUID, CBCharacteristic> = .init()
     let discoverServiceRegistry: KeyedRegistry<CBUUID, CBService> = .init()
+    let rssiReadRegistry: ListRegistry<NSNumber> = .init()
 
     lazy var didDiscoverCharacteristicsSubject: PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never> = .init()
     lazy var didDiscoverServicesSubject: PassthroughSubject<[CBService], Never> = .init()
@@ -137,6 +138,7 @@ public class BlePeripheralProxy: NSObject {
         characteristicWriteRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
         discoverServiceRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
         discoverCharacteristicRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
+        rssiReadRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
     
         // Notify publishers.
         didDiscoverCharacteristicsSubject.send(completion: .finished)
@@ -537,6 +539,43 @@ extension BlePeripheralProxy {
         
         peripheral.setNotifyValue(enabled, for: characteristic)
         
+    }
+    
+}
+
+// MARK: - RSSI read
+
+extension BlePeripheralProxy {
+
+    /// Reads the RSSI (Received Signal Strength Indicator) value of the peripheral.
+    ///
+    /// This method attempts to read the RSSI value of the connected peripheral within a specified timeout period.
+    ///
+    /// - Parameters:
+    ///   - timeout: The maximum time to wait for an RSSI read operation. Defaults to 10 seconds.
+    ///   - callback: A closure that is called with the result of the RSSI read operation. The closure is passed a `Result` containing the RSSI value or an error if the read fails.
+    public func readRSSI(
+        timeout: DispatchTimeInterval = .seconds(10),
+        callback: @escaping (Result<NSNumber, Error>) -> Void
+    ) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        guard peripheral.state == .connected else {
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            return
+        }
+       
+        rssiReadRegistry.register(
+            callback: callback,
+            timeout: timeout
+        ) {
+            $0.notify(.failure(BlePeripheralProxyError.rssiReadTimeout))
+        }
+      
+        peripheral.readRSSI()
+
     }
     
 }

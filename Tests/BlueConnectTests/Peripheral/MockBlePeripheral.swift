@@ -65,11 +65,13 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     var errorOnRead: Error?
     var errorOnWrite: Error?
     var errorOnNotify: Error?
+    var errorOnRSSI: Error?
     var delayOnDiscoverServices: DispatchTimeInterval?
     var delayOnDiscoverCharacteristics: DispatchTimeInterval?
     var delayOnRead: DispatchTimeInterval?
     var delayOnWrite: DispatchTimeInterval?
     var delayOnNotify: DispatchTimeInterval?
+    var delayOnRSSI: DispatchTimeInterval?
     
     // MARK: - Private properties
     
@@ -292,8 +294,7 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 peripheralDelegate?.blePeripheral(
                     self,
                     didWriteValueFor: internalCharacteristic,
-                    error: errorOnWrite
-                )
+                    error: errorOnWrite)
                 errorOnWrite = nil
                 return
             }
@@ -349,8 +350,7 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 peripheralDelegate?.blePeripheral(
                     self,
                     didUpdateNotificationStateFor: internalCharacteristic,
-                    error: errorOnNotify
-                )
+                    error: errorOnNotify)
                 errorOnNotify = nil
                 return
             }
@@ -375,10 +375,14 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     }
     
     func readRSSI() {
+        
         queue.async { [weak self] in
+            
             guard let self else { return }
+            
             mutex.lock()
             defer { mutex.unlock() }
+            
             guard state == .connected else {
                 peripheralDelegate?.blePeripheral(
                     self,
@@ -386,12 +390,33 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                     error: MockBleError.peripheralNotConnected)
                 return
             }
-            rssi = Int.random(in: (-90)...(-50))
-            peripheralDelegate?.blePeripheral(
-                self,
-                didReadRSSI: NSNumber(value: rssi),
-                error: nil)
+            guard errorOnRSSI == nil else {
+                peripheralDelegate?.blePeripheral(
+                    self,
+                    didReadRSSI: NSNumber(127),
+                    error: errorOnRSSI)
+                errorOnRSSI = nil
+                return
+            }
+            @Sendable func _readInternal() {
+                mutex.lock()
+                defer { mutex.unlock() }
+                peripheralDelegate?.blePeripheral(
+                    self,
+                    didReadRSSI: NSNumber(value: rssi),
+                    error: nil)
+            }
+            if let delayOnRSSI {
+                queue.asyncAfter(deadline: .now() + delayOnRSSI) {
+                    _readInternal()
+                }
+                self.delayOnRSSI = nil
+            } else {
+                _readInternal()
+            }
+            
         }
+        
     }
     
     func maximumWriteValueLength(for: CBCharacteristicWriteType) -> Int {

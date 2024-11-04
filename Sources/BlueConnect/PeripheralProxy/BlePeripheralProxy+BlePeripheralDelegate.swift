@@ -91,8 +91,28 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
     }
     
     public func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
-        guard error == nil else { return }
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // Notify any error on awaiting callbacks.
+        if let error {
+            rssiReadRegistry.notifyAll(.failure(error))
+            return
+        }
+        
+        // A value of 127 dBm (or 0x7F in hexadecimal) is a special indicator, meaning the RSSI reading is unavailable.
+        if RSSI.intValue == -127 {
+            rssiReadRegistry.notifyAll(.failure(BlePeripheralProxyError.rssiReadNotAvailable))
+            return
+        }
+        
+        // Notify on the publisher.
         didUpdateRSSISubject.send(RSSI)
+        
+        // Notify callbacks.
+        rssiReadRegistry.notifyAll(.success(RSSI))
+        
     }
     
     public func blePeripheral(_ peripheral: BlePeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
