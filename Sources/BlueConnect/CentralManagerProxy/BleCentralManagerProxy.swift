@@ -96,9 +96,9 @@ public class BleCentralManagerProxy: NSObject {
     
     /// Initializes the proxy with the provided `BleCentralManager`.
     ///
-    /// - Parameter CentralManager: The `BleCentralManager` instance that this proxy will manage.
+    /// - Parameter centralManager: The `BleCentralManager` instance that this proxy will manage.
     ///
-    /// - Important: You must use this initializer when running unit tests, passing your `BleCentralManager` implementation.
+    /// - Important: You must use this initializer when running unit tests, passing your mocked `BleCentralManager` implementation.
     public init(centralManager: BleCentralManager) {
         super.init()
         self.centralManager = centralManager

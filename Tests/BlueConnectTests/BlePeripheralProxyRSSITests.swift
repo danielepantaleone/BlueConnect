@@ -302,7 +302,7 @@ extension BlePeripheralProxyRSSITests {
         } catch BlePeripheralProxyError.peripheralNotConnected {
             XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
+            XCTFail("peripheral RSSI read was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
     }
     
@@ -320,7 +320,7 @@ extension BlePeripheralProxyRSSITests {
         } catch BlePeripheralProxyError.rssiReadNotAvailable {
             XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'rssiReadNotAvailable', got '\(error)' instead")
+            XCTFail("peripheral RSSI read was expected to fail with BlePeripheralProxyError 'rssiReadNotAvailable', got '\(error)' instead")
         }
     }
     
@@ -338,7 +338,7 @@ extension BlePeripheralProxyRSSITests {
         } catch BlePeripheralProxyError.rssiReadTimeout {
             XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
         } catch {
-            XCTFail("characteristic read was expected to fail with BlePeripheralProxyError 'rssiReadTimeout', got '\(error)' instead")
+            XCTFail("peripheral RSSI read was expected to fail with BlePeripheralProxyError 'rssiReadTimeout', got '\(error)' instead")
         }
     }
 
@@ -356,7 +356,7 @@ extension BlePeripheralProxyRSSITests {
         } catch MockBleError.mockedError {
             XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
         } catch {
-            XCTFail("characteristic read was expected to fail with MockBleError 'mockedError', got '\(error)' instead")
+            XCTFail("peripheral RSSI read was expected to fail with MockBleError 'mockedError', got '\(error)' instead")
         }
     }
 
