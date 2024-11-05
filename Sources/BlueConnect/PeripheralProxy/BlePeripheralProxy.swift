@@ -403,6 +403,14 @@ extension BlePeripheralProxy {
 
 extension BlePeripheralProxy {
     
+    /// Returns the maximum amount of data, in bytes, that can be sent to a characteristic in a single write operation of a given type.
+    ///
+    /// - Parameter type: The type of write operation, specified by `CBCharacteristicWriteType`.
+    /// - Returns: The maximum length, in bytes, that can be sent in a single write operation.
+    public func maximumWriteValueLength(for type: CBCharacteristicWriteType) -> Int {
+        return peripheral.maximumWriteValueLength(for: type)
+    }
+    
     /// Writes a value to a specific characteristic and notifies the result through the provided callback.
     ///
     /// This method writes the specified data to the given characteristic and invokes the callback upon completion.

@@ -50,6 +50,14 @@ public protocol BleCharacteristicWriteWithoutResponseProxy: BleCharacteristicPro
 
 public extension BleCharacteristicWriteWithoutResponseProxy {
     
+    /// Returns the maximum amount of data, in bytes, that can be sent to a characteristic in a single write operation of a given type.
+    ///
+    /// - Parameter type: The type of write operation, specified by `CBCharacteristicWriteType`.
+    /// - Returns: The maximum length, in bytes, that can be sent in a single write operation.
+    func maximumWriteValueLength(for type: CBCharacteristicWriteType) -> Int {
+        return peripheralProxy?.maximumWriteValueLength(for: type) ?? 0
+    }
+    
     /// Write a value to a characteristic without waiting for a response from the BLE peripheral.
     ///
     /// This method first discovers the characteristic and then writes the provided value without expecting a response.

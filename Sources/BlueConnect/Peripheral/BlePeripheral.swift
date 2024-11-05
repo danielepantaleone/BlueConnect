@@ -71,7 +71,7 @@ public protocol BlePeripheral: AnyObject {
     ///
     /// - Parameter type: The type of write operation, specified by `CBCharacteristicWriteType`.
     /// - Returns: The maximum length, in bytes, that can be sent in a single write operation.
-    func maximumWriteValueLength(for: CBCharacteristicWriteType) -> Int
+    func maximumWriteValueLength(for type: CBCharacteristicWriteType) -> Int
     
     /// Reads the current RSSI (Received Signal Strength Indicator) value for the peripheral, while connected.
     func readRSSI()

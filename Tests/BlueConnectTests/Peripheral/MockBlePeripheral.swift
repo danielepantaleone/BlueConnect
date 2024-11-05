@@ -419,7 +419,7 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
         
     }
     
-    func maximumWriteValueLength(for: CBCharacteristicWriteType) -> Int {
+    func maximumWriteValueLength(for type: CBCharacteristicWriteType) -> Int {
         return 180
     }
     
