@@ -39,6 +39,9 @@ public class BleCentralManagerProxy: NSObject {
     /// The instance of the `BleCentralManager` that this proxy manages.
     public private(set) var centralManager: BleCentralManager!
     
+    /// A Boolean value that indicates whether the underlying central is currently scanning.
+    public var isScanning: Bool { centralManager.isScanning }
+    
     // MARK: - Publishers
     
     /// A publisher that emits the updated state of the BLE central manager.

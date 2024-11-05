@@ -46,9 +46,11 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(4))
             .receive(on: DispatchQueue.main)
             .sink(
-                receiveCompletion: { completion in
+                receiveCompletion: { [weak self] completion in
+                    guard let self else { return }
                     switch completion {
                         case .finished:
+                            XCTAssertFalse(bleCentralManagerProxy.isScanning)
                             completionExp.fulfill()
                         case .failure(let error):
                             XCTFail("peripheral discovery terminated with error: \(error)")
@@ -61,7 +63,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
             .store(in: &subscriptions)
         // Await expectation
         wait(for: [completionExp, publisherExp], timeout: 5.0)
-        XCTAssertFalse(bleCentralManager.isScanning)
+        XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
     }
@@ -89,7 +91,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
             .store(in: &subscriptions)
         // Await expectation
         wait(for: [completionExp, publisherExp], timeout: 5.0)
-        XCTAssertTrue(bleCentralManager.isScanning)
+        XCTAssertTrue(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNotNil(bleCentralManagerProxy.discoverSubject)
     }
@@ -120,13 +122,13 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                 }
             )
             .store(in: &subscriptions)
-        // Manually stop the scan
+        // Manually stop the scan in 4 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(4)) { [weak self] in
             self?.bleCentralManagerProxy.stopScan()
         }
         // Await expectation
         wait(for: [completionExp, publisherExp], timeout: 5.0)
-        XCTAssertTrue(bleCentralManager.isScanning)
+        XCTAssertTrue(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
     }
@@ -140,7 +142,8 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(2))
             .receive(on: DispatchQueue.main)
             .sink(
-                receiveCompletion: { completion in
+                receiveCompletion: { [weak self] completion in
+                    guard let self else { return }
                     switch completion {
                         case .finished:
                             XCTFail("peripheral discovery terminated with success but failure was expected")
@@ -154,6 +157,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                                 return
                             }
                             XCTAssertEqual(state, .poweredOff)
+                            XCTAssertFalse(bleCentralManagerProxy.isScanning)
                             completionExp.fulfill()
                     }
                 },
@@ -164,7 +168,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
             .store(in: &subscriptions)
         // Await expectation
         wait(for: [completionExp, publisherExp], timeout: 3.0)
-        XCTAssertFalse(bleCentralManager.isScanning)
+        XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
     }
@@ -199,6 +203,8 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                 }
             )
             .store(in: &subscriptions)
+        // Check that we are scanning
+        XCTAssertTrue(bleCentralManagerProxy.isScanning)
         // Destroy the proxy
         bleCentralManagerProxy = nil
         // Await expectation
