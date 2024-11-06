@@ -235,7 +235,7 @@ extension BleCentralManagerProxyStateChangeTests {
         wait(for: [expectation], timeout: 2.0)
     }
     
-    func testWaitUntilReadyFailedDueToTimeout() throws {
+    func testWaitUntilReadyFailDueToTimeout() throws {
         XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
         // Set state to simulate central manager taking time to be ready.
         centralManager(state: .resetting)
