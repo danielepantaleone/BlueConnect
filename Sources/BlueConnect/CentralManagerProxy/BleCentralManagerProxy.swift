@@ -435,13 +435,13 @@ extension BleCentralManagerProxy {
         
         // Ensure central manager is authorized.
         guard centralManager.state != .unauthorized else {
-            callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
+            callback(.failure(BleCentralManagerProxyError.invalidState(.unauthorized)))
             return
         }
         
         // Ensure central manager is supported.
         guard centralManager.state != .unsupported else {
-            callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
+            callback(.failure(BleCentralManagerProxyError.invalidState(.unsupported)))
             return
         }
         

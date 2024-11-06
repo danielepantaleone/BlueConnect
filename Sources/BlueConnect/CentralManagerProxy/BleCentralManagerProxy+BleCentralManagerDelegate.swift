@@ -81,6 +81,13 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
             // Remove any tracked connection timeout.
             connectionTimeouts.removeAll()
             
+            // If we go unauthorized or unsupported stop waiting for central to be ready.
+            if central.state == .unauthorized {
+                waitUntilReadyRegistry.notifyAll(.failure(BleCentralManagerProxyError.invalidState(.unauthorized)))
+            } else if central.state == .unsupported {
+                waitUntilReadyRegistry.notifyAll(.failure(BleCentralManagerProxyError.invalidState(.unsupported)))
+            }
+            
         } else {
             
             // Notify any registered callback.

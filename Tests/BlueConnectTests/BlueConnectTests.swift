@@ -54,6 +54,10 @@ class BlueConnectTests: XCTestCase {
     }
     var subscriptions: Set<AnyCancellable> = []
     
+    // MARK: - Lazy properties
+    
+    lazy var queue: DispatchQueue = DispatchQueue.global(qos: .background)
+    
     // MARK: - Setup & tear down
     
     override func setUpWithError() throws {
