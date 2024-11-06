@@ -564,7 +564,7 @@ extension BlePeripheralProxy {
     ///   - callback: A closure that is called with the result of the RSSI read operation. The closure is passed a `Result` containing the RSSI value or an error if the read fails.
     public func readRSSI(
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<NSNumber, Error>) -> Void
+        callback: @escaping (Result<NSNumber, Error>) -> Void = { _ in }
     ) {
         
         mutex.lock()
