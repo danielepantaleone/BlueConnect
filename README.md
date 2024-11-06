@@ -25,6 +25,7 @@ This combination of asynchronous communication, event-driven architecture, and t
     * [Reading a characteristic](#reading-a-characteristic)
     * [Writing a characteristic](#writing-a-characteristic)
     * [Enabling notify on a characteristic](#enabling-notify-on-a-characteristic)
+    * [Reading connected peripheral RSSI](#reading-connected-peripheral-rssi)
 * [Providing unit tests in your codebase](#providing-unit-tests-in-your-codebase)
 * [Installation](#installation)
     * [Cocoapods](#cocoapods)
@@ -355,6 +356,35 @@ do {
     print("notify enabled on the characteristic")
 } catch {
     print("failed to enable notify on the characteristic with error: \(error)")
+}
+```
+
+### Reading connected peripheral RSSI
+
+To read connected peripheral RSSI you can use the `readRSSI` method of the `BlePeripheralProxy`.
+
+```swift
+import BlueConnect
+import Combine
+import CoreBluetooth
+
+var subscriptions: Set<AnyCancellable> = []
+let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
+
+// You can optionally subscribe a publisher to be triggered when the RSSI value is read.
+peripheralProxy.didUpdateRSSIPublisher
+    .receive(on: DispatchQueue.main)
+    .sink { value in 
+        print("RSSI: \(value)")
+    }
+    .store(in: &subscriptions)
+
+do {
+    // The following will read the RSSI value from a connected peripheral.
+    let value = try await peripheralProxy.readRSSI(timeout: .seconds(10))
+    print("RSSI: \(value)")
+} catch {
+    print("failed to read peripheral RSSI with error: \(error)")
 }
 ```
 
