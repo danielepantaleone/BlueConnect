@@ -27,8 +27,14 @@
 
 import Foundation
 
+#if compiler(>=5.10)
 /// A global lock to manage registry thread safety.
 nonisolated(unsafe) let registryLock = RecursiveMutex()
+#else
+/// A global lock to manage registry thread safety.
+let registryLock = RecursiveMutex()
+#endif
+
 
 // MARK: - Subscription
 
