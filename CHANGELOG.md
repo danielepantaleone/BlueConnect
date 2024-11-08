@@ -1,6 +1,14 @@
 Release Notes
 =============
 
+## 1.2.1
+
+Released November 08, 2024
+
+- Fix build using Swift 5.9 [68629bf](https://github.com/danielepantaleone/BlueConnect/commit/68629bf9b1163d5d858d6e764fe8d613ab7abd80)
+
+**Full Changelog**: [1.2.0...1.2.1](https://github.com/danielepantaleone/BlueConnect/compare/1.2.0...1.2.1)
+
 ## 1.2.0
 
 Released November 06, 2024

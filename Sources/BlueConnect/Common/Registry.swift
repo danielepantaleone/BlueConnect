@@ -35,7 +35,6 @@ nonisolated(unsafe) let registryLock = RecursiveMutex()
 let registryLock = RecursiveMutex()
 #endif
 
-
 // MARK: - Subscription
 
 /// A `Subscription` that manages an asynchronous callback with a timeout.
