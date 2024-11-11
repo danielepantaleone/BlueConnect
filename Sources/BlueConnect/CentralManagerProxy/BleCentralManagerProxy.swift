@@ -39,8 +39,20 @@ public class BleCentralManagerProxy: NSObject {
     /// The instance of the `BleCentralManager` that this proxy manages.
     public private(set) var centralManager: BleCentralManager!
     
-    /// A Boolean value that indicates whether the underlying central is currently scanning.
+    /// The current authorization status for using Bluetooth.
+    ///
+    /// This property reflects the app's authorization to use Bluetooth features.
+    public var authorization: CBManagerAuthorization { centralManager.authorization }
+    
+    /// Whether or not the central manager is currently scanning for peripherals.
+    ///
+    /// Returns `true` if the central manager is actively scanning for peripherals; otherwise, `false`.
     public var isScanning: Bool { centralManager.isScanning }
+    
+    /// The current state of the central manager.
+    ///
+    /// This property reflects the current state of the Bluetooth central manager (e.g., powered on, off, etc.).
+    public var state: CBManagerState { centralManager.state }
     
     // MARK: - Publishers
     
