@@ -96,18 +96,18 @@ public protocol BlePeripheralManagerDelegate: NSObject, CBPeripheralManagerDeleg
     /// - Parameters:
     ///   - peripheral: The `BlePeripheralManager` instance restoring its state.
     ///   - dict: A dictionary containing state information to restore the peripheral manager.
-    func blePeripheralManager(_ peripheral: BlePeripheralManager, willRestoreState dict: [String : Any])
+    func blePeripheralManager(_ peripheral: BlePeripheralManager, willRestoreState dict: [String: Any])
     
 }
 
 public extension BlePeripheralManagerDelegate {
     func blePeripheralManagerDidUpdateState(_ peripheral: BlePeripheralManager) { }
-    func blePeripheralManagerDidStartAdvertising(_ peripheral: BlePeripheralManager, error: (any Error)?) { }
+    func blePeripheralManagerDidStartAdvertising(_ peripheral: BlePeripheralManager, error: Error?) { }
     func blePeripheralManagerIsReady(toUpdateSubscribers peripheral: BlePeripheralManager) { }
-    func blePeripheralManager(_ peripheral: BlePeripheralManager, didAdd service: CBService, error: (any Error)?) { }
+    func blePeripheralManager(_ peripheral: BlePeripheralManager, didAdd service: CBService, error: Error?) { }
     func blePeripheralManager(_ peripheral: BlePeripheralManager, central: BleCentral, didSubscribeTo characteristic: CBCharacteristic) { }
     func blePeripheralManager(_ peripheral: BlePeripheralManager, central: BleCentral, didUnsubscribeFrom characteristic: CBCharacteristic) { }
     func blePeripheralManager(_ peripheral: BlePeripheralManager, didReceiveRead request: CBATTRequest) { }
     func blePeripheralManager(_ peripheral: BlePeripheralManager, didReceiveWrite requests: [CBATTRequest]) { }
-    func blePeripheralManager(_ peripheral: BlePeripheralManager, willRestoreState dict: [String : Any]) { }
+    func blePeripheralManager(_ peripheral: BlePeripheralManager, willRestoreState dict: [String: Any]) { }
 }

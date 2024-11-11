@@ -66,7 +66,7 @@ public protocol BlePeripheralManager: AnyObject {
     /// Starts advertising peripheral data.
     ///
     /// - Parameter advertisementData: A dictionary containing data to advertise, such as service UUIDs and local name.
-    func startAdvertising(_ advertisementData: [String : Any]?)
+    func startAdvertising(_ advertisementData: [String: Any]?)
 
     /// Stops advertising peripheral data.
     ///
@@ -125,7 +125,7 @@ public extension BlePeripheralManager {
     ///
     /// - Parameter advertisementData: A dictionary containing data to advertise, such as service UUIDs and local name.
     ///   Defaults to `nil`.
-    func startAdvertising(_ advertisementData: [String : Any]? = nil) {
+    func startAdvertising(_ advertisementData: [String: Any]? = nil) {
         startAdvertising(advertisementData)
     }
     
