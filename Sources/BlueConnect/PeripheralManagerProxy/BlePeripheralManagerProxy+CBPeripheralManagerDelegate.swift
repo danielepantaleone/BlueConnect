@@ -34,14 +34,18 @@ extension BlePeripheralManagerProxy: CBPeripheralManagerDelegate {
         blePeripheralManagerDidUpdateState(peripheral)
     }
 
-    public func peripheralManager(_ peripheral: CBPeripheralManager, willRestoreState dict: [String: Any]) {
-        blePeripheralManager(peripheral, willRestoreState: dict)
-    }
-
     public func peripheralManagerDidStartAdvertising(_ peripheral: CBPeripheralManager, error: Error?) {
         blePeripheralManagerDidStartAdvertising(peripheral, error: error)
     }
 
+    public func peripheralManager(_ peripheral: CBPeripheralManager, willRestoreState dict: [String: Any]) {
+        blePeripheralManager(peripheral, willRestoreState: dict)
+    }
+
+    public func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
+        blePeripheralManagerIsReady(toUpdateSubscribers: peripheral)
+    }
+    
     public func peripheralManager(_ peripheral: CBPeripheralManager, didAdd service: CBService, error: Error?) {
         blePeripheralManager(peripheral, didAdd: service, error: error)
     }
@@ -62,8 +66,4 @@ extension BlePeripheralManagerProxy: CBPeripheralManagerDelegate {
         blePeripheralManager(peripheral, didReceiveWrite: requests)
     }
 
-    public func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
-        blePeripheralManagerIsReady(toUpdateSubscribers: peripheral)
-    }
-    
 }
