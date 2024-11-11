@@ -87,7 +87,7 @@ public class BleCentralManagerProxy: NSObject {
     var connectionTimeouts: Set<UUID> = []
     let connectionRegistry: KeyedRegistry<UUID, Void> = .init()
     let disconnectionRegistry: KeyedRegistry<UUID, Void> = .init()
-    var waitUntilReadyRegistry: ListRegistry<Void> = .init()
+    let waitUntilReadyRegistry: ListRegistry<Void> = .init()
    
     var discoverSubject: PassthroughSubject<(
         peripheral: BlePeripheral,
