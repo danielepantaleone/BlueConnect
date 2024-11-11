@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 1.3.0
+
+TBD
+
+- Added missing properties to central manager proxy [0553ec4](https://github.com/danielepantaleone/BlueConnect/commit/0553ec455ab714567e690091ee3563e9a9fa3472)
+- Added support for peripheral manager [11d69f9](https://github.com/danielepantaleone/BlueConnect/commit/11d69f9fa24c13918ac078bd55f472a09e8b6434) using peripheral manager proxy [8906b43](https://github.com/danielepantaleone/BlueConnect/commit/8906b4363af58c8d064b9f771610591c08b5ef71)
+
 ## 1.2.1
 
 Released November 08, 2024
