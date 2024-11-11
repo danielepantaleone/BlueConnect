@@ -108,6 +108,7 @@ public protocol BlePeripheralManager: AnyObject {
     ///   - value: The data to be sent.
     ///   - characteristic: The `CBMutableCharacteristic` for which the update is sent.
     ///   - centrals: An optional array of `BleCentral` instances representing the subscribed centrals.
+    ///   
     /// - Returns: `true` if the update was successfully queued; otherwise, `false`.
     func updateValue(_ value: Data, for characteristic: CBMutableCharacteristic, onSubscribedCentrals centrals: [BleCentral]?) -> Bool
     
