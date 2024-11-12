@@ -183,6 +183,17 @@ extension BlePeripheralManagerProxy {
     public func add(_ service: CBMutableService) {
         peripheralManager.add(service)
     }
+    
+    /// Adds a list of services to the peripheral manager.
+    ///
+    /// Registers a list of `CBMutableService` with the peripheral manager, making the all the services available for centrals to discover and interact with.
+    ///
+    /// - Parameter services: A list of `CBMutableService` instance representing the services to add.
+    public func add(services: [CBMutableService]) {
+        for service in services {
+            peripheralManager.add(service)
+        }
+    }
 
     /// Removes a service from the peripheral manager.
     ///
@@ -191,6 +202,17 @@ extension BlePeripheralManagerProxy {
     /// - Parameter service: A `CBMutableService` instance representing the service to remove.
     public func remove(_ service: CBMutableService) {
         peripheralManager.remove(service)
+    }
+    
+    /// Removes a list services from the peripheral manager.
+    ///
+    /// Unregisters previously added services, making them unavailable for centrals.
+    ///
+    /// - Parameter servicew: A list of `CBMutableService` instance representing the services to remove.
+    public func remove(services: [CBMutableService]) {
+        for service in services {
+            peripheralManager.remove(service)
+        }
     }
 
     /// Removes all services from the peripheral manager.
