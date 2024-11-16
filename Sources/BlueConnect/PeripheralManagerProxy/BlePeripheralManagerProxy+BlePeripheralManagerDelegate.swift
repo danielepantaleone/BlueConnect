@@ -38,6 +38,10 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
         if peripheral.state == .poweredOn {
             // Notify any registered callback.
             waitUntilReadyRegistry.notifyAll(.success(()))
+        } else if peripheral.state == .unauthorized {
+            waitUntilReadyRegistry.notifyAll(.failure(BlePeripheralManagerProxyError.invalidState(.unauthorized)))
+        } else if peripheral.state == .unsupported {
+            waitUntilReadyRegistry.notifyAll(.failure(BlePeripheralManagerProxyError.invalidState(.unsupported)))
         }
         
         // Notify state publisher.
