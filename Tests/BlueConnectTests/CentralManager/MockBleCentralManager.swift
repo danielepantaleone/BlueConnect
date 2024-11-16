@@ -38,12 +38,6 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     var errorOnDisconnection: Error?
     var delayOnConnection: DispatchTimeInterval?
     var delayOnDisconnection: DispatchTimeInterval?
-
-    // MARK: - Private properties
-    
-    private var peripherals: [BlePeripheral] = []
-    private var scanTimer: DispatchSourceTimer?
-    private var scanCounter: Int = 0
     
     // MARK: - Protocol properties
     
@@ -51,7 +45,6 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
 
     var authorization: CBManagerAuthorization { .allowedAlways }
     var isScanning: Bool = false
-    let mutex = RecursiveMutex()
     var state: CBManagerState = .poweredOff {
         didSet {
             queue.async { [weak self] in
@@ -62,7 +55,12 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
         }
     }
     
-    // MARK: - Private properties
+    // MARK: - Internal properties
+        
+    let mutex = RecursiveMutex()
+    var peripherals: [BlePeripheral] = []
+    var scanTimer: DispatchSourceTimer?
+    var scanCounter: Int = 0
     
     lazy var queue: DispatchQueue = DispatchQueue.global(qos: .background)
 
