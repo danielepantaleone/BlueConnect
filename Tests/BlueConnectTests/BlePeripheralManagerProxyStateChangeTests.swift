@@ -34,39 +34,6 @@ import XCTest
     
 final class BlePeripheralManagerProxyStateChangeTests: BlueConnectTests {
     
-    // MARK: - Properties
-    
-    var blePeripheralManager: MockBlePeripheralManager!
-    var blePeripheralManagerProxy: BlePeripheralManagerProxy!
-    
-    // MARK: - Setup & tear down
-    
-    override func setUpWithError() throws {
-        try super.setUpWithError()
-        blePeripheralManager = .init()
-        blePeripheralManagerProxy = .init(peripheralManager: blePeripheralManager)
-    }
-    
-    override func tearDownWithError() throws {
-        try super.tearDownWithError()
-        blePeripheralManagerProxy = nil
-        blePeripheralManager = nil
-    }
-    
-    // MARK: - Functions
-    
-    func peripheralManager(state: CBManagerState) {
-        XCTAssertNotEqual(blePeripheralManager.state, state)
-        let expectation = expectation(description: "waiting for bluetooth peripheral manager state to change to '\(state)'")
-        blePeripheralManagerProxy.didUpdateStatePublisher
-            .receive(on: DispatchQueue.main)
-            .filter { $0 == state }
-            .sink { _ in expectation.fulfill() }
-            .store(in: &subscriptions)
-        blePeripheralManager.state = state
-        wait(for: [expectation], timeout: 2.0)
-    }
-    
 }
 
 // MARK: - Test our mock

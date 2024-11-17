@@ -52,6 +52,8 @@ class BlueConnectTests: XCTestCase {
             return try XCTUnwrap(peripheral as? MockBlePeripheral)
         }
     }
+    var blePeripheralManager: MockBlePeripheralManager!
+    var blePeripheralManagerProxy: BlePeripheralManagerProxy!
     var subscriptions: Set<AnyCancellable> = []
     
     // MARK: - Lazy properties
@@ -81,25 +83,41 @@ class BlueConnectTests: XCTestCase {
                 secret: "efgh")
         ])
         bleCentralManagerProxy = .init(centralManager: bleCentralManager)
+        blePeripheralManager = .init()
+        blePeripheralManagerProxy = .init(peripheralManager: blePeripheralManager)
     }
     
     override func tearDownWithError() throws {
         try super.tearDownWithError()
         bleCentralManagerProxy = nil
         bleCentralManager = nil
+        blePeripheralManagerProxy = nil
+        blePeripheralManager = nil
     }
     
     // MARK: - Functions
     
     func centralManager(state: CBManagerState) {
         XCTAssertNotEqual(bleCentralManager.state, state)
-        let expectation = expectation(description: "waiting for bluetooth state to change to '\(state)'")
+        let expectation = expectation(description: "waiting for bluetooth central manager state to change to '\(state)'")
         bleCentralManagerProxy.didUpdateStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 == state }
             .sink { _ in expectation.fulfill() }
             .store(in: &subscriptions)
         bleCentralManager.state = state
+        wait(for: [expectation], timeout: 2.0)
+    }
+    
+    func peripheralManager(state: CBManagerState) {
+        XCTAssertNotEqual(blePeripheralManager.state, state)
+        let expectation = expectation(description: "waiting for bluetooth peripheral manager state to change to '\(state)'")
+        blePeripheralManagerProxy.didUpdateStatePublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == state }
+            .sink { _ in expectation.fulfill() }
+            .store(in: &subscriptions)
+        blePeripheralManager.state = state
         wait(for: [expectation], timeout: 2.0)
     }
     
