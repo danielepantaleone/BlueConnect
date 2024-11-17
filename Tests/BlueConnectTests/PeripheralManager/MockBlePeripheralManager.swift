@@ -35,19 +35,13 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     // MARK: - Properties
     
     var errorOnUpdateValue: Bool = false
-    
+    var errorOnAdvertising: Error?
+    var delayOnAdvertising: DispatchTimeInterval?
+        
     // MARK: - Protocol properties
     
     var authorization: CBManagerAuthorization { .allowedAlways }
-    var isAdvertising: Bool = false {
-        didSet {
-            queue.async { [weak self] in
-                guard let self else { return }
-                guard isAdvertising else { return }
-                peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: nil)
-            }
-        }
-    }
+    var isAdvertising: Bool = false
     var state: CBManagerState = .poweredOff {
         didSet {
             queue.async { [weak self] in
@@ -69,14 +63,38 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     // MARK: - Interface
     
     func startAdvertising(_ advertisementData: [String: Any]?) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        isAdvertising = true
+        queue.async { [weak self] in
+            guard let self else { return }
+            mutex.lock()
+            defer { mutex.unlock() }
+            guard !isAdvertising else { return }
+            guard errorOnAdvertising == nil else {
+                peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: errorOnAdvertising)
+                errorOnAdvertising = nil
+                return
+            }
+            @Sendable func _advertiseInternal() {
+                mutex.lock()
+                defer { mutex.unlock() }
+                guard state == .poweredOn else { return }
+                isAdvertising = true
+                peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: nil)
+            }
+            if let delayOnAdvertising {
+                queue.asyncAfter(deadline: .now() + delayOnAdvertising) {
+                    _advertiseInternal()
+                }
+                self.delayOnAdvertising = nil
+            } else {
+                _advertiseInternal()
+            }
+        }
     }
     
     func stopAdvertising() {
         mutex.lock()
         defer { mutex.unlock() }
+        guard isAdvertising else { return }
         isAdvertising = false
     }
     

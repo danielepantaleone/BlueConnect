@@ -93,6 +93,7 @@ class BlueConnectTests: XCTestCase {
         bleCentralManager = nil
         blePeripheralManagerProxy = nil
         blePeripheralManager = nil
+        subscriptions.removeAll()
     }
     
     // MARK: - Functions
