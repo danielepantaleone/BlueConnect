@@ -61,14 +61,14 @@ public class BlePeripheralManagerProxy: NSObject {
         didUpdateStateSubject.eraseToAnyPublisher()
     }()
     
+    /// Publisher for the advertising status of the peripheral manager that emits a `Bool` value indicating whether the peripheral manager is currently advertising (`true`) or not (`false`).
+    public lazy var didUpdateAdvertisingPublisher: AnyPublisher<Bool, Never> = {
+        didUpdateAdvertisingSubject.eraseToAnyPublisher()
+    }()
+    
     /// Publisher that emits an error whenever the advertising fails to start due to CoreBluetooth internal error.
     public lazy var didFailToStartAdvertisingPublisher: AnyPublisher<Error, Never> = {
         didFailToStartAdvertisingSubject.eraseToAnyPublisher()
-    }()
-    
-    /// Publisher for advertising status, providing an error if advertising fails.
-    public lazy var didStartAdvertisingPublisher: AnyPublisher<Void, Never> = {
-        didStartAdvertisingSubject.eraseToAnyPublisher()
     }()
     
     /// Publisher that emits when a service is successfully added or an error occurs during the addition process.
@@ -113,8 +113,8 @@ public class BlePeripheralManagerProxy: NSObject {
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
     
     lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
+    lazy var didUpdateAdvertisingSubject: PassthroughSubject<Bool, Never> = .init()
     lazy var didFailToStartAdvertisingSubject: PassthroughSubject<Error, Never> = .init()
-    lazy var didStartAdvertisingSubject: PassthroughSubject<Void, Never> = .init()
     lazy var didAddServiceSubject: PassthroughSubject<(service: CBService, error: Error?), Never> = .init()
     lazy var didSubscribeToCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
     lazy var didUnsubscribeFromCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
@@ -179,6 +179,12 @@ extension BlePeripheralManagerProxy {
         // Ensure peripheral manager is in a powered-on state.
         guard peripheralManager.state == .poweredOn else {
             callback(.failure(BlePeripheralManagerProxyError.invalidState(peripheralManager.state)))
+            return
+        }
+        
+        // Exit early if already advertising.
+        guard !isAdvertising else {
+            callback(.success(()))
             return
         }
         
