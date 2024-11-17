@@ -32,14 +32,19 @@
 /// `BlePeripheralManagerProxy` is used to signal specific error conditions that arise when interacting with the peripheral manager proxy.
 public enum BlePeripheralManagerProxyError: Error {
     
+    /// Indicates that a timeout occurred while attempting to start advertising.
+    ///
+    /// This error is thrown when someone starts advertising services on the peripheral manager but the callback is not triggered within a provided timeout.
+    case advertisingTimeout
+    
     /// Indicates that the central manager is in an invalid state for the requested operation.
     ///
     /// - Parameter state: The invalid `CBManagerState` that prevented the operation from proceeding.
     case invalidState(CBManagerState)
     
-    /// Indicates that a timeout occurred while awaiting for the central manager to turn on.
+    /// Indicates that a timeout occurred while awaiting for the peripheral manager to turn on.
     ///
-    /// This error is thrown when someone starts awaiting for the central manager to be ready but the state change is not triggered within a provided timeout.
+    /// This error is thrown when someone starts awaiting for the peripheral manager to be ready but the state change is not triggered within a provided timeout.
     case readyTimeout
     
 }

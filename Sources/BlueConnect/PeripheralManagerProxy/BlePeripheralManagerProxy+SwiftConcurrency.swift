@@ -30,6 +30,26 @@ import Foundation
 
 extension BlePeripheralManagerProxy {
     
+    /// Starts advertising peripheral data.
+    ///
+    /// Initiates advertising of the peripheral's services and other provided advertisement data.
+    ///
+    /// - Parameters:
+    ///   - advertisementData: A dictionary containing data to advertise, such as service UUIDs and the local name. Defaults to `nil` if no advertisement data is provided.
+    ///   - timeout: The time interval to wait for the advertising operation to complete before timing out. Defaults to `.never`, meaning no timeout is applied.
+    ///
+    /// - Returns: The method returns asynchronously when the peripheral manager starts advertising..
+    /// - Throws: An error if the advertising operation fails or times out.
+    public func startAdvertising(_ advertisementData: [String: Any]? = nil, timeout: DispatchTimeInterval = .never) async throws {
+        try await withCheckedThrowingContinuation { continuation in
+            startAdvertising(advertisementData, timeout: timeout) { result in
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
+            }
+        }
+    }
+    
     /// Waits asynchronously until the peripheral manager is in the `.poweredOn` state, or throws an error if the state is unauthorized or unsupported.
     ///
     /// This method uses an async/await pattern to wait for the peripheral manager to become ready. It checks the peripheral manager's state and resumes

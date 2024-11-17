@@ -35,8 +35,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
+        // Notify any registered callback.
         if peripheral.state == .poweredOn {
-            // Notify any registered callback.
             waitUntilReadyRegistry.notifyAll(.success(()))
         } else if peripheral.state == .unauthorized {
             waitUntilReadyRegistry.notifyAll(.failure(BlePeripheralManagerProxyError.invalidState(.unauthorized)))
@@ -54,8 +54,17 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
         mutex.lock()
         defer { mutex.unlock() }
         
-        // Notify state publisher.
-        didStartAdvertisingSubject.send(error)
+        if let error {
+            // Notify any registered callback.
+            startAdvertisingRegistry.notifyAll(.failure(error))
+            // Notify state publisher.
+            didFailToStartAdvertisingSubject.send(error)
+        } else {
+            // Notify any registered callback.
+            startAdvertisingRegistry.notifyAll(.success(()))
+            // Notify state publisher.
+            didStartAdvertisingSubject.send(())
+        }
         
     }
     

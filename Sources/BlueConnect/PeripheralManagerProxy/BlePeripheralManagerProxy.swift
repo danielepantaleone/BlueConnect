@@ -61,8 +61,13 @@ public class BlePeripheralManagerProxy: NSObject {
         didUpdateStateSubject.eraseToAnyPublisher()
     }()
     
+    /// Publisher that emits an error whenever the advertising fails to start due to CoreBluetooth internal error.
+    public lazy var didFailToStartAdvertisingPublisher: AnyPublisher<Error, Never> = {
+        didFailToStartAdvertisingSubject.eraseToAnyPublisher()
+    }()
+    
     /// Publisher for advertising status, providing an error if advertising fails.
-    public lazy var didStartAdvertisingPublisher: AnyPublisher<Error?, Never> = {
+    public lazy var didStartAdvertisingPublisher: AnyPublisher<Void, Never> = {
         didStartAdvertisingSubject.eraseToAnyPublisher()
     }()
     
@@ -72,12 +77,12 @@ public class BlePeripheralManagerProxy: NSObject {
     }()
     
     /// Publisher for central subscriptions to a characteristic.
-    public lazy var didSubscribeToChacracteristicPublisher: AnyPublisher<CBCharacteristic, Never> = {
+    public lazy var didSubscribeToCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> = {
         didSubscribeToCharacteristicSubject.eraseToAnyPublisher()
     }()
     
     /// Publisher for central unsubscriptions from a characteristic.
-    public lazy var didUnsubscribeFromChacracteristicPublisher: AnyPublisher<CBCharacteristic, Never> = {
+    public lazy var didUnsubscribeFromCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> = {
         didUnsubscribeFromCharacteristicSubject.eraseToAnyPublisher()
     }()
     
@@ -104,10 +109,12 @@ public class BlePeripheralManagerProxy: NSObject {
     // MARK: - Internal properties
     
     let mutex = RecursiveMutex()
+    let startAdvertisingRegistry: ListRegistry<Void> = .init()
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
     
     lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
-    lazy var didStartAdvertisingSubject: PassthroughSubject<Error?, Never> = .init()
+    lazy var didFailToStartAdvertisingSubject: PassthroughSubject<Error, Never> = .init()
+    lazy var didStartAdvertisingSubject: PassthroughSubject<Void, Never> = .init()
     lazy var didAddServiceSubject: PassthroughSubject<(service: CBService, error: Error?), Never> = .init()
     lazy var didSubscribeToCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
     lazy var didUnsubscribeFromCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
@@ -155,11 +162,37 @@ extension BlePeripheralManagerProxy {
     
     /// Starts advertising peripheral data.
     ///
-    /// Initiates advertising of the peripheral's services and other provided advertisement data.
+    /// Initiates advertising of the peripheral's services and other provided advertisement data. The method ensures that the peripheral manager is in a powered-on state before starting the advertising process. A callback is invoked with the result of the operation, either success or an error.
     ///
-    /// - Parameter advertisementData: A dictionary containing data to advertise, such as service UUIDs and the local name.
-    public func startAdvertising(_ advertisementData: [String: Any]? = nil) {
+    /// - Parameters:
+    ///   - advertisementData: A dictionary containing data to advertise, such as service UUIDs and the local name. Defaults to `nil` if no advertisement data is provided.
+    ///   - timeout: The time interval to wait for the advertising to start before timing out. Defaults to `.never`, meaning no timeout is applied.
+    ///   - callback: A closure that is called with the result of the advertising operation. The closure is passed a `Result` type, which is `.success` on successful advertising start or `.failure` with an error if the operation fails. Defaults to a no-op closure.
+    public func startAdvertising(
+        _ advertisementData: [String: Any]? = nil,
+        timeout: DispatchTimeInterval = .never,
+        callback: @escaping (Result<Void, Error>) -> Void = { _ in }
+    ) {
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // Ensure peripheral manager is in a powered-on state.
+        guard peripheralManager.state == .poweredOn else {
+            callback(.failure(BlePeripheralManagerProxyError.invalidState(peripheralManager.state)))
+            return
+        }
+        
+        // Register a callback to be notified when advertising is started.
+        startAdvertisingRegistry.register(
+            callback: callback,
+            timeout: timeout
+        ) {
+            $0.notify(.failure(BlePeripheralManagerProxyError.advertisingTimeout))
+        }
+        
+        // Try to start advertising.
         peripheralManager.startAdvertising(advertisementData)
+        
     }
 
     /// Stops advertising peripheral data.
