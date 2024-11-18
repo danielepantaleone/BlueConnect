@@ -22,10 +22,10 @@ This combination of asynchronous communication, event-driven architecture, and t
     * [Scanning for peripherals](#scanning-for-peripherals)
     * [Connecting a peripheral](#connecting-a-peripheral)
     * [Disconnecting a peripheral](#disconnecting-a-peripheral)
+    * [Reading connected peripheral RSSI](#reading-connected-peripheral-rssi)
     * [Reading a characteristic](#reading-a-characteristic)
     * [Writing a characteristic](#writing-a-characteristic)
     * [Enabling notify on a characteristic](#enabling-notify-on-a-characteristic)
-    * [Reading connected peripheral RSSI](#reading-connected-peripheral-rssi)
 * [Providing unit tests in your codebase](#providing-unit-tests-in-your-codebase)
 * [Installation](#installation)
     * [Cocoapods](#cocoapods)
@@ -37,23 +37,26 @@ This combination of asynchronous communication, event-driven architecture, and t
 ## Feature Highlights
 
 - [x] Supports both iOS and macOS.
-- [x] Fully covered by unit tests.
-- [x] Replaces the delegate-based interface of **`CBCentralManager`** and **`CBPeripheral`** with closures and Swift concurrency (async/await).
-- [x] Delivers event notifications via Combine publishers for both **`CBCentralManager`** and **`CBPeripheral`**.
+- [x] Completely covered by unit tests.
+- [x] Replaces the delegate-based interface of **`CBCentralManager`**, **`CBPeripheralManager`** and **`CBPeripheral`** with closures and Swift concurrency (async/await).
+- [x] Delivers event notifications via Combine publishers for **`CBCentralManager`**, **`CBPeripheralManager`** and **`CBPeripheral`**.
 - [x] Includes connection timeout handling for **`CBPeripheral`**.
 - [x] Includes characteristic operations timeout handling for **`CBPeripheral`** (discovery, read, write, set notify).
 - [x] Provides direct interaction with **`CBPeripheral`** characteristics with no need to manage **`CBPeripheral`** data.
 - [x] Provides an optional cache policy for **`CBPeripheral`** data retrieval, ideal for scenarios where characteristic data remains static over time.
 - [x] Provides automatic service/characteristic discovery when characteristic operations are requested (read, write, set notify).
+- [x] Provides notification via Combine publisher when advertising is stopped on the **`CBPeripheralManager`**.
 - [x] Correct routing of **`CBCentralManager`** disconnection events towards connection failure publisher and callbacks if the connection didn't happen at all.
 - [x] Facilitates unit testing by supporting BLE central and peripheral mocks, enabling easier testing for libraries and apps that interact with BLE peripherals.
 
 ## Usage
 
-BlueConnect delegates its functionality to two proxies:
+BlueConnect delegates its functionality to several proxies:
 
 - **`BleCentralManagerProxy`**: A wrapper around **`CBCentralManager`**, responsible for connecting, disconnecting, and 
 scanning for peripherals. 
+- **`BlePeripheralManagerProxy`**: A wrapper around **`CBPeripheralManager`**, responsible for advertising BLE services, 
+managing local services and characteristics, and reacting to BLE centrals requests. 
 It publishes events using both asynchronous methods (via callbacks or Swift concurrency) and Combine publishers.
 - **`BlePeripheralProxy`**: A wrapper around **`CBPeripheral`** that handles communication with BLE peripherals and manages 
 data transmission. 
@@ -86,24 +89,30 @@ import CoreBluetooth
 
 var subscriptions: Set<AnyCancellable> = []
 let centralManagerProxy = BleCentralManagerProxy()
-centralManagerProxy.scanForPeripherals(timeout: .seconds(30))
-    .receive(on: DispatchQueue.main)
-    .sink(
-        receiveCompletion: { completion in
-            // This is called when the peripheral scan is completed or upon scan failure.
-            switch completion {
-                case .finished:
-                    print("peripheral scan completed successfully")
-                case .failure(let error):
-                    print("peripheral scan terminated with error: \(error)")
+
+do {
+    try await centralManagerProxy.waitUntilReady()
+    centralManagerProxy.scanForPeripherals(timeout: .seconds(30))
+        .receive(on: DispatchQueue.main)
+        .sink(
+            receiveCompletion: { completion in
+                // This is called when the peripheral scan is completed or upon scan failure.
+                switch completion {
+                    case .finished:
+                        print("peripheral scan completed successfully")
+                    case .failure(let error):
+                        print("peripheral scan terminated with error: \(error)")
+                }
+            },
+            receiveValue: { peripheral, advertisementData, RSSI in 
+                // This is called multiple times for every discovered peripheral.
+                print("peripheral '\(peripheral.identifier)' was discovered")
             }
-        },
-        receiveValue: { peripheral, advertisementData, RSSI in 
-            // This is called multiple times for every discovered peripheral.
-            print("peripheral '\(peripheral.identifier)' was discovered")
-        }
-    )
-    .store(in: &subscriptions)
+        )
+        .store(in: &subscriptions)
+} catch {
+    print("peripheral scan failed with error: \(error)")
+}
 ```
 
 The peripheral scan will automatically stop if a timeout is specified. However, you can also manually stop the scan at 
@@ -146,6 +155,7 @@ do {
     // If the connection cannot be established within the specified amount of time, the connection 
     // attempt is dropped and notified by raising an appropriate error. If the connection is not 
     // established then nothing is advertised on the combine publisher.
+    try await centralManagerProxy.waitUntilReady()
     try await centralManagerProxy.connect(
         peripheral: peripheral,
         options: nil,
@@ -180,10 +190,40 @@ centralManagerProxy.didDisconnectPublisher
 
 do {
     // The following will disconnect a BLE peripheral.
+    try await centralManagerProxy.waitUntilReady()
     try await centralManagerProxy.disconnect(peripheral: peripheral)
     print("peripheral '\(peripheral.identifier)' disconnected")
 } catch {
     print("peripheral disconnection failed with error: \(error)")
+}
+```
+
+### Reading connected peripheral RSSI
+
+To read connected peripheral RSSI you can use the `readRSSI` method of the `BlePeripheralProxy`.
+
+```swift
+import BlueConnect
+import Combine
+import CoreBluetooth
+
+var subscriptions: Set<AnyCancellable> = []
+let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
+
+// You can optionally subscribe a publisher to be triggered when the RSSI value is read.
+peripheralProxy.didUpdateRSSIPublisher
+    .receive(on: DispatchQueue.main)
+    .sink { value in 
+        print("RSSI: \(value)")
+    }
+    .store(in: &subscriptions)
+
+do {
+    // The following will read the RSSI value from a connected peripheral.
+    let value = try await peripheralProxy.readRSSI(timeout: .seconds(10))
+    print("RSSI: \(value)")
+} catch {
+    print("failed to read peripheral RSSI with error: \(error)")
 }
 ```
 
@@ -359,46 +399,21 @@ do {
 }
 ```
 
-### Reading connected peripheral RSSI
-
-To read connected peripheral RSSI you can use the `readRSSI` method of the `BlePeripheralProxy`.
-
-```swift
-import BlueConnect
-import Combine
-import CoreBluetooth
-
-var subscriptions: Set<AnyCancellable> = []
-let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
-
-// You can optionally subscribe a publisher to be triggered when the RSSI value is read.
-peripheralProxy.didUpdateRSSIPublisher
-    .receive(on: DispatchQueue.main)
-    .sink { value in 
-        print("RSSI: \(value)")
-    }
-    .store(in: &subscriptions)
-
-do {
-    // The following will read the RSSI value from a connected peripheral.
-    let value = try await peripheralProxy.readRSSI(timeout: .seconds(10))
-    print("RSSI: \(value)")
-} catch {
-    print("failed to read peripheral RSSI with error: \(error)")
-}
-```
-
 ## Providing unit tests in your codebase
 
-By leveraging the power of **`BleCentralManagerProxy`** and **`BlePeripheralProxy`**, you can easily create mocks for your codebase, allowing you to run unit tests in a controlled environment. This is made possible because **`BleCentralManagerProxy`** and **`BlePeripheralProxy`** rely on protocols during initialization:
+By leveraging the power of **`BleCentralManagerProxy`**, **`BlePeripheralManagerProxy`** and **`BlePeripheralProxy`**, you can easily create mocks for your codebase, allowing you to run unit tests in a controlled environment. 
+This is made possible because **`BleCentralManagerProxy`**, **`BlePeripheralManagerProxy`** and **`BlePeripheralProxy`** rely on protocols during initialization:
 
 - **`BleCentralManager`**: A protocol that defines all public methods of **`CBCentralManager`**. **`CBCentralManager`** itself conforms to this protocol.
+- **`BlePeripheralManager`**: A protocol that defines all public methods of **`CBPeripheralManager`**. **`CBPeripheralManager`** itself conforms to this protocol.
 - **`BlePeripheral`**: A protocol that defines all public methods of **`CBPeripheral`**. **`CBPeripheral`** itself conforms to this protocol.
 
 You can create mock versions of your central manager and peripheral(s) and supply them during the initialization of 
-**`BleCentralManagerProxy`** and **`BlePeripheralProxy`**. This can be easily achieved by using a dependency injection (DI) container such as [Factory](https://github.com/hmlongco/Factory?tab=readme-ov-file#mocking).
+**`BleCentralManagerProxy`**, **`BlePeripheralManagerProxy`** and **`BlePeripheralProxy`**. 
+This can be easily achieved by using a dependency injection (DI) container such as [Factory](https://github.com/hmlongco/Factory?tab=readme-ov-file#mocking).
 
 - An example of a mocked central manager can be found [here](https://github.com/danielepantaleone/BlueConnect/blob/master/Tests/BlueConnectTests/CentralManager/MockBleCentralManager.swift).
+- An example of a mocked peripheral manager can be found [here](https://github.com/danielepantaleone/BlueConnect/blob/master/Tests/BlueConnectTests/PeripheralManager/MockBlePeripheralManager.swift).
 - An example of a mocked peripheral can be found [here](https://github.com/danielepantaleone/BlueConnect/blob/master/Tests/BlueConnectTests/Peripheral/MockBlePeripheral.swift).
 
 ## Installation
