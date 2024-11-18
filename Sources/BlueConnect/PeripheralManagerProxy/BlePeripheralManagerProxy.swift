@@ -108,8 +108,10 @@ public class BlePeripheralManagerProxy: NSObject {
     
     // MARK: - Internal properties
     
+    var advertisingMonitor: DispatchSourceTimer?
     let mutex = RecursiveMutex()
     let startAdvertisingRegistry: ListRegistry<Void> = .init()
+    let stopAdvertisingRegistry: ListRegistry<Void> = .init()
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
     
     lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
@@ -153,6 +155,19 @@ public class BlePeripheralManagerProxy: NSObject {
         self.peripheralManager = CBPeripheralManager(delegate: self, queue: queue, options: options)
         self.peripheralManager.peripheralManagerDelegate = self
     }
+    
+    /// Perform `BlePeripheralManagerProxy` graceful deinitialization.
+    deinit {
+        mutex.lock()
+        defer { mutex.unlock() }
+        peripheralManager.peripheralManagerDelegate = nil
+        // Notify registries about shutdown.
+        startAdvertisingRegistry.notifyAll(.failure(BleCentralManagerProxyError.destroyed))
+        stopAdvertisingRegistry.notifyAll(.failure(BleCentralManagerProxyError.destroyed))
+        // Stop timers
+        advertisingMonitor?.cancel()
+        advertisingMonitor = nil
+    }
 
 }
 
@@ -173,6 +188,7 @@ extension BlePeripheralManagerProxy {
         timeout: DispatchTimeInterval = .never,
         callback: @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
+        
         mutex.lock()
         defer { mutex.unlock() }
         
@@ -204,8 +220,41 @@ extension BlePeripheralManagerProxy {
     /// Stops advertising peripheral data.
     ///
     /// Calling this method halts any active advertising by the peripheral manager, stopping the broadcast of services and advertisement data.
-    public func stopAdvertising() {
+    ///
+    /// - Parameters:
+    ///   - callback: A closure that is called with the result of the stop advertising operation. The closure is passed a `Result` type, which is `.success` on successful advertising stop or `.failure` with an error if the operation fails. Defaults to a no-op closure.
+    public func stopAdvertising(callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
+        
+        mutex.lock()
+        defer { mutex.unlock() }
+        
+        // Ensure peripheral manager is in a powered-on state.
+        guard peripheralManager.state == .poweredOn else {
+            callback(.failure(BlePeripheralManagerProxyError.invalidState(peripheralManager.state)))
+            return
+        }
+        
+        // Exit early if not advertising.
+        guard isAdvertising else {
+            callback(.success(()))
+            return
+        }
+        
+        // If we do not have an advertising monitor running (very unlikely) we have to provide early feeback.
+        guard advertisingMonitor == nil || advertisingMonitor!.isCancelled else {
+            peripheralManager.stopAdvertising()
+            callback(.success(()))
+            return
+        }
+        
+        // Register a callback to be notified when advertising is stopped.
+        stopAdvertisingRegistry.register(callback: callback) {
+            $0.notify(.failure(BlePeripheralManagerProxyError.advertisingTimeout))
+        }
+        
+        // Try to stop advertising.
         peripheralManager.stopAdvertising()
+        
     }
     
 }

@@ -256,3 +256,163 @@ extension BlePeripheralManagerProxyAdvertisingTests {
     }
     
 }
+
+// MARK: - Test stop advertising
+
+extension BlePeripheralManagerProxyAdvertisingTests {
+    
+    func testStopAdvertising() throws {
+        // Turn on ble peripheral manager.
+        peripheralManager(state: .poweredOn)
+        // Start advertising.
+        try startAdvertising()
+        // Check for monitor to be running.
+        XCTAssertNotNil(blePeripheralManagerProxy.advertisingMonitor)
+        // Await state change.
+        let callbackExp = expectation(description: "waiting for peripheral manager advertising to stop")
+        let publisherExp = expectation(description: "waiting for peripheral manager advertising to be emitted on publisher")
+        // Assert over publisher notify.
+        blePeripheralManagerProxy.didUpdateAdvertisingPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == false }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Assert over callback notify.
+        blePeripheralManagerProxy.stopAdvertising { result in
+            switch result {
+                case .success:
+                    callbackExp.fulfill()
+                case .failure(let error):
+                    XCTFail("waiting for peripheral manager advertising to stop failed with error: \(error)")
+            }
+        }
+        // Await expectation fullfilment.
+        wait(for: [callbackExp, publisherExp], timeout: 4.0)
+        // Assert final state.
+        XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+        XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
+    }
+    
+    func testStopAdvertisingWhenNoAdvertisingAtAll() throws {
+        // Turn on ble peripheral manager.
+        peripheralManager(state: .poweredOn)
+        // Check for monitor NOT to be running.
+        XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+        XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
+        // Await state change.
+        let callbackExp = expectation(description: "waiting for peripheral manager advertising to stop because not running")
+        let publisherExp = expectation(description: "waiting for peripheral manager advertising NOT to be emitted on publisher")
+        publisherExp.isInverted = true
+        // Assert over publisher notify.
+        blePeripheralManagerProxy.didUpdateAdvertisingPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == false }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Assert over callback notify.
+        blePeripheralManagerProxy.stopAdvertising { result in
+            switch result {
+                case .success:
+                    callbackExp.fulfill()
+                case .failure(let error):
+                    XCTFail("waiting for peripheral manager advertising to stop failed with error: \(error)")
+            }
+        }
+        // Await expectation fullfilment.
+        wait(for: [callbackExp, publisherExp], timeout: 4.0)
+        // Assert final state.
+        XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+        XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
+    }
+    
+    func testStopAdvertisingFailDueToPeripheralManagerOff() throws {
+        // Assert initial advertising state.
+        XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+        // Await state change.
+        let callbackExp = expectation(description: "waiting for peripheral manager advertising stop to fail")
+        let publisherExp = expectation(description: "waiting for peripheral manager advertising stop NOT to be emitted on publisher")
+        publisherExp.isInverted = true
+        // Assert over publisher notify.
+        blePeripheralManagerProxy.didUpdateAdvertisingPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == false }
+            .sink { _ in publisherExp.fulfill() }
+            .store(in: &subscriptions)
+        // Assert over callback notify.
+        blePeripheralManagerProxy.stopAdvertising { result in
+            switch result {
+                case .success:
+                    XCTFail("peripheral manager advertising was expected to fail but succeeded instead")
+                case .failure(let error):
+                    guard let proxyError = error as? BlePeripheralManagerProxyError else {
+                        XCTFail("peripheral manager advertising was expected to fail with BlePeripheralManagerProxyError, got '\(error)' instead")
+                        return
+                    }
+                    guard case .invalidState(let state) = proxyError else {
+                        XCTFail("peripheral manager advertising was expected to fail with BlePeripheralManagerProxyError 'invalidState', got '\(proxyError)' instead")
+                        return
+                    }
+                    XCTAssertEqual(state, .poweredOff)
+                    callbackExp.fulfill()
+            }
+        }
+        // Await expectation fullfilment.
+        wait(for: [callbackExp, publisherExp], timeout: 2.0)
+        // Assert final state
+        XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+        XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
+    }
+    
+}
+
+// MARK: - Test stop advertising (async)
+
+extension BlePeripheralManagerProxyAdvertisingTests {
+    
+    func testStopAdvertisingAsync() async throws {
+        // Turn on ble peripheral manager.
+        peripheralManager(state: .poweredOn)
+        // Start advertising.
+        try startAdvertising()
+        // Check for monitor to be running.
+        XCTAssertNotNil(blePeripheralManagerProxy.advertisingMonitor)
+        // Test
+        do {
+            try await blePeripheralManagerProxy.stopAdvertising()
+            XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+            XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
+        } catch {
+            XCTFail("peripheral manager advertising to stop failed with error: \(error)")
+        }
+    }
+    
+    func testStopAdvertisingWhenNoAdvertisingAtAllAsync() async throws {
+        // Turn on ble peripheral manager.
+        peripheralManager(state: .poweredOn)
+        // Check for monitor NOT to be running.
+        XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+        XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
+        // Test
+        do {
+            try await blePeripheralManagerProxy.stopAdvertising()
+            XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+            XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
+        } catch {
+            XCTFail("peripheral manager advertising to stop failed with error: \(error)")
+        }
+    }
+    
+    func testStopAdvertisingFailDueToPeripheralManagerOffAsync() async throws {
+        do {
+            try await blePeripheralManagerProxy.stopAdvertising()
+        } catch BlePeripheralManagerProxyError.invalidState(let state) {
+            XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+            XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
+            XCTAssertEqual(state, .poweredOff)
+        } catch {
+            XCTFail("peripheral manager advertising stop was expected to fail with BlePeripheralManagerProxyError.invalidState, got '\(error)' instead")
+        }
+    }
+    
+}
+

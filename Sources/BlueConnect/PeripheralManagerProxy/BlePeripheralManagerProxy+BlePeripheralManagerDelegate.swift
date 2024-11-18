@@ -55,15 +55,38 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
         defer { mutex.unlock() }
         
         if let error {
+            
             // Notify any registered callback.
             startAdvertisingRegistry.notifyAll(.failure(error))
             // Notify state publisher.
             didFailToStartAdvertisingSubject.send(error)
+            
         } else {
+            
             // Notify any registered callback.
             startAdvertisingRegistry.notifyAll(.success(()))
             // Notify state on the publisher.
             didUpdateAdvertisingSubject.send(isAdvertising)
+            
+            // Start a monitor to check whether advertising is stopped.
+            advertisingMonitor?.cancel()
+            advertisingMonitor = DispatchSource.makeTimerSource()
+            advertisingMonitor?.schedule(deadline: .now() + .seconds(1), repeating: .seconds(1))
+            advertisingMonitor?.setEventHandler { [weak self] in
+                guard let self else { return }
+                mutex.lock()
+                defer { mutex.unlock() }
+                guard !isAdvertising else { return }
+                // Kill the timer and reset.
+                advertisingMonitor?.cancel()
+                advertisingMonitor = nil
+                // Notify any registered callback.
+                stopAdvertisingRegistry.notifyAll(.success(()))
+                // Notify state on the publisher.
+                didUpdateAdvertisingSubject.send(isAdvertising)
+            }
+            advertisingMonitor?.resume()
+           
         }
         
     }

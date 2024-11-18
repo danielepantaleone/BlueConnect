@@ -245,6 +245,22 @@ class BlueConnectTests: XCTestCase {
         wait(for: [expectation], timeout: 12.0)
     }
     
+    func startAdvertising() throws {
+        XCTAssertEqual(blePeripheralManagerProxy.state, .poweredOn)
+        XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+        let expectation = expectation(description: "waiting for peripheral manager advertising to start")
+        blePeripheralManagerProxy.startAdvertising { result in
+            switch result {
+                case .success:
+                    expectation.fulfill()
+                case .failure(let error):
+                    XCTFail("waiting for peripheral manager advertising to start failed with error: \(error)")
+            }
+        }
+        wait(for: [expectation], timeout: 2.0)
+        XCTAssertTrue(blePeripheralManagerProxy.isAdvertising)
+    }
+    
     func wait(_ timeout: DispatchTimeInterval) {
         let expectation = expectation(description: "waiting")
         let queue = DispatchQueue.global(qos: .background)
