@@ -153,20 +153,15 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
         // Await state change.
         let callbackExp = expectation(description: "waiting for peripheral manager advertising to fail")
-        let publisherStartExp = expectation(description: "waiting for peripheral manager advertising NOT to be emitted on publisher")
-        publisherStartExp.isInverted = true
-        let publisherFailExp = expectation(description: "waiting for peripheral manager advertising fail to be emitted on publisher")
+        let publisherExp = expectation(description: "waiting for peripheral manager advertising NOT to be emitted on publisher")
+        publisherExp.isInverted = true
         // Mock advertising timeout.
         blePeripheralManager.errorOnAdvertising = MockBleError.mockedError
         // Assert over publisher notify.
         blePeripheralManagerProxy.didUpdateAdvertisingPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 == true }
-            .sink { _ in publisherStartExp.fulfill() }
-            .store(in: &subscriptions)
-        blePeripheralManagerProxy.didFailToStartAdvertisingPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { _ in publisherFailExp.fulfill() }
+            .sink { _ in publisherExp.fulfill() }
             .store(in: &subscriptions)
         // Assert over callback notify.
         blePeripheralManagerProxy.startAdvertising { result in
@@ -183,7 +178,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [callbackExp, publisherStartExp, publisherFailExp], timeout: 2.0)
+        wait(for: [callbackExp, publisherExp], timeout: 2.0)
         // Assert final state.
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
     }

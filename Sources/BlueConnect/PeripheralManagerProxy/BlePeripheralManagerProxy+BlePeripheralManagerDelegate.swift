@@ -58,8 +58,6 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
             
             // Notify any registered callback.
             startAdvertisingRegistry.notifyAll(.failure(error))
-            // Notify state publisher.
-            didFailToStartAdvertisingSubject.send(error)
             
         } else {
             

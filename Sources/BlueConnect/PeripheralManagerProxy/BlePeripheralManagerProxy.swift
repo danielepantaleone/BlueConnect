@@ -66,11 +66,6 @@ public class BlePeripheralManagerProxy: NSObject {
         didUpdateAdvertisingSubject.eraseToAnyPublisher()
     }()
     
-    /// Publisher that emits an error whenever the advertising fails to start due to CoreBluetooth internal error.
-    public lazy var didFailToStartAdvertisingPublisher: AnyPublisher<Error, Never> = {
-        didFailToStartAdvertisingSubject.eraseToAnyPublisher()
-    }()
-    
     /// Publisher that emits when a service is successfully added or an error occurs during the addition process.
     public lazy var didAddServicePublisher: AnyPublisher<(service: CBService, error: Error?), Never> = {
         didAddServiceSubject.eraseToAnyPublisher()
@@ -116,7 +111,6 @@ public class BlePeripheralManagerProxy: NSObject {
     
     lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
     lazy var didUpdateAdvertisingSubject: PassthroughSubject<Bool, Never> = .init()
-    lazy var didFailToStartAdvertisingSubject: PassthroughSubject<Error, Never> = .init()
     lazy var didAddServiceSubject: PassthroughSubject<(service: CBService, error: Error?), Never> = .init()
     lazy var didSubscribeToCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
     lazy var didUnsubscribeFromCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
