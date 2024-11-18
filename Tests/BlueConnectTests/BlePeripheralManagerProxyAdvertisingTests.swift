@@ -374,6 +374,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         // Test
         do {
             try await blePeripheralManagerProxy.stopAdvertising()
+            wait(.seconds(1)) // for advertisingMonitor to be nil (go figure....)
             XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
             XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
         } catch {
