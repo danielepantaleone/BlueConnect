@@ -123,7 +123,7 @@ any time by calling **`stopScan`** on the **`BleCentralManagerProxy`**.
 To connect to a BLE peripheral, use the **`connect`** method on the **`BleCentralManagerProxy`**. 
 You can provide connection options that will be forwarded to the underlying **`CBCentralManager`**. 
 Additionally, you have the option to specify a timeout (defaulting to no timeout if not provided).
-The establishment of the connection will be notified through the Combine publisher, allowing you 
+The establishment of the connection will also be notified through the Combine publishers, allowing you 
 to react to the connection status.
 
 ```swift
@@ -153,8 +153,7 @@ centralManagerProxy.didFailToConnectPublisher
 do {
     // The following will try to establish a connection to a BLE peripheral for at most 60 seconds.
     // If the connection cannot be established within the specified amount of time, the connection 
-    // attempt is dropped and notified by raising an appropriate error. If the connection is not 
-    // established then nothing is advertised on the combine publisher.
+    // attempt is dropped and notified by raising an appropriate error.
     try await centralManagerProxy.waitUntilReady()
     try await centralManagerProxy.connect(
         peripheral: peripheral,
