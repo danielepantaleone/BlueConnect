@@ -241,8 +241,8 @@ struct SerialNumberProxy: BleCharacteristicReadProxy {
     
     typealias ValueType = String
     
-    var characteristicUUID: CBUUID = CBUUID(string: "2A25")
-    var serviceUUID: CBUUID = CBUUID(string: "180A")
+    let characteristicUUID: CBUUID = CBUUID(string: "2A25")
+    let serviceUUID: CBUUID = CBUUID(string: "180A")
 
     weak var peripheralProxy: BlePeripheralProxy?
     
@@ -295,8 +295,8 @@ struct PinProxy: BleCharacteristicWriteProxy {
     
     typealias ValueType = String
     
-    var characteristicUUID: CBUUID = CBUUID(string: "5A8F2E01-58D9-4B0B-83B8-843402E49293")
-    var serviceUUID: CBUUID = CBUUID(string: "C5405A74-7C07-4702-A631-9D5EBF007DAE")
+    let characteristicUUID: CBUUID = CBUUID(string: "5A8F2E01-58D9-4B0B-83B8-843402E49293")
+    let serviceUUID: CBUUID = CBUUID(string: "C5405A74-7C07-4702-A631-9D5EBF007DAE")
 
     weak var peripheralProxy: BlePeripheralProxy?
     
@@ -351,8 +351,8 @@ struct HeartRateProxy: BleCharacteristicReadProxy, BleCharacteristicNotifyProxy 
     
     typealias ValueType = Int
     
-    var characteristicUUID: CBUUID = CBUUID(string: "2A37")
-    var serviceUUID: CBUUID = CBUUID(string: "180D")
+    let characteristicUUID: CBUUID = CBUUID(string: "2A37")
+    let serviceUUID: CBUUID = CBUUID(string: "180D")
 
     weak var peripheralProxy: BlePeripheralProxy?
     
