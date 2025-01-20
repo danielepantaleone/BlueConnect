@@ -216,6 +216,12 @@ extension BleCentralManagerProxy {
             mutex.lock()
             defer { mutex.unlock() }
             
+            // If the peripheral managed to connect somehow, avoid to disconnect it.
+            // We assume the connection was already advertised on the callback and combine publisher.
+            guard peripheral.state != .connected else {
+                return
+            }
+            
             // We track the connection timeout for this peripheral to trigger the correct
             // callbacks and publisher after disconnecting the peripheral from the central.
             connectionTimeouts.insert(peripheral.identifier)
