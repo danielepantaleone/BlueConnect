@@ -1,6 +1,14 @@
 Release Notes
 =============
 
+## 1.3.1
+
+Released January 20, 2025
+
+- Fix race condition where a peripheral connection is timed out even if the peripheral is connected [dd99877](https://github.com/danielepantaleone/BlueConnect/commit/dd998773ac35d2716aafd7c0dac81feb272097b3)
+
+**Full Changelog**: [1.3.0...1.3.1](https://github.com/danielepantaleone/BlueConnect/compare/1.3.0...1.3.1)
+
 ## 1.3.0
 
 Released November 18, 2024
