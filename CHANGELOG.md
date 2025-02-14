@@ -50,7 +50,3 @@ Released October 26, 2024
 ## 1.0.0
 
 Released October 19, 2024
-
-Initial release
-
-Released October 19, 2024 &bull; 
