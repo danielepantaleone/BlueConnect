@@ -32,7 +32,7 @@ import XCTest
 
 @testable import BlueConnect
 
-class BlueConnectTests: XCTestCase {
+class BlueConnectTests: XCTestCase, @unchecked Sendable {
     
     // MARK: - Properties
     
@@ -200,7 +200,7 @@ class BlueConnectTests: XCTestCase {
         XCTAssertEqual(proxy.peripheral.state, .connected)
         XCTAssertNotNil(proxy.getCharacteristic(characteristicUUID))
         let expectation = expectation(description: "waiting for characteristic to be read")
-        var characteristicData: Data? = nil
+        let characteristicData = AtomicReference<Data?>(nil)
         proxy.read(
             characteristicUUID: characteristicUUID,
             cachePolicy: .never,
@@ -208,7 +208,7 @@ class BlueConnectTests: XCTestCase {
         ) { result in
             switch result {
                 case .success(let data):
-                    characteristicData = data
+                    characteristicData.value = data
                     expectation.fulfill()
                 case .failure(let error):
                     XCTFail("characteristic read failed with error: \(error)")
@@ -217,10 +217,10 @@ class BlueConnectTests: XCTestCase {
         // Await expectations
         wait(for: [expectation], timeout: 2.0)
         // Return read data
-        guard let characteristicData else {
+        guard let data = characteristicData.value else {
             throw MockBleError.characteristicNotRead
         }
-        return characteristicData
+        return data
     }
     
     func setNotify(characteristicUUID: CBUUID, enabled: Bool, on proxy: BlePeripheralProxy) {

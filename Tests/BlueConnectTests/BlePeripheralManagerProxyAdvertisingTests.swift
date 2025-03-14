@@ -32,7 +32,7 @@ import XCTest
 
 @testable import BlueConnect
     
-final class BlePeripheralManagerProxyAdvertisingTests: BlueConnectTests {
+final class BlePeripheralManagerProxyAdvertisingTests: BlueConnectTests, @unchecked Sendable {
     
 }
 
@@ -411,4 +411,3 @@ extension BlePeripheralManagerProxyAdvertisingTests {
     }
     
 }
-

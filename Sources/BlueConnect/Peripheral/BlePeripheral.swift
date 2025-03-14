@@ -34,7 +34,7 @@
 /// This protocol can be adopted by mock objects to simulate BLE peripheral behavior in tests, enabling controlled and repeatable testing of BLE operations without requiring a physical device.
 ///
 /// - Note: `CBPeripheral` conforms to `BlePeripheral`.
-public protocol BlePeripheral: AnyObject {
+public protocol BlePeripheral: AnyObject, Sendable {
     
     // MARK: - Properties
     
@@ -98,7 +98,9 @@ public protocol BlePeripheral: AnyObject {
     
 }
 
-extension CBPeripheral: BlePeripheral {
+#if $RetroactiveAttribute
+
+extension CBPeripheral: BlePeripheral, @unchecked @retroactive Sendable {
    
     public var peripheralDelegate: BlePeripheralDelegate? {
         get { self.delegate as? BlePeripheralDelegate }
@@ -106,3 +108,16 @@ extension CBPeripheral: BlePeripheral {
     }
     
 }
+
+#else
+
+extension CBPeripheral: BlePeripheral, @unchecked Sendable {
+   
+    public var peripheralDelegate: BlePeripheralDelegate? {
+        get { self.delegate as? BlePeripheralDelegate }
+        set { self.delegate = newValue }
+    }
+    
+}
+
+#endif

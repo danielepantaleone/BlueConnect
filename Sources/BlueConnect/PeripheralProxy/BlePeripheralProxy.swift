@@ -33,7 +33,7 @@ import Foundation
 ///
 /// This class uses Combine publishers to emit updates on BLE-related events, such as service discovery, characteristic updates, and RSSI changes.
 /// It also manages caching of BLE characteristics and handles asynchronous BLE operations like read, write, and notifications.
-public class BlePeripheralProxy: NSObject {
+public final class BlePeripheralProxy: NSObject, @unchecked Sendable {
     
     // MARK: - Public properties
     
@@ -44,45 +44,45 @@ public class BlePeripheralProxy: NSObject {
     
     /// A publisher that emits when characteristics are discovered for a service.
     /// It emits a tuple containing the service and an array of characteristics.
-    public lazy var didDiscoverCharacteristicsPublisher: AnyPublisher<(service: CBService, characteristics: [CBCharacteristic]), Never> = {
+    public var didDiscoverCharacteristicsPublisher: AnyPublisher<(service: CBService, characteristics: [CBCharacteristic]), Never> {
         didDiscoverCharacteristicsSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when services are discovered on the peripheral.
     /// It emits an array of discovered services.
-    public lazy var didDiscoverServicesPublisher: AnyPublisher<[CBService], Never> = {
+    public var didDiscoverServicesPublisher: AnyPublisher<[CBService], Never> {
         didDiscoverServicesSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when the peripheral updates its name.
     /// It emits the updated name of the peripheral as a `String?`.
-    public lazy var didUpdateNamePublisher: AnyPublisher<String?, Never> = {
+    public var didUpdateNamePublisher: AnyPublisher<String?, Never> {
         didUpdateNameSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when the notification state for a characteristic changes.
     /// It emits a tuple containing the characteristic and a `Bool` indicating whether notifications are enabled.
-    public lazy var didUpdateNotificationStatePublisher: AnyPublisher<(characteristic: CBCharacteristic, enabled: Bool), Never> = {
+    public var didUpdateNotificationStatePublisher: AnyPublisher<(characteristic: CBCharacteristic, enabled: Bool), Never> {
         didUpdateNotificationStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits the updated RSSI (Received Signal Strength Indicator) value for the peripheral.
     /// It emits an `NSNumber` representing the RSSI.
-    public lazy var didUpdateRSSIPublisher: AnyPublisher<NSNumber, Never> = {
+    public var didUpdateRSSIPublisher: AnyPublisher<NSNumber, Never> {
         didUpdateRSSISubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when a characteristic's value has been updated.
     /// It emits a tuple containing the characteristic and the updated value as `Data`.
-    public lazy var didUpdateValuePublisher: AnyPublisher<(characteristic: CBCharacteristic, data: Data), Never> = {
+    public var didUpdateValuePublisher: AnyPublisher<(characteristic: CBCharacteristic, data: Data), Never> {
         didUpdateValueSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when a characteristic write operation completes.
     /// It emits the characteristic that was written.
-    public lazy var didWriteValuePublisher: AnyPublisher<CBCharacteristic, Never> = {
+    public var didWriteValuePublisher: AnyPublisher<CBCharacteristic, Never> {
         didWriteValueSubject.eraseToAnyPublisher()
-    }()
+    }
    
     // MARK: - Internal properties
     
@@ -97,13 +97,13 @@ public class BlePeripheralProxy: NSObject {
     let discoverServiceRegistry: KeyedRegistry<CBUUID, CBService> = .init()
     let rssiReadRegistry: ListRegistry<NSNumber> = .init()
 
-    lazy var didDiscoverCharacteristicsSubject: PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never> = .init()
-    lazy var didDiscoverServicesSubject: PassthroughSubject<[CBService], Never> = .init()
-    lazy var didUpdateNameSubject: PassthroughSubject<String?, Never> = .init()
-    lazy var didUpdateNotificationStateSubject: PassthroughSubject<(characteristic: CBCharacteristic, enabled: Bool), Never> = .init()
-    lazy var didUpdateRSSISubject: PassthroughSubject<NSNumber, Never> = .init()
-    lazy var didUpdateValueSubject: PassthroughSubject<(characteristic: CBCharacteristic, data: Data), Never> = .init()
-    lazy var didWriteValueSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
+    let didDiscoverCharacteristicsSubject: PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never> = .init()
+    let didDiscoverServicesSubject: PassthroughSubject<[CBService], Never> = .init()
+    let didUpdateNameSubject: PassthroughSubject<String?, Never> = .init()
+    let didUpdateNotificationStateSubject: PassthroughSubject<(characteristic: CBCharacteristic, enabled: Bool), Never> = .init()
+    let didUpdateRSSISubject: PassthroughSubject<NSNumber, Never> = .init()
+    let didUpdateValueSubject: PassthroughSubject<(characteristic: CBCharacteristic, data: Data), Never> = .init()
+    let didWriteValueSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
     
     // MARK: - Initialization
     
@@ -215,7 +215,7 @@ extension BlePeripheralProxy {
     public func discover(
         serviceUUID: CBUUID,
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<CBService, Error>) -> Void
+        callback: @Sendable @escaping (Result<CBService, Error>) -> Void
     ) {
         
         mutex.lock()
@@ -281,7 +281,7 @@ extension BlePeripheralProxy {
         characteristicUUID: CBUUID,
         in serviceUUID: CBUUID,
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<CBCharacteristic, Error>) -> Void
+        callback: @Sendable @escaping (Result<CBCharacteristic, Error>) -> Void
     ) {
         
         mutex.lock()
@@ -361,7 +361,7 @@ extension BlePeripheralProxy {
         characteristicUUID: CBUUID,
         cachePolicy: BlePeripheralCachePolicy = .never,
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<Data, Error>) -> Void
+        callback: @Sendable @escaping (Result<Data, Error>) -> Void
     ) {
         
         mutex.lock()
@@ -435,7 +435,7 @@ extension BlePeripheralProxy {
         data: Data,
         to characteristicUUID: CBUUID,
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<Void, Error>) -> Void
+        callback: @Sendable @escaping (Result<Void, Error>) -> Void
     ) {
         
         mutex.lock()
@@ -521,7 +521,7 @@ extension BlePeripheralProxy {
         enabled: Bool,
         for characteristicUUID: CBUUID,
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<Bool, Error>) -> Void
+        callback: @Sendable @escaping (Result<Bool, Error>) -> Void
     ) {
         
         mutex.lock()
@@ -571,7 +571,7 @@ extension BlePeripheralProxy {
     ///   - callback: A closure that is called with the result of the RSSI read operation. The closure is passed a `Result` containing the RSSI value or an error if the read fails.
     public func readRSSI(
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<NSNumber, Error>) -> Void = { _ in }
+        callback: @Sendable @escaping (Result<NSNumber, Error>) -> Void = { _ in }
     ) {
         
         mutex.lock()

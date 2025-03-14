@@ -34,7 +34,7 @@ import Foundation
 /// It requires that conforming types define a specific `ValueType` for the characteristic, and provide access to the UUIDs of the characteristic and its associated service.
 ///
 /// Additionally, it allows access to the `BlePeripheralProxy` managing the peripheral.
-public protocol BleCharacteristicProxy {
+public protocol BleCharacteristicProxy: Sendable {
     
     /// Associated type representing the value of the BLE characteristic.
     associatedtype ValueType: Sendable
@@ -61,7 +61,7 @@ public extension BleCharacteristicProxy {
     /// - Parameters:
     ///   - timeout: The timeout duration for the characteristic discovery operation. Defaults to 10 seconds.
     ///   - callback: A closure to execute when the characteristic is discovered. This closure receives a `Result<CBCharacteristic, Error>` where the success case contains the discovered characteristic and the failure case contains an error.
-    func discover(timeout: DispatchTimeInterval = .seconds(10), callback: @escaping (Result<CBCharacteristic, Error>) -> Void) {
+    func discover(timeout: DispatchTimeInterval = .seconds(10), callback: @Sendable @escaping (Result<CBCharacteristic, Error>) -> Void) {
         let start: DispatchTime = .now()
         peripheralProxy?.discover(serviceUUID: serviceUUID, timeout: timeout) { serviceDiscoveryResult in
             serviceDiscoveryResult.forwardError(to: callback)

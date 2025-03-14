@@ -32,7 +32,7 @@ import XCTest
 
 @testable import BlueConnect
 
-final class BleCentralManagerProxyScanTests: BlueConnectTests {
+final class BleCentralManagerProxyScanTests: BlueConnectTests, @unchecked Sendable {
  
     func testScanWithTimeout() throws {
         // Turn on ble central manager

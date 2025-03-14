@@ -27,13 +27,8 @@
 
 import Foundation
 
-#if compiler(>=5.10)
-/// A global lock to manage registry thread safety.
-nonisolated(unsafe) let registryLock = RecursiveMutex()
-#else
 /// A global lock to manage registry thread safety.
 let registryLock = RecursiveMutex()
-#endif
 
 // MARK: - Subscription
 
@@ -42,7 +37,7 @@ let registryLock = RecursiveMutex()
 /// Subscriptions are notified when a result becomes available, an error occurs, or when the timeout is reached if no notification has occurred.
 ///
 /// - Note: This class conforms to `Identifiable` and `Equatable`.
-class Subscription<ValueType>: Identifiable, Equatable {
+final class Subscription<ValueType>: Identifiable, Equatable, @unchecked Sendable {
     
     /// The state of the subscription.
     enum State {
@@ -59,11 +54,11 @@ class Subscription<ValueType>: Identifiable, Equatable {
     /// A unique identifier for the subscription instance.
     let id = UUID()
     /// The callback function that is invoked when the subscription is notified.
-    let callback: (Result<ValueType, Error>) -> Void
+    let callback: @Sendable (Result<ValueType, Error>) -> Void
     /// The duration of time after which the subscription times out.
     let timeout: DispatchTimeInterval
     /// The function called when the subscription times out.
-    let timeoutHandler: (Subscription) -> Void
+    let timeoutHandler: @Sendable (Subscription) -> Void
    
     /// A timer that triggers the timeout handler when the subscription times out.
     private var timer: DispatchSourceTimer?
@@ -79,9 +74,9 @@ class Subscription<ValueType>: Identifiable, Equatable {
     ///   - timeout: The time duration after which the subscription times out.
     ///   - timeoutHandler: A closure to be called when the subscription times out.
     init(
-        callback: @escaping (Result<ValueType, Error>) -> Void,
+        callback: @Sendable @escaping (Result<ValueType, Error>) -> Void,
         timeout: DispatchTimeInterval,
-        timeoutHandler: @escaping (Subscription) -> Void
+        timeoutHandler: @Sendable @escaping (Subscription) -> Void
     ) {
         self.callback = callback
         self.timeout = timeout
@@ -145,7 +140,7 @@ class Subscription<ValueType>: Identifiable, Equatable {
 /// to be invoked if it is not notified within the specified timeout.
 ///
 /// - Note: `KeyType` must conform to `Hashable`.
-class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
+final class KeyedRegistry<KeyType: Sendable, ValueType: Sendable>: @unchecked Sendable where KeyType: Hashable {
     
     // MARK: - Properties
     
@@ -203,9 +198,9 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
     /// - Note: The subscription is started immediately, which begins tracking its timeout if one is set.
     func register(
         key: KeyType,
-        callback: @escaping ((Result<ValueType, Error>) -> Void),
+        callback: @Sendable @escaping (Result<ValueType, Error>) -> Void,
         timeout: DispatchTimeInterval = .never,
-        timeoutHandler: @escaping (Subscription<ValueType>) -> Void = { _ in }
+        timeoutHandler: @Sendable @escaping (Subscription<ValueType>) -> Void = { _ in }
     ) {
         
         registryLock.lock()
@@ -241,7 +236,7 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
 /// `ListRegistry` allows you to register subscriptions, notify them with a result, and retrieve
 /// all active subscriptions. Each subscription includes a callback and an optional timeout
 /// with a handler that is invoked if the subscription is not notified within the specified time.
-class ListRegistry<ValueType> {
+final class ListRegistry<ValueType: Sendable>: @unchecked Sendable {
     
     // MARK: - Properties
     
@@ -281,9 +276,9 @@ class ListRegistry<ValueType> {
     ///
     /// - Note: The subscription starts immediately, beginning timeout tracking if a timeout is specified.
     func register(
-        callback: @escaping ((Result<ValueType, Error>) -> Void),
+        callback: @Sendable @escaping (Result<ValueType, Error>) -> Void,
         timeout: DispatchTimeInterval = .never,
-        timeoutHandler: @escaping (Subscription<ValueType>) -> Void = { _ in }
+        timeoutHandler: @Sendable @escaping (Subscription<ValueType>) -> Void = { _ in }
     ) {
         
         registryLock.lock()

@@ -31,7 +31,7 @@
 ///
 /// `BleCentralManagerProxyError` is used to signal specific error conditions that arise when interacting with
 /// the central manager proxy, such as connection timeouts, invalid states, or unknown issues.
-public enum BleCentralManagerProxyError: Error {
+public enum BleCentralManagerProxyError: Error, Sendable {
     
     /// Indicates that a timeout occurred during peripheral connection.
     ///

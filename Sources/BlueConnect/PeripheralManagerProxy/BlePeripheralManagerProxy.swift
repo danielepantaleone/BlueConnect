@@ -32,7 +32,7 @@ import Foundation
 /// A proxy class to manage a `BlePeripheralManager` instance, providing reactive publishers for various BLE events.
 ///
 /// `BlePeripheralManagerProxy` offers a wrapper around a `BlePeripheralManager`, exposing key properties and providing publishers for Combine-based event handling.
-public class BlePeripheralManagerProxy: NSObject {
+public final class BlePeripheralManagerProxy: NSObject, @unchecked Sendable {
     
     // MARK: - Public properties
     
@@ -57,73 +57,75 @@ public class BlePeripheralManagerProxy: NSObject {
     // MARK: - Publishers
     
     /// Publisher for state updates of the peripheral manager.
-    public lazy var didUpdateStatePublisher: AnyPublisher<CBManagerState, Never> = {
+    public var didUpdateStatePublisher: AnyPublisher<CBManagerState, Never> {
         didUpdateStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for the advertising status of the peripheral manager that emits a `Bool` value indicating whether the peripheral manager is currently advertising (`true`) or not (`false`).
-    public lazy var didUpdateAdvertisingPublisher: AnyPublisher<Bool, Never> = {
+    public var didUpdateAdvertisingPublisher: AnyPublisher<Bool, Never> {
         didUpdateAdvertisingSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher that emits when a service is successfully added or an error occurs during the addition process.
-    public lazy var didAddServicePublisher: AnyPublisher<(service: CBService, error: Error?), Never> = {
+    public var didAddServicePublisher: AnyPublisher<(service: CBService, error: Error?), Never> {
         didAddServiceSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for central subscriptions to a characteristic.
-    public lazy var didSubscribeToCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> = {
+    public var didSubscribeToCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> {
         didSubscribeToCharacteristicSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for central unsubscriptions from a characteristic.
-    public lazy var didUnsubscribeFromCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> = {
+    public var didUnsubscribeFromCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> {
         didUnsubscribeFromCharacteristicSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for read requests from centrals.
-    public lazy var didReceiveReadRequestPublisher: AnyPublisher<CBATTRequest, Never> = {
+    public var didReceiveReadRequestPublisher: AnyPublisher<CBATTRequest, Never> {
         didReceiveReadRequestSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for write requests from centrals.
-    public lazy var didReceiveWriteRequestsPublisher: AnyPublisher<[CBATTRequest], Never> = {
+    public var didReceiveWriteRequestsPublisher: AnyPublisher<[CBATTRequest], Never> {
         didReceiveWriteRequestsSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher that emits when the peripheral manager is ready to update subscribers.
-    public lazy var isReadyToUpdateSubscribersPublisher: AnyPublisher<Void, Never> = {
+    public var isReadyToUpdateSubscribersPublisher: AnyPublisher<Void, Never> {
         isReadyToUpdateSubscribersSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for the peripheral manager's restored state.
-    public lazy var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> = {
+    public var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> {
         willRestoreStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     // MARK: - Internal properties
     
     var advertisingMonitor: DispatchSourceTimer?
     let mutex = RecursiveMutex()
+    
     let startAdvertisingRegistry: ListRegistry<Void> = .init()
     let stopAdvertisingRegistry: ListRegistry<Void> = .init()
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
     
-    lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
-    lazy var didUpdateAdvertisingSubject: PassthroughSubject<Bool, Never> = .init()
-    lazy var didAddServiceSubject: PassthroughSubject<(service: CBService, error: Error?), Never> = .init()
-    lazy var didSubscribeToCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
-    lazy var didUnsubscribeFromCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
-    lazy var didReceiveReadRequestSubject: PassthroughSubject<CBATTRequest, Never> = .init()
-    lazy var didReceiveWriteRequestsSubject: PassthroughSubject<[CBATTRequest], Never> = .init()
-    lazy var isReadyToUpdateSubscribersSubject: PassthroughSubject<Void, Never> = .init()
-    lazy var willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
+    let didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
+    let didUpdateAdvertisingSubject: PassthroughSubject<Bool, Never> = .init()
+    let didAddServiceSubject: PassthroughSubject<(service: CBService, error: Error?), Never> = .init()
+    let didSubscribeToCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
+    let didUnsubscribeFromCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
+    let didReceiveReadRequestSubject: PassthroughSubject<CBATTRequest, Never> = .init()
+    let didReceiveWriteRequestsSubject: PassthroughSubject<[CBATTRequest], Never> = .init()
+    let isReadyToUpdateSubscribersSubject: PassthroughSubject<Void, Never> = .init()
+    let willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
     
     // MARK: - Initialization
     
     /// Unavailable initializer.
+    @available(*, unavailable, message: "Use other available initializers")
     public override init() {
-        fatalError("please use other available initializers")
+        fatalError("use other available initializers")
     }
     
     /// Initializes the proxy with the provided `BlePeripheralManager`.
@@ -154,6 +156,8 @@ public class BlePeripheralManagerProxy: NSObject {
     deinit {
         mutex.lock()
         defer { mutex.unlock() }
+        peripheralManager.removeAllServices()
+        peripheralManager.stopAdvertising()
         peripheralManager.peripheralManagerDelegate = nil
         // Notify registries about shutdown.
         startAdvertisingRegistry.notifyAll(.failure(BleCentralManagerProxyError.destroyed))
@@ -180,7 +184,7 @@ extension BlePeripheralManagerProxy {
     public func startAdvertising(
         _ advertisementData: [String: Any]? = nil,
         timeout: DispatchTimeInterval = .never,
-        callback: @escaping (Result<Void, Error>) -> Void = { _ in }
+        callback: @Sendable @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
         
         mutex.lock()
@@ -215,9 +219,8 @@ extension BlePeripheralManagerProxy {
     ///
     /// Calling this method halts any active advertising by the peripheral manager, stopping the broadcast of services and advertisement data.
     ///
-    /// - Parameters:
-    ///   - callback: A closure that is called with the result of the stop advertising operation. The closure is passed a `Result` type, which is `.success` on successful advertising stop or `.failure` with an error if the operation fails. Defaults to a no-op closure.
-    public func stopAdvertising(callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
+    /// - Parameter callback: A closure that is called with the result of the stop advertising operation. The closure is passed a `Result` type, which is `.success` on successful advertising stop or `.failure` with an error if the operation fails. Defaults to a no-op closure.
+    public func stopAdvertising(callback: @Sendable @escaping (Result<Void, Error>) -> Void = { _ in }) {
         
         mutex.lock()
         defer { mutex.unlock() }
@@ -364,7 +367,7 @@ extension BlePeripheralManagerProxy {
     ///   - callback: A closure that receives a `Result` indicating success or an error if the peripheral manager is unauthorized or unsupported.
     ///
     /// - Note: If the state is already `.poweredOn`, the callback is called immediately with success.
-    public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
+    public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @Sendable @escaping (Result<Void, Error>) -> Void) {
         
         mutex.lock()
         defer { mutex.unlock() }

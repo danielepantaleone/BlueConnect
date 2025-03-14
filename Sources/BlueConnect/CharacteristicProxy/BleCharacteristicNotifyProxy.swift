@@ -61,7 +61,7 @@ public extension BleCharacteristicNotifyProxy {
     func setNotify(
         enabled: Bool,
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: ((Result<Bool, Error>) -> Void)? = nil
+        callback: (@Sendable (Result<Bool, Error>) -> Void)? = nil
     ) {
         let start: DispatchTime = .now()
         discover(timeout: timeout) { characteristicDiscoveryResult in

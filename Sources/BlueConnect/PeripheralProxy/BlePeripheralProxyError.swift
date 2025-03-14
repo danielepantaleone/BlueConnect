@@ -32,7 +32,7 @@ import Foundation
 ///
 /// `BlePeripheralProxyError` is used to signal specific error conditions that arise during BLE operations such as reading, writing,
 /// notifying, or discovering services and characteristics.
-public enum BlePeripheralProxyError: Error {
+public enum BlePeripheralProxyError: Error, Sendable {
     
     /// The specified characteristic was not found on the peripheral.
     ///

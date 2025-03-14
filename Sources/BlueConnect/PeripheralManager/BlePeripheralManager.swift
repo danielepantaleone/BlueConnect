@@ -37,7 +37,7 @@
 /// This protocol allows for mock implementations in testing and decouples BLE management from direct dependency on `CBPeripheralManager`.
 ///
 /// - Note: `CBPeripheralManager` conforms to `BlePeripheralManager`.
-public protocol BlePeripheralManager: AnyObject {
+public protocol BlePeripheralManager: AnyObject, Sendable {
     
     // MARK: - Properties
     
@@ -133,7 +133,9 @@ public extension BlePeripheralManager {
 
 // MARK: - CBPeripheralManager + BlePeripheralManager
 
-extension CBPeripheralManager: BlePeripheralManager {
+#if $RetroactiveAttribute
+
+extension CBPeripheralManager: BlePeripheralManager, @unchecked @retroactive Sendable {
    
     public var peripheralManagerDelegate: BlePeripheralManagerDelegate? {
         get { delegate as? BlePeripheralManagerDelegate }
@@ -150,3 +152,25 @@ extension CBPeripheralManager: BlePeripheralManager {
     }
 
 }
+
+#else
+
+extension CBPeripheralManager: BlePeripheralManager, @unchecked Sendable {
+   
+    public var peripheralManagerDelegate: BlePeripheralManagerDelegate? {
+        get { delegate as? BlePeripheralManagerDelegate }
+        set { delegate = newValue }
+    }
+    
+    public func setDesiredConnectionLatency(_ latency: CBPeripheralManagerConnectionLatency, for central: BleCentral) {
+        guard let cbCentral = central as? CBCentral else { return }
+        setDesiredConnectionLatency(latency, for: cbCentral)
+    }
+    
+    public func updateValue(_ value: Data, for characteristic: CBMutableCharacteristic, onSubscribedCentrals centrals: [BleCentral]?) -> Bool {
+        updateValue(value, for: characteristic, onSubscribedCentrals: centrals?.compactMap { $0 as? CBCentral })
+    }
+
+}
+
+#endif

@@ -1,5 +1,5 @@
 //
-//  BleCentral.swift
+//  AtomicReference.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -25,40 +25,39 @@
 //  THE SOFTWARE.
 //
 
-@preconcurrency import CoreBluetooth
+import Foundation
 
-// MARK: - BleCentral
-
-/// A protocol to mimic the capabilities of a `CBCentral`.
+/// A thread-safe atomic reference for storing and updating values of a `Sendable` type.
 ///
-/// This protocol can be adopted by mock objects to simulate BLE central behavior in tests, enabling controlled and repeatable testing of BLE operations without requiring a physical device.
-///
-/// - Note: `CBCentral` conforms to `BleCentral`.
-public protocol BleCentral: AnyObject, Sendable {
+/// This class ensures safe concurrent access to the stored value by using an `NSLock`.
+/// It provides atomic get and set operations.
+final class AtomicReference<ValueType: Sendable>: @unchecked Sendable {
     
-    /// The unique identifier of the BLE central.
+    // MARK: - Private Properties
+    
+    /// The internally stored reference value.
+    private var reference: ValueType
+    
+    /// A lock to ensure thread-safe access to the reference.
+    private let lock: NSLock = .init()
+    
+    // MARK: - Properties
+    
+    /// The current value of the atomic reference.
     ///
-    /// Each BLE central has a unique identifier that can be used to distinguish it from other devices.
-    var identifier: UUID { get }
+    /// - Note: Access to this property is thread-safe.
+    var value: ValueType {
+        get { lock.withLock { reference } }
+        set { lock.withLock { reference = newValue } }
+    }
     
-    /// The maximum amount of data, in bytes, that the central can receive in a single notification or indication.
+    // MARK: - Initialization
+    
+    /// Creates an atomic reference with an initial value.
     ///
-    /// This value represents the central’s maximum limit for data transfer, which may vary depending on the device capabilities.
-    var maximumUpdateValueLength: Int { get }
-}
-
-// MARK: - CBCentral + BleCentral
-
-#if $RetroactiveAttribute
-
-extension CBCentral: BleCentral, @unchecked @retroactive Sendable {
+    /// - Parameter value: The initial value to store.
+    init(_ value: ValueType) {
+        self.reference = value
+    }
     
 }
-
-#else
-
-extension CBCentral: BleCentral, @unchecked Sendable {
-    
-}
-
-#endif

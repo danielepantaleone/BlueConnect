@@ -32,7 +32,7 @@ import XCTest
 
 @testable import BlueConnect
 
-final class BleCharacteristicWriteWithoutResponseProxyTests: BlueConnectTests {
+final class BleCharacteristicWriteWithoutResponseProxyTests: BlueConnectTests, @unchecked Sendable {
     
     // MARK: - Properties
     

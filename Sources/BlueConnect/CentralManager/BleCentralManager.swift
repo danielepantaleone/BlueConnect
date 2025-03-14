@@ -34,7 +34,7 @@
 /// This protocol can be adopted by mock objects to simulate BLE central manager behavior in tests, enabling controlled and repeatable testing of BLE operations without requiring a physical device.
 ///
 /// - Note: `CBCentralManager` conforms to `BleCentralManager`.
-public protocol BleCentralManager: AnyObject {
+public protocol BleCentralManager: AnyObject, Sendable {
     
     // MARK: - Properties
     
@@ -144,7 +144,9 @@ public extension BleCentralManager {
 
 // MARK: - CBCentralManager + BleCentralManager
 
-extension CBCentralManager: BleCentralManager {
+#if $RetroactiveAttribute
+
+extension CBCentralManager: BleCentralManager, @unchecked @retroactive Sendable {
     
     public var centraManagerDelegate: BleCentralManagerDelegate? {
         get { delegate as? BleCentralManagerDelegate }
@@ -170,3 +172,34 @@ extension CBCentralManager: BleCentralManager {
     }
     
 }
+
+#else
+
+extension CBCentralManager: BleCentralManager, @unchecked Sendable {
+    
+    public var centraManagerDelegate: BleCentralManagerDelegate? {
+        get { delegate as? BleCentralManagerDelegate }
+        set { delegate = newValue }
+    }
+    
+    public func cancelConnection(_ peripheral: BlePeripheral) {
+        guard let cbPeripheral = peripheral as? CBPeripheral else { return }
+        cancelPeripheralConnection(cbPeripheral)
+    }
+    
+    public func connect(_ peripheral: BlePeripheral, options: [String: Any]? = nil) {
+        guard let cbPeripheral = peripheral as? CBPeripheral else { return }
+        connect(cbPeripheral, options: options)
+    }
+    
+    public func retrievePeripherals(withIds identifiers: [UUID]) -> [BlePeripheral] {
+        return retrievePeripherals(withIdentifiers: identifiers)
+    }
+    
+    public func retrieveConnectedPeripherals(withServiceIds serviceUUIDs: [CBUUID]) -> [BlePeripheral] {
+        return retrieveConnectedPeripherals(withServices: serviceUUIDs)
+    }
+    
+}
+
+#endif

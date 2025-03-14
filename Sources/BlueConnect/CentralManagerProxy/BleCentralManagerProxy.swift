@@ -32,7 +32,7 @@ import Foundation
 /// `BleCentralManagerProxy` provides a higher-level abstraction for managing BLE peripherals via `BleCentralManager`.
 ///
 /// This class uses Combine publishers to emit updates on BLE-related events, such as peripheral discovery, peripheral connection/disconnection and state updates.
-public class BleCentralManagerProxy: NSObject {
+public final class BleCentralManagerProxy: NSObject, @unchecked Sendable {
     
     // MARK: - Public properties
     
@@ -57,56 +57,58 @@ public class BleCentralManagerProxy: NSObject {
     // MARK: - Publishers
     
     /// A publisher that emits the updated state of the BLE central manager.
-    public lazy var didUpdateStatePublisher: AnyPublisher<CBManagerState, Never> = {
+    public var didUpdateStatePublisher: AnyPublisher<CBManagerState, Never> {
         didUpdateStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when a BLE peripheral successfully connects.
-    public lazy var didConnectPublisher: AnyPublisher<BlePeripheral, Never> = {
+    public var didConnectPublisher: AnyPublisher<BlePeripheral, Never> {
         didConnectSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when a BLE peripheral disconnects, optionally including an error if the disconnection was unexpected.
-    public lazy var didDisconnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error?), Never> = {
+    public var didDisconnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error?), Never> {
         didDisconnectSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when the central manager fails to connect to a BLE peripheral, optionally including the error that occurred.
-    public lazy var didFailToConnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error), Never> = {
+    public var didFailToConnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error), Never> {
         didFailToConnectSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when the central manager will restore its state.
-    public lazy var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> = {
+    public var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> {
         willRestoreStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     // MARK: - Internal properties
-    
-    var connectionState: [UUID: CBPeripheralState] = [:]
-    var connectionTimeouts: Set<UUID> = []
+   
     let connectionRegistry: KeyedRegistry<UUID, Void> = .init()
     let disconnectionRegistry: KeyedRegistry<UUID, Void> = .init()
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
    
+    var connectionState: [UUID: CBPeripheralState] = [:]
+    var connectionTimeouts: Set<UUID> = []
     var discoverSubject: PassthroughSubject<(
         peripheral: BlePeripheral,
         advertisementData: BleAdvertisementData,
         RSSI: Int), Error>?
     var discoverTimer: DispatchSourceTimer?
+    
     let mutex = RecursiveMutex()
     
-    lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
-    lazy var didConnectSubject: PassthroughSubject<BlePeripheral, Never> = .init()
-    lazy var didDisconnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error?), Never> = .init()
-    lazy var didFailToConnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error), Never> = .init()
-    lazy var willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
+    let didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
+    let didConnectSubject: PassthroughSubject<BlePeripheral, Never> = .init()
+    let didDisconnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error?), Never> = .init()
+    let didFailToConnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error), Never> = .init()
+    let willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
     
     // MARK: - Initialization
     
     /// Unavailable initializer.
+    @available(*, unavailable, message: "Use other available initializers")
     public override init() {
-        fatalError("please use other available initializers")
+        fatalError("use other available initializers")
     }
     
     /// Initializes the proxy with the provided `BleCentralManager`.
@@ -137,8 +139,8 @@ public class BleCentralManagerProxy: NSObject {
     deinit {
         mutex.lock()
         defer { mutex.unlock() }
+        // Stop central manager interaction.
         centralManager.centraManagerDelegate = nil
-        // Stop ongoing scan (if any)
         centralManager.stopScan()
         // Notify registries about shutdown.
         connectionRegistry.notifyAll(.failure(BleCentralManagerProxyError.destroyed))
@@ -186,7 +188,7 @@ extension BleCentralManagerProxy {
         peripheral: BlePeripheral,
         options: [String: Any]? = nil,
         timeout: DispatchTimeInterval = .never,
-        callback: @escaping (Result<Void, Error>) -> Void = { _ in }
+        callback: @Sendable @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
         
         mutex.lock()
@@ -273,7 +275,7 @@ extension BleCentralManagerProxy {
     ///
     /// - Note: If the peripheral is already in a `.disconnected` state, the callback is immediately called with success.
     /// - Note: If the peripheral is already in the process of disconnecting (`.disconnecting` state), the method does not reinitiate the disconnection.
-    public func disconnect(peripheral: BlePeripheral, callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
+    public func disconnect(peripheral: BlePeripheral, callback: @Sendable @escaping (Result<Void, Error>) -> Void = { _ in }) {
         
         mutex.lock()
         defer { mutex.unlock() }
@@ -440,7 +442,7 @@ extension BleCentralManagerProxy {
     ///   - callback: A closure that receives a `Result` indicating success or an error if the central manager is unauthorized or unsupported.
     ///
     /// - Note: If the state is already `.poweredOn`, the callback is called immediately with success.
-    public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
+    public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @Sendable @escaping (Result<Void, Error>) -> Void) {
         
         mutex.lock()
         defer { mutex.unlock() }

@@ -33,7 +33,7 @@ extension Result {
     /// - Returns: The original `Result` instance.
     /// - Note: The closure will be executed only if the `Result` is a `.success`. If the `Result` is a `.failure`, the closure is not executed.
     @discardableResult
-    func onSuccess(_ action: (Success) throws -> Void) rethrows -> Self {
+    func onSuccess(_ action: @Sendable (Success) throws -> Void) rethrows -> Self {
         switch self {
             case .success(let success):
                 try action(success)
@@ -49,7 +49,7 @@ extension Result {
     /// - Returns: The original `Result` instance.
     /// - Note: The closure will be executed only if the `Result` is a `.failure`. If the `Result` is a `.success`, the closure is not executed.
     @discardableResult
-    func onFailure(_ action: (Failure) throws -> Void) rethrows -> Self {
+    func onFailure(_ action: @Sendable (Failure) throws -> Void) rethrows -> Self {
         switch self {
             case .success:
                 break
@@ -65,7 +65,7 @@ extension Result {
     /// - Returns: The original `Result` instance.
     /// - Note: The callback will be executed only if the `Result` is a `.success`. If the `Result` is a `.failure`, the callback is not executed.
     @discardableResult
-    func forwardSuccess(to callback: ((Result<Success, Failure>) throws -> Void)?) rethrows -> Self {
+    func forwardSuccess(to callback: (@Sendable (Result<Success, Failure>) throws -> Void)?) rethrows -> Self {
         switch self {
             case .success(let value):
                 try callback?(.success(value))
@@ -81,7 +81,7 @@ extension Result {
     /// - Returns: The original `Result` instance.
     /// - Note: The callback will be executed only if the `Result` is a `.failure`. If the `Result` is a `.success`, the callback is not executed.
     @discardableResult
-    func forwardError<T>(to callback: ((Result<T, Failure>) throws -> Void)?) rethrows -> Self {
+    func forwardError<T>(to callback: (@Sendable (Result<T, Failure>) throws -> Void)?) rethrows -> Self {
         switch self {
             case .success:
                 break

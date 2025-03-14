@@ -32,7 +32,7 @@ import XCTest
 
 @testable import BlueConnect
 
-final class BleCentralManagerProxyDisconnectionTests: BlueConnectTests {
+final class BleCentralManagerProxyDisconnectionTests: BlueConnectTests, @unchecked Sendable {
     
 }
 

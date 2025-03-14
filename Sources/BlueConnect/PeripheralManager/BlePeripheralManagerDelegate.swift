@@ -34,7 +34,7 @@
 /// and interactions with central devices subscribing to characteristics.
 ///
 /// Implementers of this protocol can respond to BLE events with custom behavior for testing or application logic.
-public protocol BlePeripheralManagerDelegate: NSObject, CBPeripheralManagerDelegate {
+public protocol BlePeripheralManagerDelegate: NSObject, CBPeripheralManagerDelegate, Sendable {
     
     /// Called when the peripheral manager updates its state.
     ///

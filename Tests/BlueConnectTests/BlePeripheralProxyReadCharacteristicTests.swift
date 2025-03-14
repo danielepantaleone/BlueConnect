@@ -32,7 +32,7 @@ import XCTest
 
 @testable import BlueConnect
 
-final class BlePeripheralProxyReadCharacteristicTests: BlueConnectTests {
+final class BlePeripheralProxyReadCharacteristicTests: BlueConnectTests, @unchecked Sendable {
     
     // MARK: - Properties
     

@@ -32,7 +32,7 @@ import Foundation
 /// `RecursiveMutex` provides a simple way to handle mutual exclusion with recursive locking capabilities.
 /// This is useful when a thread needs to acquire the mutex multiple times without causing a deadlock.
 /// The mutex is implemented using POSIX threads and is initialized as a recursive mutex to allow reentrant locking.
-class RecursiveMutex: NSLocking {
+final class RecursiveMutex: NSLocking, @unchecked Sendable {
     
     // MARK: - Properties
     

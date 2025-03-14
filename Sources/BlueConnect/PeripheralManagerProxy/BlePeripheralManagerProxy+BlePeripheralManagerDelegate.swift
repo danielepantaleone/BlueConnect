@@ -90,73 +90,45 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     }
     
     public func blePeripheralManagerIsReady(toUpdateSubscribers peripheral: BlePeripheralManager) {
-        
         mutex.lock()
         defer { mutex.unlock() }
-        
-        // Notify state publisher.
         isReadyToUpdateSubscribersSubject.send(())
-        
     }
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, didAdd service: CBService, error: Error?) {
-        
         mutex.lock()
         defer { mutex.unlock() }
-        
-        // Notify state publisher.
         didAddServiceSubject.send((service, error))
-        
     }
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, central: BleCentral, didSubscribeTo characteristic: CBCharacteristic) {
-        
         mutex.lock()
         defer { mutex.unlock() }
-        
-        // Notify state publisher.
         didSubscribeToCharacteristicSubject.send(characteristic)
-        
     }
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, central: BleCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
-        
         mutex.lock()
         defer { mutex.unlock() }
-        
-        // Notify state publisher.
         didUnsubscribeFromCharacteristicSubject.send(characteristic)
-        
     }
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, didReceiveRead request: CBATTRequest) {
-        
         mutex.lock()
         defer { mutex.unlock() }
-        
-        // Notify state publisher.
         didReceiveReadRequestSubject.send(request)
-        
     }
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
-        
         mutex.lock()
         defer { mutex.unlock() }
-        
-        // Notify state publisher.
         didReceiveWriteRequestsSubject.send(requests)
-        
     }
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, willRestoreState dict: [String: Any]) {
-        
         mutex.lock()
         defer { mutex.unlock() }
-        
-        // Notify publisher.
         willRestoreStateSubject.send(dict)
-        
     }
     
 }

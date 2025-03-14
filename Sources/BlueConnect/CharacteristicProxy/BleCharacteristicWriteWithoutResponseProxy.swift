@@ -70,7 +70,7 @@ public extension BleCharacteristicWriteWithoutResponseProxy {
     func writeWithoutResponse(
         value: ValueType,
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: ((Result<Void, Error>) -> Void)? = nil
+        callback: (@Sendable (Result<Void, Error>) -> Void)? = nil
     ) {
         discover(timeout: timeout) { result in
             result.forwardError(to: callback)

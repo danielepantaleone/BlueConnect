@@ -33,7 +33,7 @@ import Foundation
 /// This struct stores both the cached data and the time when it was cached, allowing for cache expiration logic based on time intervals.
 ///
 /// - Note: This is useful for optimizing performance and reducing BLE interactions when retrieving static or infrequently changing data.
-public struct BlePeripheralCacheRecord {
+public struct BlePeripheralCacheRecord: Sendable {
     
     /// The data cached from the BLE peripheral.
     public let data: Data

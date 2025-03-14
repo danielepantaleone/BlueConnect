@@ -36,8 +36,7 @@
 /// communication with a peripheral.
 ///
 /// Conforms to: `CBPeripheralDelegate`
-///
-public protocol BlePeripheralDelegate: CBPeripheralDelegate {
+public protocol BlePeripheralDelegate: CBPeripheralDelegate, Sendable {
     
     /// Called when the BLE peripheral's name has been updated.
     ///

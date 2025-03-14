@@ -31,7 +31,7 @@ import Dispatch
 ///
 /// The `BlePeripheralCachePolicy` enum specifies different strategies for determining whether to retrieve a value from the cache or fetch it directly from the peripheral.
 /// This helps optimize communication with Bluetooth hardware by reducing unnecessary requests when cached data is available and valid.
-public enum BlePeripheralCachePolicy {
+public enum BlePeripheralCachePolicy: Sendable {
     
     /// Never use the cached value and always fetch the latest data from the peripheral.
     case never

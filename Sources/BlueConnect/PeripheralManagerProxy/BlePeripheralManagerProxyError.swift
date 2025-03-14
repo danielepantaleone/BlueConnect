@@ -30,7 +30,7 @@
 /// An enumeration representing various errors that can occur in the `BlePeripheralManagerProxy`.
 ///
 /// `BlePeripheralManagerProxy` is used to signal specific error conditions that arise when interacting with the peripheral manager proxy.
-public enum BlePeripheralManagerProxyError: Error {
+public enum BlePeripheralManagerProxyError: Error, Sendable {
     
     /// Indicates that a timeout occurred while attempting to start advertising.
     ///

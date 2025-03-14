@@ -84,7 +84,7 @@ public extension BleCharacteristicWriteProxy {
     func write(
         value: ValueType,
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: ((Result<Void, Error>) -> Void)? = nil
+        callback: (@Sendable (Result<Void, Error>) -> Void)? = nil
     ) {
         let start: DispatchTime = .now()
         discover(timeout: timeout) { result in

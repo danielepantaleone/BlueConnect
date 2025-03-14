@@ -78,7 +78,7 @@ public extension BleCharacteristicReadProxy {
     func read(
         cachePolicy: BlePeripheralCachePolicy = .never,
         timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<ValueType, Error>) -> Void
+        callback: @Sendable @escaping (Result<ValueType, Error>) -> Void
     ) {
         let start: DispatchTime = .now()
         discover(timeout: timeout) { characteristicDiscoveryResult in

@@ -33,7 +33,7 @@
 /// methods for handling central manager updates, connections, discoveries, disconnections, and failures.
 ///
 /// This protocol is typically implemented by objects that need to receive events from a `BleCentralManager`, which wraps CoreBluetooth's `CBCentralManager`.
-public protocol BleCentralManagerDelegate: NSObject, CBCentralManagerDelegate {
+public protocol BleCentralManagerDelegate: NSObject, CBCentralManagerDelegate, Sendable {
     
     /// Called when the Bluetooth central manager updates its state.
     ///

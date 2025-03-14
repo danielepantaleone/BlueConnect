@@ -32,7 +32,7 @@ import Foundation
 ///
 /// `BleCharacteristicProxyError` signals issues with encoding or decoding characteristic data during BLE operations,
 /// and includes the underlying cause of the error.
-public enum BleCharacteristicProxyError: Error {
+public enum BleCharacteristicProxyError: Error, Sendable {
     
     /// The characteristic proxy successfully retrieved the characteristic data, but data conversion to the expected type failed.
     ///
