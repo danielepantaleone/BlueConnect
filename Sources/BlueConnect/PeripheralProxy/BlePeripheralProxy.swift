@@ -159,6 +159,8 @@ public class BlePeripheralProxy: NSObject {
     /// - Parameter uuid: The UUID of the service to retrieve.
     /// - Returns: The `CBService` if found, otherwise `nil`.
     func getService(_ uuid: CBUUID) -> CBService? {
+        mutex.lock()
+        defer { mutex.unlock() }
         return peripheral.services?.first(where: { $0.uuid == uuid })
     }
     
@@ -167,6 +169,8 @@ public class BlePeripheralProxy: NSObject {
     /// - Parameter uuid: The UUID of the characteristic to retrieve.
     /// - Returns: The `CBCharacteristic` if found, otherwise `nil`.
     func getCharacteristic(_ uuid: CBUUID) -> CBCharacteristic? {
+        mutex.lock()
+        defer { mutex.unlock() }
         for service in peripheral.services.emptyIfNil {
             guard let characteristic = service.characteristics?.first(where: { $0.uuid == uuid }) else {
                 continue
@@ -183,6 +187,8 @@ public class BlePeripheralProxy: NSObject {
     ///   - serviceUUID: The UUID of the service where to search the characteristic.
     /// - Returns: The `CBCharacteristic` if found, otherwise `nil`.
     func getCharacteristic(_ uuid: CBUUID, serviceUUID: CBUUID) -> CBCharacteristic? {
+        mutex.lock()
+        defer { mutex.unlock() }
         guard let service = getService(serviceUUID) else {
             return nil
         }
