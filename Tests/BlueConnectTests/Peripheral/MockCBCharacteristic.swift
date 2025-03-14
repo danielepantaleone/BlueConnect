@@ -32,9 +32,22 @@ import Foundation
 
 class MockCBCharacteristic: CBMutableCharacteristic, @unchecked Sendable {
     
-    @Atomic
-    var internalIsNotifying: Bool = false
+    // MARK: - Private properties
     
-    override var isNotifying: Bool { internalIsNotifying }
+    private var _internalIsNotifying: Bool = false
+    
+    // MARK: - Properties
+    
+    var lock: NSLock = .init()
+    var internalIsNotifying: Bool {
+        get { lock.withLock { _internalIsNotifying } }
+        set { lock.withLock { _internalIsNotifying = newValue } }
+    }
+    
+    // MARK: - Overridden properties
+    
+    override var isNotifying: Bool {
+        internalIsNotifying
+    }
     
 }
