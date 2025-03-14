@@ -3,7 +3,10 @@ Release Notes
 
 ## 1.4.0
 
-TBD
+Released March 14, 2025
+
+- Added Sendable conformance [50cee21](https://github.com/danielepantaleone/BlueConnect/commit/50cee21aa972b77295c480831af67defd618bcf0)
+- Fix possible data race when requesting data from BLE peripheral [2a13288](https://github.com/danielepantaleone/BlueConnect/commit/2a132882be926171ca553e39153d00573ff58b3b)
 
 ## 1.3.1
 
