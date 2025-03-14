@@ -109,6 +109,7 @@ public class BlePeripheralProxy: NSObject {
     
     /// Unavailable initializer.
     /// Use `init(peripheral:)` instead.
+    @available(*, unavailable, message: "Use init(peripheral:) instead.")
     public override init() {
         fatalError("use init(peripheral:)")
     }
