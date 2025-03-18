@@ -44,45 +44,45 @@ public class BlePeripheralProxy: NSObject {
     
     /// A publisher that emits when characteristics are discovered for a service.
     /// It emits a tuple containing the service and an array of characteristics.
-    public lazy var didDiscoverCharacteristicsPublisher: AnyPublisher<(service: CBService, characteristics: [CBCharacteristic]), Never> = {
+    public var didDiscoverCharacteristicsPublisher: AnyPublisher<(service: CBService, characteristics: [CBCharacteristic]), Never> {
         didDiscoverCharacteristicsSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when services are discovered on the peripheral.
     /// It emits an array of discovered services.
-    public lazy var didDiscoverServicesPublisher: AnyPublisher<[CBService], Never> = {
+    public var didDiscoverServicesPublisher: AnyPublisher<[CBService], Never> {
         didDiscoverServicesSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when the peripheral updates its name.
     /// It emits the updated name of the peripheral as a `String?`.
-    public lazy var didUpdateNamePublisher: AnyPublisher<String?, Never> = {
+    public var didUpdateNamePublisher: AnyPublisher<String?, Never> {
         didUpdateNameSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when the notification state for a characteristic changes.
     /// It emits a tuple containing the characteristic and a `Bool` indicating whether notifications are enabled.
-    public lazy var didUpdateNotificationStatePublisher: AnyPublisher<(characteristic: CBCharacteristic, enabled: Bool), Never> = {
+    public var didUpdateNotificationStatePublisher: AnyPublisher<(characteristic: CBCharacteristic, enabled: Bool), Never> {
         didUpdateNotificationStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits the updated RSSI (Received Signal Strength Indicator) value for the peripheral.
     /// It emits an `NSNumber` representing the RSSI.
-    public lazy var didUpdateRSSIPublisher: AnyPublisher<NSNumber, Never> = {
+    public var didUpdateRSSIPublisher: AnyPublisher<NSNumber, Never> {
         didUpdateRSSISubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when a characteristic's value has been updated.
     /// It emits a tuple containing the characteristic and the updated value as `Data`.
-    public lazy var didUpdateValuePublisher: AnyPublisher<(characteristic: CBCharacteristic, data: Data), Never> = {
+    public var didUpdateValuePublisher: AnyPublisher<(characteristic: CBCharacteristic, data: Data), Never> {
         didUpdateValueSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when a characteristic write operation completes.
     /// It emits the characteristic that was written.
-    public lazy var didWriteValuePublisher: AnyPublisher<CBCharacteristic, Never> = {
+    public var didWriteValuePublisher: AnyPublisher<CBCharacteristic, Never> {
         didWriteValueSubject.eraseToAnyPublisher()
-    }()
+    }
    
     // MARK: - Internal properties
     
@@ -97,13 +97,13 @@ public class BlePeripheralProxy: NSObject {
     let discoverServiceRegistry: KeyedRegistry<CBUUID, CBService> = .init()
     let rssiReadRegistry: ListRegistry<NSNumber> = .init()
 
-    lazy var didDiscoverCharacteristicsSubject: PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never> = .init()
-    lazy var didDiscoverServicesSubject: PassthroughSubject<[CBService], Never> = .init()
-    lazy var didUpdateNameSubject: PassthroughSubject<String?, Never> = .init()
-    lazy var didUpdateNotificationStateSubject: PassthroughSubject<(characteristic: CBCharacteristic, enabled: Bool), Never> = .init()
-    lazy var didUpdateRSSISubject: PassthroughSubject<NSNumber, Never> = .init()
-    lazy var didUpdateValueSubject: PassthroughSubject<(characteristic: CBCharacteristic, data: Data), Never> = .init()
-    lazy var didWriteValueSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
+    let didDiscoverCharacteristicsSubject: PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never> = .init()
+    let didDiscoverServicesSubject: PassthroughSubject<[CBService], Never> = .init()
+    let didUpdateNameSubject: PassthroughSubject<String?, Never> = .init()
+    let didUpdateNotificationStateSubject: PassthroughSubject<(characteristic: CBCharacteristic, enabled: Bool), Never> = .init()
+    let didUpdateRSSISubject: PassthroughSubject<NSNumber, Never> = .init()
+    let didUpdateValueSubject: PassthroughSubject<(characteristic: CBCharacteristic, data: Data), Never> = .init()
+    let didWriteValueSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
     
     // MARK: - Initialization
     

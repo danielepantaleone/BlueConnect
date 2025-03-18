@@ -56,10 +56,9 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     // MARK: - Internal properties
     
     let mutex = RecursiveMutex()
+    let queue: DispatchQueue = DispatchQueue.global(qos: .background)
     var services: [CBMutableService] = []
         
-    lazy var queue: DispatchQueue = DispatchQueue.global(qos: .background)
-    
     // MARK: - Interface
     
     func startAdvertising(_ advertisementData: [String: Any]?) {

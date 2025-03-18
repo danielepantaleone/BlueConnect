@@ -54,11 +54,8 @@ class BlueConnectTests: XCTestCase {
     }
     var blePeripheralManager: MockBlePeripheralManager!
     var blePeripheralManagerProxy: BlePeripheralManagerProxy!
+    let queue: DispatchQueue = DispatchQueue.global(qos: .background)
     var subscriptions: Set<AnyCancellable> = []
-    
-    // MARK: - Lazy properties
-    
-    lazy var queue: DispatchQueue = DispatchQueue.global(qos: .background)
     
     // MARK: - Setup & tear down
     

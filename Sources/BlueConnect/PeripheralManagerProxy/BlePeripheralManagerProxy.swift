@@ -57,49 +57,49 @@ public class BlePeripheralManagerProxy: NSObject {
     // MARK: - Publishers
     
     /// Publisher for state updates of the peripheral manager.
-    public lazy var didUpdateStatePublisher: AnyPublisher<CBManagerState, Never> = {
+    public var didUpdateStatePublisher: AnyPublisher<CBManagerState, Never> {
         didUpdateStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for the advertising status of the peripheral manager that emits a `Bool` value indicating whether the peripheral manager is currently advertising (`true`) or not (`false`).
-    public lazy var didUpdateAdvertisingPublisher: AnyPublisher<Bool, Never> = {
+    public var didUpdateAdvertisingPublisher: AnyPublisher<Bool, Never> {
         didUpdateAdvertisingSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher that emits when a service is successfully added or an error occurs during the addition process.
-    public lazy var didAddServicePublisher: AnyPublisher<(service: CBService, error: Error?), Never> = {
+    public var didAddServicePublisher: AnyPublisher<(service: CBService, error: Error?), Never> {
         didAddServiceSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for central subscriptions to a characteristic.
-    public lazy var didSubscribeToCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> = {
+    public var didSubscribeToCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> {
         didSubscribeToCharacteristicSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for central unsubscriptions from a characteristic.
-    public lazy var didUnsubscribeFromCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> = {
+    public var didUnsubscribeFromCharacteristicPublisher: AnyPublisher<CBCharacteristic, Never> {
         didUnsubscribeFromCharacteristicSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for read requests from centrals.
-    public lazy var didReceiveReadRequestPublisher: AnyPublisher<CBATTRequest, Never> = {
+    public var didReceiveReadRequestPublisher: AnyPublisher<CBATTRequest, Never> {
         didReceiveReadRequestSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for write requests from centrals.
-    public lazy var didReceiveWriteRequestsPublisher: AnyPublisher<[CBATTRequest], Never> = {
+    public var didReceiveWriteRequestsPublisher: AnyPublisher<[CBATTRequest], Never> {
         didReceiveWriteRequestsSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher that emits when the peripheral manager is ready to update subscribers.
-    public lazy var isReadyToUpdateSubscribersPublisher: AnyPublisher<Void, Never> = {
+    public var isReadyToUpdateSubscribersPublisher: AnyPublisher<Void, Never> {
         isReadyToUpdateSubscribersSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// Publisher for the peripheral manager's restored state.
-    public lazy var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> = {
+    public var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> {
         willRestoreStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     // MARK: - Internal properties
     
@@ -109,15 +109,15 @@ public class BlePeripheralManagerProxy: NSObject {
     let stopAdvertisingRegistry: ListRegistry<Void> = .init()
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
     
-    lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
-    lazy var didUpdateAdvertisingSubject: PassthroughSubject<Bool, Never> = .init()
-    lazy var didAddServiceSubject: PassthroughSubject<(service: CBService, error: Error?), Never> = .init()
-    lazy var didSubscribeToCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
-    lazy var didUnsubscribeFromCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
-    lazy var didReceiveReadRequestSubject: PassthroughSubject<CBATTRequest, Never> = .init()
-    lazy var didReceiveWriteRequestsSubject: PassthroughSubject<[CBATTRequest], Never> = .init()
-    lazy var isReadyToUpdateSubscribersSubject: PassthroughSubject<Void, Never> = .init()
-    lazy var willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
+    let didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
+    let didUpdateAdvertisingSubject: PassthroughSubject<Bool, Never> = .init()
+    let didAddServiceSubject: PassthroughSubject<(service: CBService, error: Error?), Never> = .init()
+    let didSubscribeToCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
+    let didUnsubscribeFromCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
+    let didReceiveReadRequestSubject: PassthroughSubject<CBATTRequest, Never> = .init()
+    let didReceiveWriteRequestsSubject: PassthroughSubject<[CBATTRequest], Never> = .init()
+    let isReadyToUpdateSubscribersSubject: PassthroughSubject<Void, Never> = .init()
+    let willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
     
     // MARK: - Initialization
     

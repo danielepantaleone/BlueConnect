@@ -58,11 +58,10 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     // MARK: - Internal properties
         
     let mutex = RecursiveMutex()
+    let queue: DispatchQueue = DispatchQueue.global(qos: .background)
     var peripherals: [BlePeripheral] = []
     var scanTimer: DispatchSourceTimer?
     var scanCounter: Int = 0
-    
-    lazy var queue: DispatchQueue = DispatchQueue.global(qos: .background)
 
     // MARK: - Initialization
     

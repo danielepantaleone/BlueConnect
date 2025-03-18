@@ -57,29 +57,29 @@ public class BleCentralManagerProxy: NSObject {
     // MARK: - Publishers
     
     /// A publisher that emits the updated state of the BLE central manager.
-    public lazy var didUpdateStatePublisher: AnyPublisher<CBManagerState, Never> = {
+    public var didUpdateStatePublisher: AnyPublisher<CBManagerState, Never> {
         didUpdateStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when a BLE peripheral successfully connects.
-    public lazy var didConnectPublisher: AnyPublisher<BlePeripheral, Never> = {
+    public var didConnectPublisher: AnyPublisher<BlePeripheral, Never> {
         didConnectSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when a BLE peripheral disconnects, optionally including an error if the disconnection was unexpected.
-    public lazy var didDisconnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error?), Never> = {
+    public var didDisconnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error?), Never> {
         didDisconnectSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when the central manager fails to connect to a BLE peripheral, optionally including the error that occurred.
-    public lazy var didFailToConnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error), Never> = {
+    public var didFailToConnectPublisher: AnyPublisher<(peripheral: BlePeripheral, error: Error), Never> {
         didFailToConnectSubject.eraseToAnyPublisher()
-    }()
+    }
     
     /// A publisher that emits when the central manager will restore its state.
-    public lazy var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> = {
+    public var willRestoreStatePublisher: AnyPublisher<[String: Any], Never> {
         willRestoreStateSubject.eraseToAnyPublisher()
-    }()
+    }
     
     // MARK: - Internal properties
     
@@ -89,18 +89,18 @@ public class BleCentralManagerProxy: NSObject {
     let disconnectionRegistry: KeyedRegistry<UUID, Void> = .init()
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
    
+    var discoverTimer: DispatchSourceTimer?
     var discoverSubject: PassthroughSubject<(
         peripheral: BlePeripheral,
         advertisementData: BleAdvertisementData,
         RSSI: Int), Error>?
-    var discoverTimer: DispatchSourceTimer?
     let mutex = RecursiveMutex()
     
-    lazy var didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
-    lazy var didConnectSubject: PassthroughSubject<BlePeripheral, Never> = .init()
-    lazy var didDisconnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error?), Never> = .init()
-    lazy var didFailToConnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error), Never> = .init()
-    lazy var willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
+    let didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
+    let didConnectSubject: PassthroughSubject<BlePeripheral, Never> = .init()
+    let didDisconnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error?), Never> = .init()
+    let didFailToConnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error), Never> = .init()
+    let willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
     
     // MARK: - Initialization
     

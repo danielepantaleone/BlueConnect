@@ -82,6 +82,7 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     private let secret: String
     private let mutex = RecursiveMutex()
     private var timer: DispatchSourceTimer?
+    private let queue: DispatchQueue = DispatchQueue.global(qos: .background)
     
     // MARK: - Services
     
@@ -89,8 +90,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     private let batteryService = CBMutableService(type: MockBleDescriptor.batteryServiceUUID, primary: false)
     private let heartRateService = CBMutableService(type: MockBleDescriptor.heartRateServiceUUID, primary: false)
     private let customService = CBMutableService(type: MockBleDescriptor.customServiceUUID, primary: false)
-    
-    lazy var queue: DispatchQueue = DispatchQueue.global(qos: .background)
     
     // MARK: - Initialization
     
