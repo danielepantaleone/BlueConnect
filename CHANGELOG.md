@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 1.3.2
+
+Released March 18, 2025
+
+- Fix possible data race when requesting data from BLE peripheral [2a13288](https://github.com/danielepantaleone/BlueConnect/commit/2a132882be926171ca553e39153d00573ff58b3b)
+- Prefer immutable properties over lazily initialized ones [b6d15c4](https://github.com/danielepantaleone/BlueConnect/commit/b6d15c4b41fec68f3f59e274811ee8a934a241f4)
+
 ## 1.3.1
 
 Released January 20, 2025

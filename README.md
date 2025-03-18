@@ -420,14 +420,14 @@ This can be easily achieved by using a dependency injection (DI) container such 
 ### Cocoapods
 
 ```ruby
-pod 'BlueConnect', '~> 1.3.1'
+pod 'BlueConnect', '~> 1.3.2'
 ```
 
 ### Swift Package Manager
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.3.1"))
+    .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.3.2"))
 ]
 ```
 
