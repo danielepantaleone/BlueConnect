@@ -94,7 +94,7 @@ public class BleCentralManagerProxy: NSObject {
         peripheral: BlePeripheral,
         advertisementData: BleAdvertisementData,
         RSSI: Int), Error>?
-    let mutex = RecursiveMutex()
+    let lock = NSRecursiveLock()
     
     let didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
     let didConnectSubject: PassthroughSubject<BlePeripheral, Never> = .init()
@@ -135,8 +135,8 @@ public class BleCentralManagerProxy: NSObject {
     
     /// Perform `BleCentralManagerProxy` graceful deinitialization.
     deinit {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         centralManager.centraManagerDelegate = nil
         // Stop ongoing scan (if any)
         centralManager.stopScan()
@@ -189,8 +189,8 @@ extension BleCentralManagerProxy {
         callback: @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
@@ -213,8 +213,8 @@ extension BleCentralManagerProxy {
             guard let self else { return }
             guard let peripheral else { return }
             
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             
             // If the peripheral managed to connect somehow, avoid to disconnect it.
             // We assume the connection was already advertised on the callback and combine publisher.
@@ -275,8 +275,8 @@ extension BleCentralManagerProxy {
     /// - Note: If the peripheral is already in the process of disconnecting (`.disconnecting` state), the method does not reinitiate the disconnection.
     public func disconnect(peripheral: BlePeripheral, callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
@@ -334,8 +334,8 @@ extension BleCentralManagerProxy {
         RSSI: Int
     ), Error> {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // If we are already have a subject it means we are already scanning we should already be receiving updates.
         // In this case we notify the completion of previous scan and we start a new one (killing any previous timer).
@@ -372,8 +372,8 @@ extension BleCentralManagerProxy {
     ///
     /// Stops the  BLE peripherals discovery and completes the scan's publisher with `.finished`.
     public func stopScan() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         // Stop discover timer.
         stopDiscoverTimer()
         // Send publisher completion.
@@ -442,8 +442,8 @@ extension BleCentralManagerProxy {
     /// - Note: If the state is already `.poweredOn`, the callback is called immediately with success.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Ensure central manager is not already powered on.
         guard centralManager.state != .poweredOn else {
@@ -480,8 +480,8 @@ extension BleCentralManagerProxy {
 extension BleCentralManagerProxy {
     
     func startDiscoverTimer(timeout: DispatchTimeInterval) {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         guard timeout != .never else {
             discoverTimer?.cancel()
             discoverTimer = nil
@@ -492,8 +492,8 @@ extension BleCentralManagerProxy {
         discoverTimer?.schedule(deadline: .now() + timeout, repeating: .never)
         discoverTimer?.setEventHandler { [weak self] in
             guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             // Stop scanning for peripherals.
             centralManager.stopScan()
             // Kill the timer and reset.
@@ -507,8 +507,8 @@ extension BleCentralManagerProxy {
     }
     
     func stopDiscoverTimer() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         discoverTimer?.cancel()
         discoverTimer = nil
     }

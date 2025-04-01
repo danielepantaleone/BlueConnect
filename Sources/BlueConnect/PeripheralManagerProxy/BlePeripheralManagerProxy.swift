@@ -104,7 +104,7 @@ public class BlePeripheralManagerProxy: NSObject {
     // MARK: - Internal properties
     
     var advertisingMonitor: DispatchSourceTimer?
-    let mutex = RecursiveMutex()
+    let lock = NSRecursiveLock()
     let startAdvertisingRegistry: ListRegistry<Void> = .init()
     let stopAdvertisingRegistry: ListRegistry<Void> = .init()
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
@@ -152,8 +152,8 @@ public class BlePeripheralManagerProxy: NSObject {
     
     /// Perform `BlePeripheralManagerProxy` graceful deinitialization.
     deinit {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         peripheralManager.peripheralManagerDelegate = nil
         // Notify registries about shutdown.
         startAdvertisingRegistry.notifyAll(.failure(BleCentralManagerProxyError.destroyed))
@@ -183,8 +183,8 @@ extension BlePeripheralManagerProxy {
         callback: @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Ensure peripheral manager is in a powered-on state.
         guard peripheralManager.state == .poweredOn else {
@@ -219,8 +219,8 @@ extension BlePeripheralManagerProxy {
     ///   - callback: A closure that is called with the result of the stop advertising operation. The closure is passed a `Result` type, which is `.success` on successful advertising stop or `.failure` with an error if the operation fails. Defaults to a no-op closure.
     public func stopAdvertising(callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Ensure peripheral manager is in a powered-on state.
         guard peripheralManager.state == .poweredOn else {
@@ -366,8 +366,8 @@ extension BlePeripheralManagerProxy {
     /// - Note: If the state is already `.poweredOn`, the callback is called immediately with success.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Ensure peripheral manager is not already powered on.
         guard peripheralManager.state != .poweredOn else {

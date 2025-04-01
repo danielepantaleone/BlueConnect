@@ -55,7 +55,7 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     
     // MARK: - Internal properties
     
-    let mutex = RecursiveMutex()
+    let lock = NSRecursiveLock()
     let queue: DispatchQueue = DispatchQueue.global(qos: .background)
     var services: [CBMutableService] = []
         
@@ -64,8 +64,8 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     func startAdvertising(_ advertisementData: [String: Any]?) {
         queue.async { [weak self] in
             guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             guard !isAdvertising else { return }
             guard errorOnAdvertising == nil else {
                 peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: errorOnAdvertising)
@@ -73,8 +73,8 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
                 return
             }
             @Sendable func _advertiseInternal() {
-                mutex.lock()
-                defer { mutex.unlock() }
+                lock.lock()
+                defer { lock.unlock() }
                 guard state == .poweredOn else { return }
                 isAdvertising = true
                 peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: nil)
@@ -91,8 +91,8 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     }
     
     func stopAdvertising() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         guard isAdvertising else { return }
         isAdvertising = false
     }
@@ -102,20 +102,20 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     }
     
     func add(_ service: CBMutableService) {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         services.append(service)
     }
     
     func remove(_ service: CBMutableService) {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         services.removeAll { $0.uuid == service.uuid }
     }
     
     func removeAllServices() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         services.removeAll()
     }
     

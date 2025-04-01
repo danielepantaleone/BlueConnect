@@ -57,7 +57,7 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     
     // MARK: - Internal properties
         
-    let mutex = RecursiveMutex()
+    let lock = NSRecursiveLock()
     let queue: DispatchQueue = DispatchQueue.global(qos: .background)
     var peripherals: [BlePeripheral] = []
     var scanTimer: DispatchSourceTimer?
@@ -78,8 +78,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
         mockPeripheral.state = .connecting
         queue.async { [weak self] in
             guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             guard state == .poweredOn else {
                 mockPeripheral.state = .disconnected
                 centraManagerDelegate?.bleCentralManager(
@@ -98,8 +98,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
                 return
             }
             @Sendable func _connectInternal() {
-                mutex.lock()
-                defer { mutex.unlock() }
+                lock.lock()
+                defer { lock.unlock() }
                 guard state == .poweredOn else { return }
                 guard mockPeripheral.state == .connecting else { return }
                 mockPeripheral.state = .connected
@@ -122,8 +122,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
         mockPeripheral.state = .disconnecting
         queue.async { [weak self] in
             guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             let error: Error?
             if state != .poweredOn {
                 error = MockBleError.bluetoothIsOff
@@ -134,8 +134,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
                 error = nil
             }
             @Sendable func _disconnectInternal() {
-                mutex.lock()
-                defer { mutex.unlock() }
+                lock.lock()
+                defer { lock.unlock() }
                 guard mockPeripheral.state == .disconnecting else { return }
                 mockPeripheral.state = .disconnected
                 centraManagerDelegate?.bleCentralManager(
@@ -155,16 +155,16 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     }
     
     func retrievePeripherals(withIds identifiers: [UUID]) -> [BlePeripheral] {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return peripherals.filter { peripheral in
             identifiers.contains { $0 == peripheral.identifier }
         }
     }
     
     func retrieveConnectedPeripherals(withServiceIds serviceUUIDs: [CBUUID]) -> [BlePeripheral] {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return peripherals.filter { peripheral in
             guard peripheral.state == .connected else { return false }
             guard let services = peripheral.services else { return false }
@@ -174,8 +174,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     }
     
     func scanForPeripherals(withServices: [CBUUID]?, options: [String: Any]?) {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         isScanning = true
         scanCounter = 0
         scanTimer?.cancel()
@@ -189,8 +189,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     }
     
     func stopScan() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         isScanning = false
         scanCounter = 0
         scanTimer?.cancel()
@@ -200,8 +200,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     // MARK: - Internals
     
     private func disconnectAllPeripheralsIfNotPoweredOn() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         guard state != .poweredOn else { return }
         for peripheral in peripherals {
             guard let mockPeripheral = peripheral as? MockBlePeripheral else { continue }
@@ -210,8 +210,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     }
     
     private func scanInterval() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         guard !peripherals.isEmpty else { return }
         scanCounter += 1
         let peripheral = peripherals[scanCounter % peripherals.count]

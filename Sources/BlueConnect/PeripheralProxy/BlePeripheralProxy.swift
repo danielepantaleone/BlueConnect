@@ -88,7 +88,7 @@ public class BlePeripheralProxy: NSObject {
     
     var cache: [CBUUID: BlePeripheralCacheRecord] = [:]
     var readingCharacteristics: Set<CBUUID> = []
-    let mutex = RecursiveMutex()
+    let lock = NSRecursiveLock()
     
     let characteristicReadRegistry: KeyedRegistry<CBUUID, Data> = .init()
     let characteristicNotifyRegistry: KeyedRegistry<CBUUID, Bool> = .init()
@@ -126,8 +126,8 @@ public class BlePeripheralProxy: NSObject {
     /// Perform `BlePeripheralProxy` graceful deinitialization.
     deinit {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         peripheral.peripheralDelegate = nil
         readingCharacteristics.removeAll()
@@ -159,8 +159,8 @@ public class BlePeripheralProxy: NSObject {
     /// - Parameter uuid: The UUID of the service to retrieve.
     /// - Returns: The `CBService` if found, otherwise `nil`.
     func getService(_ uuid: CBUUID) -> CBService? {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         return peripheral.services?.first(where: { $0.uuid == uuid })
     }
     
@@ -169,8 +169,8 @@ public class BlePeripheralProxy: NSObject {
     /// - Parameter uuid: The UUID of the characteristic to retrieve.
     /// - Returns: The `CBCharacteristic` if found, otherwise `nil`.
     func getCharacteristic(_ uuid: CBUUID) -> CBCharacteristic? {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         for service in peripheral.services.emptyIfNil {
             guard let characteristic = service.characteristics?.first(where: { $0.uuid == uuid }) else {
                 continue
@@ -187,8 +187,8 @@ public class BlePeripheralProxy: NSObject {
     ///   - serviceUUID: The UUID of the service where to search the characteristic.
     /// - Returns: The `CBCharacteristic` if found, otherwise `nil`.
     func getCharacteristic(_ uuid: CBUUID, serviceUUID: CBUUID) -> CBCharacteristic? {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         guard let service = getService(serviceUUID) else {
             return nil
         }
@@ -218,8 +218,8 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<CBService, Error>) -> Void
     ) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard peripheral.state == .connected else {
             callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
@@ -251,8 +251,8 @@ extension BlePeripheralProxy {
     ///   - serviceUUIDs: The UUIDs of the services to discover, or `nil` to discover all services on the peripheral.
     public func discover(serviceUUIDs: [CBUUID]?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard peripheral.state == .connected else {
             return
@@ -284,8 +284,8 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<CBCharacteristic, Error>) -> Void
     ) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard peripheral.state == .connected else {
             callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
@@ -323,8 +323,8 @@ extension BlePeripheralProxy {
     ///   - serviceUUID: The UUID of the service containing the characteristics.
     public func discover(characteristicUUIDs: [CBUUID]?, in serviceUUID: CBUUID) {
   
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard peripheral.state == .connected else {
             return
@@ -364,8 +364,8 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<Data, Error>) -> Void
     ) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         if let record = cache[characteristicUUID], cachePolicy.isValid(time: record.time) {
             callback(.success(record.data))
@@ -438,8 +438,8 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<Void, Error>) -> Void
     ) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard peripheral.state == .connected else {
             callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
@@ -482,8 +482,8 @@ extension BlePeripheralProxy {
     /// - Note: This method is useful for sending data where a response from the peripheral is not required, such as sending notifications or control commands.
     public func writeWithoutResponse(data: Data, to characteristicUUID: CBUUID) throws {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard peripheral.state == .connected else {
             throw BlePeripheralProxyError.peripheralNotConnected
@@ -524,8 +524,8 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<Bool, Error>) -> Void
     ) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard peripheral.state == .connected else {
             callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
@@ -574,8 +574,8 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<NSNumber, Error>) -> Void = { _ in }
     ) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard peripheral.state == .connected else {
             callback(.failure(BlePeripheralProxyError.peripheralNotConnected))

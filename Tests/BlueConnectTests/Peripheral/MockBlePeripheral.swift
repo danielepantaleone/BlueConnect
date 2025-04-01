@@ -80,7 +80,7 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     private let firmwareRevision: String
     private let hardwareRevision: String
     private let secret: String
-    private let mutex = RecursiveMutex()
+    private let lock = NSRecursiveLock()
     private var timer: DispatchSourceTimer?
     private let queue: DispatchQueue = DispatchQueue.global(qos: .background)
     
@@ -114,8 +114,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     func discoverServices(_ serviceUUIDs: [CBUUID]?) {
         queue.async { [weak self] in
             guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             guard state == .connected else {
                 peripheralDelegate?.blePeripheral(self, didDiscoverServices: MockBleError.peripheralNotConnected)
                 return
@@ -126,8 +126,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 return
             }
             @Sendable func _discoverServicesInternal() {
-                mutex.lock()
-                defer { mutex.unlock() }
+                lock.lock()
+                defer { lock.unlock() }
                 services = services.emptyIfNil
                 let allServices = [deviceInformationService, batteryService, heartRateService, customService]
                 if let serviceUUIDs {
@@ -158,8 +158,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     func discoverCharacteristics(_ characteristicUUIDs: [CBUUID]?, for service: CBService) {
         queue.async { [weak self] in
             guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             guard errorOnDiscoverCharacteristics == nil else {
                 peripheralDelegate?.blePeripheral(
                     self,
@@ -196,8 +196,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             
             guard state == .connected else {
                 peripheralDelegate?.blePeripheral(
@@ -229,8 +229,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 return
             }
             @Sendable func _readInternal() {
-                mutex.lock()
-                defer { mutex.unlock() }
+                lock.lock()
+                defer { lock.unlock() }
                 peripheralDelegate?.blePeripheral(
                     self,
                     didUpdateValueFor: internalCharacteristic,
@@ -255,8 +255,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             
             guard state == .connected else {
                 peripheralDelegate?.blePeripheral(
@@ -298,8 +298,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 return
             }
             @Sendable func _writeInternal() {
-                mutex.lock()
-                defer { mutex.unlock() }
+                lock.lock()
+                defer { lock.unlock() }
                 internalCharacteristic.value = data
                 peripheralDelegate?.blePeripheral(
                     self,
@@ -322,8 +322,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     func setNotifyValue(_ enabled: Bool, for characteristic: CBCharacteristic) {
         queue.async { [weak self] in
             guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             guard state == .connected else {
                 peripheralDelegate?.blePeripheral(
                     self,
@@ -354,8 +354,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 return
             }
             @Sendable func _notifyInternal() {
-                mutex.lock()
-                defer { mutex.unlock() }
+                lock.lock()
+                defer { lock.unlock() }
                 internalCharacteristic.internalIsNotifying = enabled
                 peripheralDelegate?.blePeripheral(
                     self,
@@ -379,8 +379,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             
             guard state == .connected else {
                 peripheralDelegate?.blePeripheral(
@@ -398,8 +398,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 return
             }
             @Sendable func _readInternal() {
-                mutex.lock()
-                defer { mutex.unlock() }
+                lock.lock()
+                defer { lock.unlock() }
                 peripheralDelegate?.blePeripheral(
                     self,
                     didReadRSSI: NSNumber(value: rssi),
@@ -426,8 +426,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func discoverDeviceInformationServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard state == .connected else {
             peripheralDelegate?.blePeripheral(
@@ -473,8 +473,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func discoverBatteryServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard state == .connected else {
             peripheralDelegate?.blePeripheral(
@@ -502,8 +502,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func discoverHeartRateServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard state == .connected else {
             peripheralDelegate?.blePeripheral(
@@ -531,8 +531,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func discoverCustomServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard state == .connected else {
             peripheralDelegate?.blePeripheral(
@@ -594,8 +594,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     // MARK: - Internal notify
     
     private func startNotify() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         timer?.cancel()
         timer = DispatchSource.makeTimerSource(queue: .global())
         timer?.schedule(deadline: .now() + .seconds(1), repeating: 1.0)
@@ -607,15 +607,15 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     }
     
     private func stopNotify() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         timer?.cancel()
         timer = nil
     }
     
     private func notifyInterval() {
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         let characteristic = findInternalMutableCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
         characteristic?.value = Data(with: heartRateProvider())
         services?.forEach {
@@ -635,8 +635,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     func readRSSI(after timeout: DispatchTimeInterval) {
         queue.asyncAfter(deadline: .now() + timeout) { [weak self] in
             guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             self.readRSSI()
         }
     }
@@ -644,8 +644,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     func setName(_ name: String?, after timeout: DispatchTimeInterval) {
         queue.asyncAfter(deadline: .now() + timeout) { [weak self] in
             guard let self else { return }
-            mutex.lock()
-            defer { mutex.unlock() }
+            lock.lock()
+            defer { lock.unlock() }
             self.name = name
         }
     }

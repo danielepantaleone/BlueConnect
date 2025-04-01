@@ -36,8 +36,8 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
     
     public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverServices error: Error?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard error == nil else {
             // If the discovery is unsuccessful, the error parameter returns the cause of the failure.
@@ -64,8 +64,8 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
     
     public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
       
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         guard error == nil else {
             // If the discovery is unsuccessful, the error parameter returns the cause of the failure.
@@ -92,8 +92,8 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
     
     public func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Notify any error on awaiting callbacks.
         if let error {
@@ -117,8 +117,8 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
     
     public func blePeripheral(_ peripheral: BlePeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
       
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
                 
         // Notify any error on awaiting callbacks.
         if let error {
@@ -140,8 +140,8 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
     
     public func blePeripheral(_ peripheral: BlePeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Stop reading timer and remove currently reading characteristics even if it errored.
         readingCharacteristics.remove(characteristic.uuid)
@@ -177,8 +177,8 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
     
     public func blePeripheral(_ peripheral: BlePeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
             
         // Notify any error on awaiting callbacks.
         if let error {

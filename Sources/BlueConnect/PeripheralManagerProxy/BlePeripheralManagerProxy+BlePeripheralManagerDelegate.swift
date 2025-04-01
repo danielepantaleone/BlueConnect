@@ -32,8 +32,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     
     public func blePeripheralManagerDidUpdateState(_ peripheral: BlePeripheralManager) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Notify any registered callback.
         if peripheral.state == .poweredOn {
@@ -51,8 +51,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     
     public func blePeripheralManagerDidStartAdvertising(_ peripheral: BlePeripheralManager, error: Error?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         if let error {
             
@@ -72,8 +72,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
             advertisingMonitor?.schedule(deadline: .now() + .seconds(1), repeating: .seconds(1))
             advertisingMonitor?.setEventHandler { [weak self] in
                 guard let self else { return }
-                mutex.lock()
-                defer { mutex.unlock() }
+                lock.lock()
+                defer { lock.unlock() }
                 guard !isAdvertising else { return }
                 // Kill the timer and reset.
                 advertisingMonitor?.cancel()
@@ -91,8 +91,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     
     public func blePeripheralManagerIsReady(toUpdateSubscribers peripheral: BlePeripheralManager) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Notify state publisher.
         isReadyToUpdateSubscribersSubject.send(())
@@ -101,8 +101,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, didAdd service: CBService, error: Error?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Notify state publisher.
         didAddServiceSubject.send((service, error))
@@ -111,8 +111,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, central: BleCentral, didSubscribeTo characteristic: CBCharacteristic) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Notify state publisher.
         didSubscribeToCharacteristicSubject.send(characteristic)
@@ -121,8 +121,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, central: BleCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Notify state publisher.
         didUnsubscribeFromCharacteristicSubject.send(characteristic)
@@ -131,8 +131,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, didReceiveRead request: CBATTRequest) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Notify state publisher.
         didReceiveReadRequestSubject.send(request)
@@ -141,8 +141,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, didReceiveWrite requests: [CBATTRequest]) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Notify state publisher.
         didReceiveWriteRequestsSubject.send(requests)
@@ -151,8 +151,8 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
     
     public func blePeripheralManager(_ peripheral: BlePeripheralManager, willRestoreState dict: [String: Any]) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Notify publisher.
         willRestoreStateSubject.send(dict)

@@ -32,8 +32,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     
     public func bleCentralManagerDidUpdateState(_ central: BleCentralManager) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Kill peripheral discovery and notify connection failures and disconnections.
         if central.state != .poweredOn {
@@ -102,8 +102,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     
     public func bleCentralManager(_ central: BleCentralManager, didConnect peripheral: BlePeripheral) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Track connection state.
         connectionState[peripheral.identifier] = .connected
@@ -116,8 +116,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     
     public func bleCentralManager(_ central: BleCentralManager, didDisconnectPeripheral peripheral: BlePeripheral, error: Error?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         if connectionTimeouts.contains(peripheral.identifier) {
             // This is a disconnection caused by canceling a peripheral connection after timeout.
@@ -148,8 +148,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     
     public func bleCentralManager(_ central: BleCentralManager, didFailToConnect peripheral: BlePeripheral, error: Error?) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Track connection state.
         connectionState[peripheral.identifier] = .disconnected
@@ -163,8 +163,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     
     public func bleCentralManager(_ central: BleCentralManager, willRestoreState dict: [String: Any]) {
         
-        mutex.lock()
-        defer { mutex.unlock() }
+        lock.lock()
+        defer { lock.unlock() }
         
         // Track connection state.
         if let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBPeripheral] {
