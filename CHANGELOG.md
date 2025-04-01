@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 1.3.3
+
+Released April 1, 2025
+
+- Removed custom recursive lock implementation in favour of Foundation's one [fb032f0](https://github.com/danielepantaleone/BlueConnect/commit/fb032f064187156e35264dd2ce27f8e49b38067a)
+
 ## 1.3.2
 
 Released March 18, 2025
