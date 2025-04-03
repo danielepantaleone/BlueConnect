@@ -121,43 +121,43 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     func discoverServices(_ serviceUUIDs: [CBUUID]?) {
         queue.async { [weak self] in
             guard let self else { return }
-            lock.lock()
-            defer { lock.unlock() }
-            guard state == .connected else {
-                peripheralDelegate?.blePeripheral(self, didDiscoverServices: MockBleError.peripheralNotConnected)
-                return
-            }
-            guard errorOnDiscoverServices == nil else {
-                peripheralDelegate?.blePeripheral(self, didDiscoverServices: errorOnDiscoverServices)
-                errorOnDiscoverServices = nil
-                return
-            }
-            @Sendable func _discoverServicesInternal() {
-                lock.lock()
-                defer { lock.unlock() }
-                services = services.emptyIfNil
-                let allServices = [deviceInformationService, batteryService, heartRateService, customService]
-                if let serviceUUIDs {
-                    allServices.forEach { service in
-                        guard serviceUUIDs.contains(where: { $0 == service.uuid }) else { return }
-                        guard !self.services!.contains(service) else { return }
-                        self.services!.append(service)
-                    }
-                } else {
-                    allServices.forEach { service in
-                        guard !self.services!.contains(service) else { return }
-                        self.services!.append(service)
-                    }
+            self.lock.withLock {
+                guard self.state == .connected else {
+                    self.peripheralDelegate?.blePeripheral(self, didDiscoverServices: MockBleError.peripheralNotConnected)
+                    return
                 }
-                peripheralDelegate?.blePeripheral(self, didDiscoverServices: nil)
-            }
-            if let delayOnDiscoverServices {
-                queue.asyncAfter(deadline: .now() + delayOnDiscoverServices) {
+                guard self.errorOnDiscoverServices == nil else {
+                    self.peripheralDelegate?.blePeripheral(self, didDiscoverServices: self.errorOnDiscoverServices)
+                    self.errorOnDiscoverServices = nil
+                    return
+                }
+                @Sendable func _discoverServicesInternal() {
+                    self.services = self.services.emptyIfNil
+                    let allServices = [self.deviceInformationService, self.batteryService, self.heartRateService, self.customService]
+                    if let serviceUUIDs {
+                        allServices.forEach { service in
+                            guard serviceUUIDs.contains(where: { $0 == service.uuid }) else { return }
+                            guard !self.services!.contains(service) else { return }
+                            self.services!.append(service)
+                        }
+                    } else {
+                        allServices.forEach { service in
+                            guard !self.services!.contains(service) else { return }
+                            self.services!.append(service)
+                        }
+                    }
+                    self.peripheralDelegate?.blePeripheral(self, didDiscoverServices: nil)
+                }
+                if let delayOnDiscoverServices = self.delayOnDiscoverServices {
+                    self.queue.asyncAfter(deadline: .now() + delayOnDiscoverServices) {
+                        self.lock.withLock {
+                            _discoverServicesInternal()
+                        }
+                    }
+                    self.delayOnDiscoverServices = nil
+                } else {
                     _discoverServicesInternal()
                 }
-                self.delayOnDiscoverServices = nil
-            } else {
-                _discoverServicesInternal()
             }
         }
     }
@@ -165,34 +165,36 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     func discoverCharacteristics(_ characteristicUUIDs: [CBUUID]?, for service: CBService) {
         queue.async { [weak self] in
             guard let self else { return }
-            lock.lock()
-            defer { lock.unlock() }
-            guard errorOnDiscoverCharacteristics == nil else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didDiscoverCharacteristicsFor: service,
-                    error: errorOnDiscoverCharacteristics)
-                errorOnDiscoverCharacteristics = nil
-                return
-            }
-            @Sendable func _discoverCharacteristicsInternal() {
-                if service == deviceInformationService {
-                    discoverDeviceInformationServiceCharacteristics(characteristicUUIDs)
-                } else if service == batteryService {
-                    discoverBatteryServiceCharacteristics(characteristicUUIDs)
-                } else if service == heartRateService {
-                    discoverHeartRateServiceCharacteristics(characteristicUUIDs)
-                } else if service == customService {
-                    discoverCustomServiceCharacteristics(characteristicUUIDs)
+            self.lock.withLock {
+                guard self.errorOnDiscoverCharacteristics == nil else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didDiscoverCharacteristicsFor: service,
+                        error: self.errorOnDiscoverCharacteristics)
+                    self.errorOnDiscoverCharacteristics = nil
+                    return
                 }
-            }
-            if let delayOnDiscoverCharacteristics {
-                queue.asyncAfter(deadline: .now() + delayOnDiscoverCharacteristics) {
+                @Sendable func _discoverCharacteristicsInternal() {
+                    if service == self.deviceInformationService {
+                        self.discoverDeviceInformationServiceCharacteristics(characteristicUUIDs)
+                    } else if service == self.batteryService {
+                        self.discoverBatteryServiceCharacteristics(characteristicUUIDs)
+                    } else if service == self.heartRateService {
+                        self.discoverHeartRateServiceCharacteristics(characteristicUUIDs)
+                    } else if service == self.customService {
+                        self.discoverCustomServiceCharacteristics(characteristicUUIDs)
+                    }
+                }
+                if let delayOnDiscoverCharacteristics = self.delayOnDiscoverCharacteristics {
+                    self.queue.asyncAfter(deadline: .now() + delayOnDiscoverCharacteristics) {
+                        self.lock.withLock {
+                            _discoverCharacteristicsInternal()
+                        }
+                    }
+                    self.delayOnDiscoverCharacteristics = nil
+                } else {
                     _discoverCharacteristicsInternal()
                 }
-                self.delayOnDiscoverCharacteristics = nil
-            } else {
-                _discoverCharacteristicsInternal()
             }
         }
     }
@@ -203,53 +205,54 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            lock.lock()
-            defer { lock.unlock() }
-            
-            guard state == .connected else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: characteristic,
-                    error: MockBleError.peripheralNotConnected)
-                return
-            }
-            guard characteristic.properties.contains(.read) else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: characteristic,
-                    error: MockBleError.operationNotSupported)
-                return
-            }
-            guard let internalCharacteristic = findInternalMutableCharacteristic(characteristic) else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: characteristic,
-                    error: MockBleError.characteristicNotFound)
-                return
-            }
-            guard errorOnRead == nil else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: internalCharacteristic,
-                    error: errorOnRead)
-                errorOnRead = nil
-                return
-            }
-            @Sendable func _readInternal() {
-                lock.lock()
-                defer { lock.unlock() }
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: internalCharacteristic,
-                    error: nil)
-            }
-            if let delayOnRead {
-                queue.asyncAfter(deadline: .now() + delayOnRead) {
+            self.lock.withLock {
+
+                guard self.state == .connected else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateValueFor: characteristic,
+                        error: MockBleError.peripheralNotConnected)
+                    return
+                }
+                guard characteristic.properties.contains(.read) else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateValueFor: characteristic,
+                        error: MockBleError.operationNotSupported)
+                    return
+                }
+                guard let internalCharacteristic = self.findInternalMutableCharacteristic(characteristic) else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateValueFor: characteristic,
+                        error: MockBleError.characteristicNotFound)
+                    return
+                }
+                guard self.errorOnRead == nil else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateValueFor: internalCharacteristic,
+                        error: self.errorOnRead)
+                    self.errorOnRead = nil
+                    return
+                }
+                @Sendable func _readInternal() {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateValueFor: internalCharacteristic,
+                        error: nil)
+                }
+                if let delayOnRead = self.delayOnRead {
+                    self.queue.asyncAfter(deadline: .now() + delayOnRead) {
+                        self.lock.withLock {
+                            _readInternal()
+                        }
+                    }
+                    self.delayOnRead = nil
+                } else {
                     _readInternal()
                 }
-                self.delayOnRead = nil
-            } else {
-                _readInternal()
+                
             }
             
         }
@@ -262,64 +265,65 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            lock.lock()
-            defer { lock.unlock() }
-            
-            guard state == .connected else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: characteristic,
-                    error: MockBleError.peripheralNotConnected)
-                return
-            }
-            if type == .withResponse {
-                guard characteristic.properties.contains(.write) else {
-                    peripheralDelegate?.blePeripheral(
+            self.lock.withLock {
+                
+                guard self.state == .connected else {
+                    self.peripheralDelegate?.blePeripheral(
                         self,
                         didUpdateValueFor: characteristic,
-                        error: MockBleError.operationNotSupported)
+                        error: MockBleError.peripheralNotConnected)
                     return
                 }
-            } else {
-                guard characteristic.properties.contains(.writeWithoutResponse) else {
-                    peripheralDelegate?.blePeripheral(
+                if type == .withResponse {
+                    guard characteristic.properties.contains(.write) else {
+                        self.peripheralDelegate?.blePeripheral(
+                            self,
+                            didUpdateValueFor: characteristic,
+                            error: MockBleError.operationNotSupported)
+                        return
+                    }
+                } else {
+                    guard characteristic.properties.contains(.writeWithoutResponse) else {
+                        self.peripheralDelegate?.blePeripheral(
+                            self,
+                            didUpdateValueFor: characteristic,
+                            error: MockBleError.operationNotSupported)
+                        return
+                    }
+                }
+                guard let internalCharacteristic = self.findInternalMutableCharacteristic(characteristic) else {
+                    self.peripheralDelegate?.blePeripheral(
                         self,
                         didUpdateValueFor: characteristic,
-                        error: MockBleError.operationNotSupported)
+                        error: MockBleError.characteristicNotFound)
                     return
                 }
-            }
-            guard let internalCharacteristic = findInternalMutableCharacteristic(characteristic) else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: characteristic,
-                    error: MockBleError.characteristicNotFound)
-                return
-            }
-            guard errorOnWrite == nil else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didWriteValueFor: internalCharacteristic,
-                    error: errorOnWrite)
-                errorOnWrite = nil
-                return
-            }
-            @Sendable func _writeInternal() {
-                lock.lock()
-                defer { lock.unlock() }
-                internalCharacteristic.value = data
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didWriteValueFor: internalCharacteristic,
-                    error: nil)
-            }
-            if let delayOnWrite {
-                queue.asyncAfter(deadline: .now() + delayOnWrite) {
+                guard self.errorOnWrite == nil else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didWriteValueFor: internalCharacteristic,
+                        error: self.errorOnWrite)
+                    self.errorOnWrite = nil
+                    return
+                }
+                @Sendable func _writeInternal() {
+                    internalCharacteristic.value = data
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didWriteValueFor: internalCharacteristic,
+                        error: nil)
+                }
+                if let delayOnWrite = self.delayOnWrite {
+                    self.queue.asyncAfter(deadline: .now() + delayOnWrite) {
+                        self.lock.withLock {
+                            _writeInternal()
+                        }
+                    }
+                    self.delayOnWrite = nil
+                } else {
                     _writeInternal()
                 }
-                self.delayOnWrite = nil
-            } else {
-                _writeInternal()
+                
             }
         
         }
@@ -329,53 +333,53 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     func setNotifyValue(_ enabled: Bool, for characteristic: CBCharacteristic) {
         queue.async { [weak self] in
             guard let self else { return }
-            lock.lock()
-            defer { lock.unlock() }
-            guard state == .connected else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: characteristic,
-                    error: MockBleError.peripheralNotConnected)
-                return
-            }
-            guard characteristic.properties.contains(.notify) else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: characteristic,
-                    error: MockBleError.operationNotSupported)
-                return
-            }
-            guard let internalCharacteristic = findInternalMutableCharacteristic(characteristic) else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateValueFor: characteristic,
-                    error: MockBleError.characteristicNotFound)
-                return
-            }
-            guard errorOnNotify == nil else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateNotificationStateFor: internalCharacteristic,
-                    error: errorOnNotify)
-                errorOnNotify = nil
-                return
-            }
-            @Sendable func _notifyInternal() {
-                lock.lock()
-                defer { lock.unlock() }
-                internalCharacteristic.internalIsNotifying = enabled
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didUpdateNotificationStateFor: internalCharacteristic,
-                    error: nil)
-            }
-            if let delayOnNotify {
-                queue.asyncAfter(deadline: .now() + delayOnNotify) {
+            self.lock.withLock {
+                guard self.state == .connected else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateValueFor: characteristic,
+                        error: MockBleError.peripheralNotConnected)
+                    return
+                }
+                guard characteristic.properties.contains(.notify) else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateValueFor: characteristic,
+                        error: MockBleError.operationNotSupported)
+                    return
+                }
+                guard let internalCharacteristic = self.findInternalMutableCharacteristic(characteristic) else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateValueFor: characteristic,
+                        error: MockBleError.characteristicNotFound)
+                    return
+                }
+                guard self.errorOnNotify == nil else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateNotificationStateFor: internalCharacteristic,
+                        error: self.errorOnNotify)
+                    self.errorOnNotify = nil
+                    return
+                }
+                @Sendable func _notifyInternal() {
+                    internalCharacteristic.internalIsNotifying = enabled
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didUpdateNotificationStateFor: internalCharacteristic,
+                        error: nil)
+                }
+                if let delayOnNotify = self.delayOnNotify {
+                    self.queue.asyncAfter(deadline: .now() + delayOnNotify) {
+                        self.lock.withLock {
+                            _notifyInternal()
+                        }
+                    }
+                    self.delayOnNotify = nil
+                } else {
                     _notifyInternal()
                 }
-                self.delayOnNotify = nil
-            } else {
-                _notifyInternal()
             }
         }
     }
@@ -386,39 +390,40 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            lock.lock()
-            defer { lock.unlock() }
-            
-            guard state == .connected else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didReadRSSI: NSNumber(value: -1),
-                    error: MockBleError.peripheralNotConnected)
-                return
-            }
-            guard errorOnRSSI == nil else {
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didReadRSSI: NSNumber(127),
-                    error: errorOnRSSI)
-                errorOnRSSI = nil
-                return
-            }
-            @Sendable func _readInternal() {
-                lock.lock()
-                defer { lock.unlock() }
-                peripheralDelegate?.blePeripheral(
-                    self,
-                    didReadRSSI: NSNumber(value: rssi),
-                    error: nil)
-            }
-            if let delayOnRSSI {
-                queue.asyncAfter(deadline: .now() + delayOnRSSI) {
+            self.lock.withLock {
+                
+                guard self.state == .connected else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didReadRSSI: NSNumber(value: -1),
+                        error: MockBleError.peripheralNotConnected)
+                    return
+                }
+                guard self.errorOnRSSI == nil else {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didReadRSSI: NSNumber(127),
+                        error: self.errorOnRSSI)
+                    self.errorOnRSSI = nil
+                    return
+                }
+                @Sendable func _readInternal() {
+                    self.peripheralDelegate?.blePeripheral(
+                        self,
+                        didReadRSSI: NSNumber(value: self.rssi),
+                        error: nil)
+                }
+                if let delayOnRSSI = self.delayOnRSSI {
+                    self.queue.asyncAfter(deadline: .now() + delayOnRSSI) {
+                        self.lock.withLock {
+                            _readInternal()
+                        }
+                    }
+                    self.delayOnRSSI = nil
+                } else {
                     _readInternal()
                 }
-                self.delayOnRSSI = nil
-            } else {
-                _readInternal()
+                
             }
             
         }
@@ -432,9 +437,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     // MARK: - Internal characteristics discovery
     
     private func discoverDeviceInformationServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
-        
-        lock.lock()
-        defer { lock.unlock() }
         
         guard state == .connected else {
             peripheralDelegate?.blePeripheral(
@@ -480,9 +482,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func discoverBatteryServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
-        lock.lock()
-        defer { lock.unlock() }
-        
         guard state == .connected else {
             peripheralDelegate?.blePeripheral(
                 self,
@@ -509,9 +508,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func discoverHeartRateServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
-        lock.lock()
-        defer { lock.unlock() }
-        
         guard state == .connected else {
             peripheralDelegate?.blePeripheral(
                 self,
@@ -537,9 +533,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     }
     
     private func discoverCustomServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
-        
-        lock.lock()
-        defer { lock.unlock() }
         
         guard state == .connected else {
             peripheralDelegate?.blePeripheral(
@@ -601,37 +594,36 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     // MARK: - Internal notify
     
     private func startNotify() {
-        lock.lock()
-        defer { lock.unlock() }
-        timer?.cancel()
-        timer = DispatchSource.makeTimerSource(queue: .global())
-        timer?.schedule(deadline: .now() + .seconds(1), repeating: 1.0)
-        timer?.setEventHandler { [weak self] in
-            guard let self else { return }
-            notifyInterval()
+        lock.withLock {
+            timer?.cancel()
+            timer = DispatchSource.makeTimerSource(queue: .global())
+            timer?.schedule(deadline: .now() + .seconds(1), repeating: 1.0)
+            timer?.setEventHandler { [weak self] in
+                self?.notifyInterval()
+            }
+            timer?.resume()
         }
-        timer?.resume()
     }
     
     private func stopNotify() {
-        lock.lock()
-        defer { lock.unlock() }
-        timer?.cancel()
-        timer = nil
+        lock.withLock {
+            timer?.cancel()
+            timer = nil
+        }
     }
     
     private func notifyInterval() {
-        lock.lock()
-        defer { lock.unlock() }
-        let characteristic = findInternalMutableCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
-        characteristic?.value = Data(with: heartRateProvider())
-        services?.forEach {
-            $0.characteristics?.forEach { characteristic in
-                if characteristic.isNotifying, characteristic.value != nil {
-                    peripheralDelegate?.blePeripheral(
-                        self,
-                        didUpdateValueFor: characteristic,
-                        error: nil)
+        lock.withLock {
+            let characteristic = findInternalMutableCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
+            characteristic?.value = Data(with: heartRateProvider())
+            services?.forEach {
+                $0.characteristics?.forEach { characteristic in
+                    if characteristic.isNotifying, characteristic.value != nil {
+                        peripheralDelegate?.blePeripheral(
+                            self,
+                            didUpdateValueFor: characteristic,
+                            error: nil)
+                    }
                 }
             }
         }
@@ -641,19 +633,16 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     func readRSSI(after timeout: DispatchTimeInterval) {
         queue.asyncAfter(deadline: .now() + timeout) { [weak self] in
-            guard let self else { return }
-            lock.lock()
-            defer { lock.unlock() }
-            self.readRSSI()
+            self?.readRSSI()
         }
     }
     
     func setName(_ name: String?, after timeout: DispatchTimeInterval) {
         queue.asyncAfter(deadline: .now() + timeout) { [weak self] in
             guard let self else { return }
-            lock.lock()
-            defer { lock.unlock() }
-            self.name = name
+            self.lock.withLock {
+                self.name = name                
+            }
         }
     }
     

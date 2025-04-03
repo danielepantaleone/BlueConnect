@@ -38,7 +38,7 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
         didSet {
             queue.async { [weak self] in
                 guard let self else { return }
-                peripheralManagerDelegate?.blePeripheralManagerDidUpdateState(self)
+                self.peripheralManagerDelegate?.blePeripheralManagerDidUpdateState(self)
             }
         }
     }
@@ -71,20 +71,20 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     func startAdvertising(_ advertisementData: [String: Any]?) {
         queue.async { [weak self] in
             guard let self else { return }
-            lock.withLock {
-                guard !isAdvertising else { return }
-                guard errorOnAdvertising == nil else {
-                    peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: errorOnAdvertising)
-                    errorOnAdvertising = nil
+            self.lock.withLock {
+                guard !self.isAdvertising else { return }
+                guard self.errorOnAdvertising == nil else {
+                    self.peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: self.errorOnAdvertising)
+                    self.errorOnAdvertising = nil
                     return
                 }
                 @Sendable func _advertiseInternal() {
-                    guard state == .poweredOn else { return }
-                    isAdvertising = true
-                    peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: nil)
+                    guard self.state == .poweredOn else { return }
+                    self.isAdvertising = true
+                    self.peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: nil)
                 }
-                if let delayOnAdvertising {
-                    queue.asyncAfter(deadline: .now() + delayOnAdvertising) {
+                if let delayOnAdvertising = self.delayOnAdvertising {
+                    self.queue.asyncAfter(deadline: .now() + delayOnAdvertising) {
                         self.lock.withLock {
                             _advertiseInternal()
                         }

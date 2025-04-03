@@ -38,8 +38,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
         didSet {
             queue.async { [weak self] in
                 guard let self else { return }
-                disconnectAllPeripheralsIfNotPoweredOn()
-                centraManagerDelegate?.bleCentralManagerDidUpdateState(self)
+                self.disconnectAllPeripheralsIfNotPoweredOn()
+                self.centraManagerDelegate?.bleCentralManagerDidUpdateState(self)
             }
         }
     }
@@ -85,32 +85,32 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
         mockPeripheral.state = .connecting
         queue.async { [weak self] in
             guard let self else { return }
-            lock.withLock {
-                guard state == .poweredOn else {
+            self.lock.withLock {
+                guard self.state == .poweredOn else {
                     mockPeripheral.state = .disconnected
-                    centraManagerDelegate?.bleCentralManager(
+                    self.centraManagerDelegate?.bleCentralManager(
                         self,
                         didFailToConnect: mockPeripheral,
                         error: MockBleError.bluetoothIsOff)
                     return
                 }
-                guard errorOnConnection == nil else {
+                guard self.errorOnConnection == nil else {
                     mockPeripheral.state = .disconnected
-                    centraManagerDelegate?.bleCentralManager(
+                    self.centraManagerDelegate?.bleCentralManager(
                         self,
                         didFailToConnect: mockPeripheral,
-                        error: errorOnConnection)
-                    errorOnConnection = nil
+                        error: self.errorOnConnection)
+                    self.errorOnConnection = nil
                     return
                 }
                 @Sendable func _connectInternal() {
-                    guard state == .poweredOn else { return }
+                    guard self.state == .poweredOn else { return }
                     guard mockPeripheral.state == .connecting else { return }
                     mockPeripheral.state = .connected
-                    centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
+                    self.centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
                 }
-                if let delayOnConnection {
-                    queue.asyncAfter(deadline: .now() + delayOnConnection) {
+                if let delayOnConnection = self.delayOnConnection {
+                    self.queue.asyncAfter(deadline: .now() + delayOnConnection) {
                         self.lock.withLock {
                             _connectInternal()
                         }
@@ -129,11 +129,11 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
         mockPeripheral.state = .disconnecting
         queue.async { [weak self] in
             guard let self else { return }
-            lock.withLock {
+            self.lock.withLock {
                 let error: Error?
-                if state != .poweredOn {
+                if self.state != .poweredOn {
                     error = MockBleError.bluetoothIsOff
-                } else if let errorOnDisconnection {
+                } else if let errorOnDisconnection = self.errorOnDisconnection {
                     error = errorOnDisconnection
                     self.errorOnDisconnection = nil
                 } else {
@@ -142,13 +142,13 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
                 @Sendable func _disconnectInternal() {
                     guard mockPeripheral.state == .disconnecting else { return }
                     mockPeripheral.state = .disconnected
-                    centraManagerDelegate?.bleCentralManager(
+                    self.centraManagerDelegate?.bleCentralManager(
                         self,
                         didDisconnectPeripheral: mockPeripheral,
                         error: error)
                 }
-                if let delayOnDisconnection {
-                    queue.asyncAfter(deadline: .now() + delayOnDisconnection) {
+                if let delayOnDisconnection = self.delayOnDisconnection {
+                    self.queue.asyncAfter(deadline: .now() + delayOnDisconnection) {
                         self.lock.withLock {
                             _disconnectInternal()
                         }
@@ -229,7 +229,7 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
                 if let name = mockPeripheral.name {
                     advertisementData[CBAdvertisementDataLocalNameKey] = name
                 }
-                centraManagerDelegate?.bleCentralManager( // FIX ADD QUEUE
+                self.centraManagerDelegate?.bleCentralManager( // FIX ADD QUEUE
                     self,
                     didDiscover: mockPeripheral,
                     advertisementData: .init(advertisementData),
