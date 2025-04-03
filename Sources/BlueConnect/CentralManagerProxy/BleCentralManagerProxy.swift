@@ -276,8 +276,8 @@ extension BleCentralManagerProxy {
     public func disconnect(peripheral: BlePeripheral, callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
         
         lock.lock()
-        defer { lock.unlock() }
-        
+        defer {lock.unlock() }
+                
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
             callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
@@ -333,7 +333,7 @@ extension BleCentralManagerProxy {
         advertisementData: BleAdvertisementData,
         RSSI: Int
     ), Error> {
-        
+                
         lock.lock()
         defer { lock.unlock() }
         
@@ -357,10 +357,10 @@ extension BleCentralManagerProxy {
             return subject.eraseToAnyPublisher()
         }
         
-        // Start discover timer.
-        startDiscoverTimer(timeout: timeout)
         // Store locally to update when timeout expire or on scan stop.
         discoverSubject = subject
+        // Start discover timer.
+        startDiscoverTimer(timeout: timeout)
         // Initiate discovery.
         centralManager.scanForPeripherals(withServices: serviceUUIDs, options: options)
         
@@ -375,7 +375,8 @@ extension BleCentralManagerProxy {
         lock.lock()
         defer { lock.unlock() }
         // Stop discover timer.
-        stopDiscoverTimer()
+        discoverTimer?.cancel()
+        discoverTimer = nil
         // Send publisher completion.
         discoverSubject?.send(completion: .finished)
         discoverSubject = nil
@@ -441,10 +442,10 @@ extension BleCentralManagerProxy {
     ///
     /// - Note: If the state is already `.poweredOn`, the callback is called immediately with success.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
-        
+                
         lock.lock()
         defer { lock.unlock() }
-        
+                
         // Ensure central manager is not already powered on.
         guard centralManager.state != .poweredOn else {
             callback(.success(()))
@@ -504,13 +505,6 @@ extension BleCentralManagerProxy {
             discoverSubject = nil
         }
         discoverTimer?.resume()
-    }
-    
-    func stopDiscoverTimer() {
-        lock.lock()
-        defer { lock.unlock() }
-        discoverTimer?.cancel()
-        discoverTimer = nil
     }
 
 }

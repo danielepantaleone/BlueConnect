@@ -39,7 +39,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         if central.state != .poweredOn {
             
             // Stop discover timer.
-            stopDiscoverTimer()
+            discoverTimer?.cancel()
+            discoverTimer = nil
 
             // Send publisher failure.
             discoverSubject?.send(completion: .failure(BleCentralManagerProxyError.invalidState(central.state)))
@@ -140,6 +141,8 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
     }
     
     public func bleCentralManager(_ central: BleCentralManager, didDiscover peripheral: BlePeripheral, advertisementData: BleAdvertisementData, rssi RSSI: Int) {
+        lock.lock()
+        defer { lock.unlock() }
         discoverSubject?.send((
             peripheral: peripheral,
             advertisementData: advertisementData,
