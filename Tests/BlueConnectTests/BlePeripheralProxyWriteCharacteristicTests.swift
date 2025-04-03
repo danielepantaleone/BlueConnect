@@ -69,11 +69,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         let writeExp = expectation(description: "waiting for characteristic to be written")
         let publisherExp = expectation(description: "waiting for characteristic write to be signaled by publisher")
         // Test write ack emit on publisher
-        blePeripheralProxy_1.didWriteValuePublisher
+        let subscription = blePeripheralProxy_1.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.uuid == MockBleDescriptor.secretCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test write on callback
         blePeripheralProxy_1.write(
             data: "ABCD".data(using: .utf8)!,
@@ -94,6 +93,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testWriteCharacteristicFailDueToPeripheralDisconnected() throws {
@@ -112,11 +112,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic write NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack NOT emitted on publisher
-        blePeripheralProxy_1.didWriteValuePublisher
+        let subscription = blePeripheralProxy_1.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.uuid == MockBleDescriptor.secretCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test write to fail
         blePeripheralProxy_1.write(
             data: "ABCD".data(using: .utf8)!,
@@ -142,6 +141,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testWriteCharacteristicFailDueToCharacteristicNotFound() throws {
@@ -156,11 +156,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic write NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack NOT emitted on publisher
-        blePeripheralProxy_1.didWriteValuePublisher
+        let subscription = blePeripheralProxy_1.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.uuid == MockBleDescriptor.secretCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test write to fail
         blePeripheralProxy_1.write(
             data: "ABCD".data(using: .utf8)!,
@@ -187,6 +186,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testWriteCharacteristicFailDueToOperationNotSupported() throws {
@@ -203,11 +203,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic write NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack NOT emitted on publisher
-        blePeripheralProxy_1.didWriteValuePublisher
+        let subscription = blePeripheralProxy_1.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test write to fail
         blePeripheralProxy_1.write(
             data: "ABCD".data(using: .utf8)!,
@@ -234,6 +233,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testWriteCharacteristicFailDueToTimeout() throws {
@@ -252,11 +252,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic write NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack NOT emitted on publisher
-        blePeripheralProxy_1.didWriteValuePublisher
+        let subscription = blePeripheralProxy_1.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.uuid == MockBleDescriptor.secretCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test write to fail
         blePeripheralProxy_1.write(
             data: "ABCD".data(using: .utf8)!,
@@ -283,6 +282,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testWriteCharacteristicFailDueToError() throws {
@@ -301,11 +301,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic write NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack NOT emitted on publisher
-        blePeripheralProxy_1.didWriteValuePublisher
+        let subscription = blePeripheralProxy_1.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.uuid == MockBleDescriptor.secretCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test write to fail
         blePeripheralProxy_1.write(
             data: "ABCD".data(using: .utf8)!,
@@ -331,6 +330,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testWriteCharacteristicFailDueToProxyDestroyed() throws {

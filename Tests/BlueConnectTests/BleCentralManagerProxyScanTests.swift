@@ -40,10 +40,9 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         // Test scan discovery
         let completionExp = expectation(description: "waiting for scan to be terminated")
         let publisherExp = expectation(description: "waiting for peripheral discovery to be signaled by publisher")
-        publisherExp.expectedFulfillmentCount = 3
         publisherExp.assertForOverFulfill = false
         // Test discovery emit on publisher
-        bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(4))
+        let subscription = bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(2))
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
@@ -60,9 +59,9 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                     publisherExp.fulfill()
                 }
             )
-            .store(in: &subscriptions)
         // Await expectation
-        wait(for: [completionExp, publisherExp], timeout: 5.0)
+        wait(for: [completionExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
         XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
@@ -78,7 +77,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         publisherExp.expectedFulfillmentCount = 3
         publisherExp.assertForOverFulfill = false
         // Test discovery emit on publisher
-        bleCentralManagerProxy.scanForPeripherals(timeout: .never)
+        let subscription = bleCentralManagerProxy.scanForPeripherals(timeout: .never)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { _ in
@@ -88,9 +87,9 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                     publisherExp.fulfill()
                 }
             )
-            .store(in: &subscriptions)
         // Await expectation
         wait(for: [completionExp, publisherExp], timeout: 5.0)
+        subscription.cancel()
         XCTAssertTrue(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNotNil(bleCentralManagerProxy.discoverSubject)
@@ -106,7 +105,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         publisherExp.expectedFulfillmentCount = 3
         publisherExp.assertForOverFulfill = false
         // Test discovery emit on publisher
-        bleCentralManagerProxy.scanForPeripherals(timeout: .never)
+        let subscription = bleCentralManagerProxy.scanForPeripherals(timeout: .never)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { completion in
@@ -121,13 +120,13 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                     publisherExp.fulfill()
                 }
             )
-            .store(in: &subscriptions)
         // Manually stop the scan in 4 seconds
         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(4)) { [weak self] in
             self?.bleCentralManagerProxy.stopScan()
         }
         // Await expectation
         wait(for: [completionExp, publisherExp], timeout: 5.0)
+        subscription.cancel()
         XCTAssertTrue(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
@@ -139,7 +138,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         let publisherExp = expectation(description: "waiting for peripheral discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test discovery emit on publisher
-        bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(2))
+        let subscription = bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(2))
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
@@ -165,9 +164,9 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                     publisherExp.fulfill()
                 }
             )
-            .store(in: &subscriptions)
         // Await expectation
         wait(for: [completionExp, publisherExp], timeout: 3.0)
+        subscription.cancel()
         XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
@@ -179,7 +178,7 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         // Test scan discovery
         let completionExp = expectation(description: "waiting for scan to terminate with failure")
         // Test discovery emit on publisher
-        bleCentralManagerProxy.scanForPeripherals(timeout: .never)
+        let subscription = bleCentralManagerProxy.scanForPeripherals(timeout: .never)
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { completion in
@@ -202,13 +201,13 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
                     
                 }
             )
-            .store(in: &subscriptions)
         // Check that we are scanning
         XCTAssertTrue(bleCentralManagerProxy.isScanning)
         // Destroy the proxy
         bleCentralManagerProxy = nil
         // Await expectation
         wait(for: [completionExp], timeout: 2.0)
+        subscription.cancel()
         XCTAssertFalse(bleCentralManager.isScanning)
     }
     

@@ -68,10 +68,9 @@ extension BleCharacteristicWriteProxyTests {
         let writeExp = expectation(description: "waiting for characteristic to be written")
         let publisherExp = expectation(description: "waiting for characteristic write ack to be signaled by publisher")
         // Test write ack emit on publisher
-        bleSecretProxy.didWriteValuePublisher
+        let subscription = bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test write ack on callback
         bleSecretProxy.write(
             value: "AAAA",
@@ -86,6 +85,7 @@ extension BleCharacteristicWriteProxyTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testWriteFailDueToPeripheralDisconnected() throws {
@@ -96,10 +96,9 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher
+        let subscription = bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSecretProxy.write(
             value: "AAAA",
             timeout: .never
@@ -121,6 +120,7 @@ extension BleCharacteristicWriteProxyTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 6.0)
+        subscription.cancel()
     }
     
     func testWriteFailDueToEncodingError() throws {
@@ -135,10 +135,9 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher
+        let subscription = bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSecretProxy.write(
             value: "AAAA",
             timeout: .never
@@ -161,6 +160,7 @@ extension BleCharacteristicWriteProxyTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testWriteFailDueToTimeout() throws {
@@ -175,10 +175,9 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher
+        let subscription = bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSecretProxy.write(
             value: "AAAA",
             timeout: .seconds(2)
@@ -201,6 +200,7 @@ extension BleCharacteristicWriteProxyTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testWriteFailDueToDiscoverServiceTimeout() throws {
@@ -215,10 +215,9 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher
+        let subscription = bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSecretProxy.write(
             value: "AAAA",
             timeout: .seconds(2)
@@ -241,6 +240,7 @@ extension BleCharacteristicWriteProxyTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testWriteFailDueToDiscoverCharacteristicTimeout() throws {
@@ -255,10 +255,9 @@ extension BleCharacteristicWriteProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test write ack not emitted on publisher
-        bleSecretProxy.didWriteValuePublisher
+        let subscription = bleSecretProxy.didWriteValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSecretProxy.write(
             value: "AAAA",
             timeout: .seconds(2)
@@ -281,6 +280,7 @@ extension BleCharacteristicWriteProxyTests {
         }
         // Await expectations
         wait(for: [writeExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
 }

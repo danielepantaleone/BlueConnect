@@ -65,15 +65,15 @@ extension BlePeripheralProxyTests {
         connect(peripheral: try blePeripheral_2)
         // Test name update
         let expectation = expectation(description: "waiting for peripheral name update to be signaled by publisher")
-        blePeripheralProxy_2.didUpdateNamePublisher
+        let subscription = blePeripheralProxy_2.didUpdateNamePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 == "YODA" }
             .sink { _ in expectation.fulfill() }
-            .store(in: &subscriptions)
         // Change the name
         try blePeripheral_2.setName("YODA", after: .seconds(2))
         // Await expectations
         wait(for: [expectation], timeout: 4.0)
+        subscription.cancel()
     }
     
 }

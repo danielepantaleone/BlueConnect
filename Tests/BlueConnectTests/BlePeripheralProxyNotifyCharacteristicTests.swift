@@ -70,17 +70,15 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         valuePublisherExp.assertForOverFulfill = false
         valuePublisherExp.expectedFulfillmentCount = 3
         // Test set notify ack emitted on publisher
-        blePeripheralProxy_1.didUpdateNotificationStatePublisher
+        let subscription1 = blePeripheralProxy_1.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.heartRateCharacteristicUUID }
             .filter { $0.enabled }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription2 = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.heartRateCharacteristicUUID }
             .sink { _ in valuePublisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test set notify on callback
         blePeripheralProxy_1.setNotify(
             enabled: true,
@@ -101,6 +99,8 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp, valuePublisherExp], timeout: 12.0)
+        subscription1.cancel()
+        subscription2.cancel()
     }
     
     func testSetNotifyOnCharacteristicWithNotifyAlreadyEnabled() throws {
@@ -119,11 +119,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher because already enabled")
         publisherExp.isInverted = true
         // Test set notify ack emitted on publisher
-        blePeripheralProxy_1.didUpdateNotificationStatePublisher
+        let subscription = blePeripheralProxy_1.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.heartRateCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test set notify on callback
         blePeripheralProxy_1.setNotify(
             enabled: true,
@@ -144,6 +143,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testSetNotifyOnCharacteristicFailDueToPeripheralDisconnected() throws {
@@ -162,11 +162,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test notify enabled ack NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateNotificationStatePublisher
+        let subscription = blePeripheralProxy_1.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.heartRateCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test set notify to fail
         blePeripheralProxy_1.setNotify(
             enabled: true,
@@ -192,6 +191,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testSetNotifyOnCharacteristicFailDueToCharacteristicNotFound() throws {
@@ -206,11 +206,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test notify enabled ack NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateNotificationStatePublisher
+        let subscription = blePeripheralProxy_1.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.heartRateCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test set notify to fail
         blePeripheralProxy_1.setNotify(
             enabled: true,
@@ -237,6 +236,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testSetNotifyOnCharacteristicFailDueToOperationNotSupported() throws {
@@ -253,11 +253,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test notify enabled ack NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateNotificationStatePublisher
+        let subscription = blePeripheralProxy_1.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test set notify to fail
         blePeripheralProxy_1.setNotify(
             enabled: true,
@@ -284,6 +283,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testSetNotifyOnCharacteristicFailDueToTimeout() throws {
@@ -302,11 +302,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test notify enabled ack NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateNotificationStatePublisher
+        let subscription = blePeripheralProxy_1.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.heartRateCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test set notify to fail
         blePeripheralProxy_1.setNotify(
             enabled: true,
@@ -333,6 +332,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testSetNotifyOnCharacteristicFailDueToError() throws {
@@ -351,11 +351,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test notify enabled ack NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateNotificationStatePublisher
+        let subscription = blePeripheralProxy_1.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.heartRateCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test set notify to fail
         blePeripheralProxy_1.setNotify(
             enabled: true,
@@ -381,6 +380,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testSetNotifyOnCharacteristicFailDueToProxyDestroyed() throws {

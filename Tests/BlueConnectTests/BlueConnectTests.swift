@@ -55,7 +55,6 @@ class BlueConnectTests: XCTestCase {
     var blePeripheralManager: MockBlePeripheralManager!
     var blePeripheralManagerProxy: BlePeripheralManagerProxy!
     let queue: DispatchQueue = DispatchQueue.global(qos: .background)
-    var subscriptions: Set<AnyCancellable> = []
     
     // MARK: - Setup & tear down
     
@@ -90,7 +89,6 @@ class BlueConnectTests: XCTestCase {
         bleCentralManager = nil
         blePeripheralManagerProxy = nil
         blePeripheralManager = nil
-        subscriptions.removeAll()
     }
     
     // MARK: - Functions
@@ -98,25 +96,25 @@ class BlueConnectTests: XCTestCase {
     func centralManager(state: CBManagerState) {
         XCTAssertNotEqual(bleCentralManager.state, state)
         let expectation = expectation(description: "waiting for bluetooth central manager state to change to '\(state)'")
-        bleCentralManagerProxy.didUpdateStatePublisher
+        let subscription = bleCentralManagerProxy.didUpdateStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 == state }
             .sink { _ in expectation.fulfill() }
-            .store(in: &subscriptions)
         bleCentralManager.state = state
         wait(for: [expectation], timeout: 2.0)
+        subscription.cancel()
     }
     
     func peripheralManager(state: CBManagerState) {
         XCTAssertNotEqual(blePeripheralManager.state, state)
         let expectation = expectation(description: "waiting for bluetooth peripheral manager state to change to '\(state)'")
-        blePeripheralManagerProxy.didUpdateStatePublisher
+        let subscription = blePeripheralManagerProxy.didUpdateStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 == state }
             .sink { _ in expectation.fulfill() }
-            .store(in: &subscriptions)
         blePeripheralManager.state = state
         wait(for: [expectation], timeout: 2.0)
+        subscription.cancel()
     }
     
     func connect(peripheral: BlePeripheral) {

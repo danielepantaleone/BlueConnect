@@ -67,11 +67,10 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         let discoveryExp = expectation(description: "waiting for characteristic to be discovered")
         let publisherExp = expectation(description: "waiting for characteristic discovery to be signaled by publisher")
         // Test discovery emit on publisher
-        blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.uuid == MockBleDescriptor.heartRateServiceUUID && $1.contains(where: { $0.uuid == MockBleDescriptor.heartRateCharacteristicUUID })}
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
@@ -90,6 +89,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverCharacteristicWithCharacteristicAlreadyDiscovered() throws {
@@ -106,11 +106,10 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.uuid == MockBleDescriptor.deviceInformationServiceUUID && $1.contains(where: { $0.uuid == MockBleDescriptor.serialNumberCharacteristicUUID })}
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -129,6 +128,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverCharacteristicWithMixedCharacteristicDiscovery() throws {
@@ -145,11 +145,10 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic discovery NOT to be signaled by publisher")
         publisherExp.expectedFulfillmentCount = 2
         // Test publisher to be called
-        blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.uuid == MockBleDescriptor.deviceInformationServiceUUID && $1.contains(where: { $0.uuid == MockBleDescriptor.firmwareRevisionCharacteristicUUID })}
             .sink { $0.characteristics.forEach { _ in publisherExp.fulfill() } }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
@@ -168,6 +167,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverCharacteristics() throws {
@@ -181,10 +181,9 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         let expectation = expectation(description: "waiting for characteristics discovery to be signaled by publisher")
         expectation.expectedFulfillmentCount = 2
         // Test discovery emit on publisher
-        blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
             .receive(on: DispatchQueue.main)
             .sink { $0.characteristics.forEach { _ in expectation.fulfill() } }
-            .store(in: &subscriptions)
         blePeripheralProxy_1.discover(
             characteristicUUIDs: [
                 MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -193,6 +192,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             in: MockBleDescriptor.deviceInformationServiceUUID)
         // Await expectations
         wait(for: [expectation], timeout: 2.0)
+        subscription.cancel()
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID))
         XCTAssertNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.hardwareRevisionCharacteristicUUID))
@@ -211,15 +211,15 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         let expectation = expectation(description: "waiting for characteristics discovery to be signaled by publisher")
         expectation.expectedFulfillmentCount = 3
         // Test discovery emit on publisher
-        blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
             .receive(on: DispatchQueue.main)
             .sink { $0.characteristics.forEach { _ in expectation.fulfill() } }
-            .store(in: &subscriptions)
         blePeripheralProxy_1.discover(
             characteristicUUIDs: nil,
             in: MockBleDescriptor.deviceInformationServiceUUID)
         // Await expectations
         wait(for: [expectation], timeout: 2.0)
+        subscription.cancel()
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.serialNumberCharacteristicUUID))
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.firmwareRevisionCharacteristicUUID))
         XCTAssertNotNil(blePeripheralProxy_1.getCharacteristic(MockBleDescriptor.hardwareRevisionCharacteristicUUID))
@@ -242,10 +242,9 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
             .receive(on: DispatchQueue.main)
             .sink { $0.characteristics.forEach { _ in publisherExp.fulfill() } }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -273,6 +272,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverCharacteristicFailDueToServiceNotFound() throws {
@@ -285,10 +285,9 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
             .receive(on: DispatchQueue.main)
             .sink { $0.characteristics.forEach { _ in publisherExp.fulfill() } }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -317,6 +316,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverCharacteristicFailDueToTimeout() throws {
@@ -333,10 +333,9 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
             .receive(on: DispatchQueue.main)
             .sink { $0.characteristics.forEach { _ in publisherExp.fulfill() } }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -365,6 +364,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testDiscoverCharacteristicFailDueToError() throws {
@@ -381,10 +381,9 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverCharacteristicsPublisher
             .receive(on: DispatchQueue.main)
             .sink { $0.characteristics.forEach { _ in publisherExp.fulfill() } }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -413,6 +412,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testDiscoverCharacteristicFailDueToProxyDestroyed() throws {

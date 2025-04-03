@@ -65,11 +65,10 @@ extension BlePeripheralProxyRSSITests {
         let readExp = expectation(description: "waiting for peripheral RSSI to be read")
         let publisherExp = expectation(description: "waiting for peripheral RSSI update to be signaled by publisher")
         // Test read emit on publisher
-        blePeripheralProxy_1.didUpdateRSSIPublisher
+        let subscription = blePeripheralProxy_1.didUpdateRSSIPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.intValue == -80 }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read on callback
         blePeripheralProxy_1.readRSSI(timeout: .never) { [weak self] result in
             guard let self else { return }
@@ -84,6 +83,7 @@ extension BlePeripheralProxyRSSITests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
 
     func testPeripheralRSSIUpdateFailDueToPeripheralDisconnected() throws {
@@ -94,10 +94,9 @@ extension BlePeripheralProxyRSSITests {
         let publisherExp = expectation(description: "waiting for peripheral RSSI update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read emit on publisher
-        blePeripheralProxy_1.didUpdateRSSIPublisher
+        let subscription = blePeripheralProxy_1.didUpdateRSSIPublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read on callback
         blePeripheralProxy_1.readRSSI(timeout: .never) { [weak self] result in
             guard let self else { return }
@@ -120,6 +119,7 @@ extension BlePeripheralProxyRSSITests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testPeripheralRSSIUpdateFailDueToReadNotAvailable() throws {
@@ -134,10 +134,9 @@ extension BlePeripheralProxyRSSITests {
         let publisherExp = expectation(description: "waiting for peripheral RSSI update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read emit on publisher
-        blePeripheralProxy_1.didUpdateRSSIPublisher
+        let subscription = blePeripheralProxy_1.didUpdateRSSIPublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read on callback
         blePeripheralProxy_1.readRSSI(timeout: .never) { [weak self] result in
             guard let self else { return }
@@ -160,6 +159,7 @@ extension BlePeripheralProxyRSSITests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testPeripheralRSSIUpdateFailDueToTimeout() throws {
@@ -174,10 +174,9 @@ extension BlePeripheralProxyRSSITests {
         let publisherExp = expectation(description: "waiting for peripheral RSSI update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read emit on publisher
-        blePeripheralProxy_1.didUpdateRSSIPublisher
+        let subscription = blePeripheralProxy_1.didUpdateRSSIPublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read on callback
         blePeripheralProxy_1.readRSSI(timeout: .seconds(2)) { [weak self] result in
             guard let self else { return }
@@ -200,6 +199,7 @@ extension BlePeripheralProxyRSSITests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
 
     func testPeripheralRSSIUpdateFailDueToError() throws {
@@ -214,10 +214,9 @@ extension BlePeripheralProxyRSSITests {
         let publisherExp = expectation(description: "waiting for peripheral RSSI update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read emit on publisher
-        blePeripheralProxy_1.didUpdateRSSIPublisher
+        let subscription = blePeripheralProxy_1.didUpdateRSSIPublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read on callback
         blePeripheralProxy_1.readRSSI(timeout: .seconds(2)) { [weak self] result in
             guard let self else { return }
@@ -239,6 +238,7 @@ extension BlePeripheralProxyRSSITests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testPeripheralRSSIUpdateFailDueToProxyDestroyed() throws {

@@ -68,11 +68,10 @@ extension BleCharacteristicReadProxyTests {
         let readExp = expectation(description: "waiting for characteristic to be read")
         let publisherExp = expectation(description: "waiting for characteristic update to be signaled by publisher")
         // Test read emit on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher
+        let subscription = bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 == "12345678" }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read on callback
         bleSerialNumberProxy.read(
             cachePolicy: .never,
@@ -88,6 +87,7 @@ extension BleCharacteristicReadProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testReadFailDueToPeripheralDisconnected() throws {
@@ -98,10 +98,9 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher
+        let subscription = bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSerialNumberProxy.read(
             cachePolicy: .never,
             timeout: .never
@@ -123,6 +122,7 @@ extension BleCharacteristicReadProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testReadFailDueToDecodingError() throws {
@@ -137,10 +137,9 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher
+        let subscription = bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSerialNumberProxy.read(
             cachePolicy: .never,
             timeout: .never
@@ -163,6 +162,7 @@ extension BleCharacteristicReadProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testReadFailDueToTimeout() throws {
@@ -177,10 +177,9 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher
+        let subscription = bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSerialNumberProxy.read(
             cachePolicy: .never,
             timeout: .seconds(2)
@@ -203,6 +202,7 @@ extension BleCharacteristicReadProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testReadFailDueToDiscoverServiceTimeout() throws {
@@ -217,10 +217,9 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher
+        let subscription = bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSerialNumberProxy.read(
             cachePolicy: .never,
             timeout: .seconds(2)
@@ -243,6 +242,7 @@ extension BleCharacteristicReadProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testReadFailDueToDiscoverCharacteristicTimeout() throws {
@@ -257,10 +257,9 @@ extension BleCharacteristicReadProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        bleSerialNumberProxy.didUpdateValuePublisher
+        let subscription = bleSerialNumberProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleSerialNumberProxy.read(
             cachePolicy: .never,
             timeout: .seconds(2)
@@ -283,6 +282,7 @@ extension BleCharacteristicReadProxyTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
 }

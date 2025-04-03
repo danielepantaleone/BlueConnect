@@ -65,11 +65,10 @@ extension BlePeripheralProxyDiscoverServiceTests {
         let discoveryExp = expectation(description: "waiting for service to be discovered")
         let publisherExp = expectation(description: "waiting for service discovery to be signaled by publisher")
         // Test discovery emit on publisher
-        blePeripheralProxy_1.didDiscoverServicesPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
             .filter { services in services.contains(where: { $0.uuid == MockBleDescriptor.deviceInformationServiceUUID })}
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             serviceUUID: MockBleDescriptor.deviceInformationServiceUUID,
@@ -88,6 +87,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverServiceWithServiceAlreadyDiscovered() throws {
@@ -102,11 +102,10 @@ extension BlePeripheralProxyDiscoverServiceTests {
         let publisherExp = expectation(description: "waiting for service discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverServicesPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
             .filter { services in services.contains(where: { $0.uuid == MockBleDescriptor.deviceInformationServiceUUID })}
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             serviceUUID: MockBleDescriptor.deviceInformationServiceUUID,
@@ -125,6 +124,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverServiceWithMixedServiceDiscovery() throws {
@@ -139,10 +139,9 @@ extension BlePeripheralProxyDiscoverServiceTests {
         let publisherExp = expectation(description: "waiting for service discovery to be signaled by publisher")
         publisherExp.expectedFulfillmentCount = 2
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverServicesPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
             .sink { $0.forEach { _ in publisherExp.fulfill() } }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             serviceUUID: MockBleDescriptor.heartRateServiceUUID,
@@ -162,6 +161,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverServices() throws {
@@ -172,10 +172,9 @@ extension BlePeripheralProxyDiscoverServiceTests {
         // Test services discovery
         let expectation = expectation(description: "waiting for services discovery to be signaled by publisher")
         expectation.expectedFulfillmentCount = 3
-        blePeripheralProxy_1.didDiscoverServicesPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
             .sink { $0.forEach { _ in expectation.fulfill() } }
-            .store(in: &subscriptions)
         blePeripheralProxy_1.discover(serviceUUIDs: [
             MockBleDescriptor.deviceInformationServiceUUID,
             MockBleDescriptor.batteryServiceUUID,
@@ -183,6 +182,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         ])
         // Await expectations
         wait(for: [expectation], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverServicesWithNoArguments() throws {
@@ -193,13 +193,13 @@ extension BlePeripheralProxyDiscoverServiceTests {
         // Test services discovery
         let expectation = expectation(description: "waiting for services discovery to be signaled by publisher")
         expectation.expectedFulfillmentCount = 4
-        blePeripheralProxy_1.didDiscoverServicesPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
             .sink { $0.forEach { _ in expectation.fulfill() } }
-            .store(in: &subscriptions)
         blePeripheralProxy_1.discover(serviceUUIDs: nil)
         // Await expectations
         wait(for: [expectation], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverServiceFailDueToPeripheralDisconnected() throws {
@@ -210,10 +210,9 @@ extension BlePeripheralProxyDiscoverServiceTests {
         let publisherExp = expectation(description: "waiting for service discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverServicesPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             serviceUUID: MockBleDescriptor.heartRateServiceUUID,
@@ -239,6 +238,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testDiscoverServiceFailDueToTimeout() throws {
@@ -253,10 +253,9 @@ extension BlePeripheralProxyDiscoverServiceTests {
         // Mock discovery timeout
         try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverServicesPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             serviceUUID: MockBleDescriptor.heartRateServiceUUID,
@@ -283,6 +282,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testDiscoverServiceFailDueToError() throws {
@@ -297,10 +297,9 @@ extension BlePeripheralProxyDiscoverServiceTests {
         // Mock discovery error
         try blePeripheral_1.errorOnDiscoverServices = MockBleError.mockedError
         // Test publisher not called
-        blePeripheralProxy_1.didDiscoverServicesPublisher
+        let subscription = blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             serviceUUID: MockBleDescriptor.heartRateServiceUUID,
@@ -327,6 +326,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         }
         // Await expectations
         wait(for: [discoveryExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testDiscoverServiceFailDueToProxyDestroyed() throws {

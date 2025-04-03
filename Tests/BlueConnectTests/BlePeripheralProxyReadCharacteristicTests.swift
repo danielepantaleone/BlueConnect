@@ -69,12 +69,11 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let readExp = expectation(description: "waiting for characteristic to be read")
         let publisherExp = expectation(description: "waiting for characteristic update to be signaled by publisher")
         // Test read emit on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
             .filter { String(data: $0.data, encoding: .utf8) == "12345678" }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read on callback
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -96,6 +95,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicWithMultipleConcurrentRead() throws {
@@ -114,12 +114,11 @@ extension BlePeripheralProxyReadCharacteristicTests {
         readExp.expectedFulfillmentCount = 2
         let publisherExp = expectation(description: "waiting for characteristic update to be signaled by publisher")
         // Test single read emit on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
             .filter { String(data: $0.data, encoding: .utf8) == "12345678" }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test multiple read on callback
         for _ in 0..<2 {
             blePeripheralProxy_1.read(
@@ -143,6 +142,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicWithCacheAlwaysPolicy() throws {
@@ -165,11 +165,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher due to cached value read")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.firmwareRevisionCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read on callback
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
@@ -194,6 +193,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicWithCacheTimeSensitivePolicy() throws {
@@ -216,11 +216,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher due to cached value read")
         publisherExp.isInverted = true
         // Test read not emitted on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.firmwareRevisionCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read on callback
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
@@ -245,6 +244,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicWithCacheTimeSensitivePolicyOverdue() throws {
@@ -270,11 +270,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let readExp = expectation(description: "waiting for characteristic to be read")
         let publisherExp = expectation(description: "waiting for characteristic update to be signaled by publisher due to cached value bypass")
         // Test single read emit on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.firmwareRevisionCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test multiple read on callback
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
@@ -296,6 +295,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 6.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicFailDueToPeripheralDisconnected() throws {
@@ -314,11 +314,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -345,6 +344,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicFailDueToCharacteristicNotFound() throws {
@@ -359,11 +359,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -391,6 +390,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicFailDueToOperationNotSupported() throws {
@@ -407,11 +407,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.secretCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.secretCharacteristicUUID,
@@ -439,6 +438,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicFailDueToTimeout() throws {
@@ -457,11 +457,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -489,6 +488,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicFailDueToError() throws {
@@ -507,11 +507,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -538,6 +537,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicFailDueToNilData() throws {
@@ -558,11 +558,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test read NOT emitted on publisher
-        blePeripheralProxy_1.didUpdateValuePublisher
+        let subscription = blePeripheralProxy_1.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.characteristic.uuid == MockBleDescriptor.serialNumberCharacteristicUUID }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test read to fail
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -590,6 +589,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
         // Await expectations
         wait(for: [readExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testReadCharacteristicFailDueToProxyDestroyed() throws {

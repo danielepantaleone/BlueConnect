@@ -71,15 +71,13 @@ extension BleCharacteristicNotifyProxyTests {
         valuePublisherExp.assertForOverFulfill = false
         valuePublisherExp.expectedFulfillmentCount = 3
         // Test set notify ack emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher
+        let subscription1 = bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
-        bleHeartRateProxy.didUpdateValuePublisher
+        let subscription2 = bleHeartRateProxy.didUpdateValuePublisher
             .receive(on: DispatchQueue.main)
             .sink { _ in valuePublisherExp.fulfill() }
-            .store(in: &subscriptions)
         // Test set notify on callback
         bleHeartRateProxy.setNotify(
             enabled: true,
@@ -95,6 +93,8 @@ extension BleCharacteristicNotifyProxyTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp, valuePublisherExp], timeout: 12.0)
+        subscription1.cancel()
+        subscription2.cancel()
     }
     
     func testSetNotifyFailDueToPeripheralDisconnected() throws {
@@ -105,11 +105,10 @@ extension BleCharacteristicNotifyProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic notification state update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test set notify not emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher
+        let subscription = bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleHeartRateProxy.setNotify(
             enabled: true,
             timeout: .never
@@ -131,6 +130,7 @@ extension BleCharacteristicNotifyProxyTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
     }
     
     func testSetNotifyFailDueToTimeout() throws {
@@ -145,11 +145,10 @@ extension BleCharacteristicNotifyProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic notification state update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test set notify not emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher
+        let subscription = bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleHeartRateProxy.setNotify(
             enabled: true,
             timeout: .seconds(2)
@@ -172,6 +171,7 @@ extension BleCharacteristicNotifyProxyTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testSetNotifyFailDueToDiscoverServiceTimeout() throws {
@@ -186,11 +186,10 @@ extension BleCharacteristicNotifyProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic notification state update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test set notify not emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher
+        let subscription = bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleHeartRateProxy.setNotify(
             enabled: true,
             timeout: .seconds(2)
@@ -213,6 +212,7 @@ extension BleCharacteristicNotifyProxyTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
     func testSetNotifyFailDueToDiscoverCharacteristicTimeout() throws {
@@ -227,11 +227,10 @@ extension BleCharacteristicNotifyProxyTests {
         let publisherExp = expectation(description: "waiting for characteristic notification state update NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test set notify not emitted on publisher
-        bleHeartRateProxy.didUpdateNotificationStatePublisher
+        let subscription = bleHeartRateProxy.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 }
             .sink { _ in publisherExp.fulfill() }
-            .store(in: &subscriptions)
         bleHeartRateProxy.setNotify(
             enabled: true,
             timeout: .seconds(2)
@@ -254,6 +253,7 @@ extension BleCharacteristicNotifyProxyTests {
         }
         // Await expectations
         wait(for: [notifyExp, publisherExp], timeout: 4.0)
+        subscription.cancel()
     }
     
 }

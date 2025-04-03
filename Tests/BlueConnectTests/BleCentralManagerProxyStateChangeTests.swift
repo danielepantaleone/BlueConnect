@@ -74,7 +74,7 @@ extension BleCentralManagerProxyStateChangeTests {
         let connectFailPublisherExp = expectation(description: "waiting for connection failure publisher to be called on blePeripheral_2")
         let connectExp = expectation(description: "waiting for blePeripheral_2 connection to fail")
         // Test disconnection publisher to be called on blePeripheral_1
-        bleCentralManagerProxy.didDisconnectPublisher
+        let subscription1 = bleCentralManagerProxy.didDisconnectPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
             .sink { _, error in
@@ -90,9 +90,8 @@ extension BleCentralManagerProxyStateChangeTests {
                         XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
                 }
             }
-            .store(in: &subscriptions)
         // Test connection failure publisher to be called on blePeripheral_2
-        bleCentralManagerProxy.didFailToConnectPublisher
+        let subscription2 = bleCentralManagerProxy.didFailToConnectPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_2 }
             .sink { _, error in
@@ -104,7 +103,6 @@ extension BleCentralManagerProxyStateChangeTests {
                         XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
                 }
             }
-            .store(in: &subscriptions)
         // Test connection failure on callback
         bleCentralManagerProxy.connect(
             peripheral: try blePeripheral_2,
@@ -135,6 +133,8 @@ extension BleCentralManagerProxyStateChangeTests {
         centralManager(state: .poweredOff)
         // Await expectations
         wait(for: [connectExp, connectFailPublisherExp, disconnectPublisherExp], timeout: 6.0)
+        subscription1.cancel()
+        subscription2.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         XCTAssertEqual(try blePeripheral_2.state, .disconnected)
         XCTAssertEqual(bleCentralManagerProxy.connectionState[MockBleDescriptor.peripheralUUID_1], .disconnected)
