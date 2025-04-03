@@ -32,6 +32,18 @@ import Foundation
 
 class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     
+    // MARK: - Atomic properties
+    
+    var _state: CBManagerState = .poweredOff {
+        didSet {
+            queue.async { [weak self] in
+                guard let self else { return }
+                disconnectAllPeripheralsIfNotPoweredOn()
+                centraManagerDelegate?.bleCentralManagerDidUpdateState(self)
+            }
+        }
+    }
+    
     // MARK: - Properties
     
     var errorOnConnection: Error?
@@ -45,20 +57,15 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
 
     var authorization: CBManagerAuthorization { .allowedAlways }
     var isScanning: Bool = false
-    var state: CBManagerState = .poweredOff {
-        didSet {
-            queue.async { [weak self] in
-                guard let self else { return }
-                disconnectAllPeripheralsIfNotPoweredOn()
-                centraManagerDelegate?.bleCentralManagerDidUpdateState(self)
-            }
-        }
+    var state: CBManagerState {
+        get { lock.withLock { _state } }
+        set { lock.withLock { _state = newValue } }
     }
     
     // MARK: - Internal properties
         
     let lock = NSRecursiveLock()
-    let queue: DispatchQueue = DispatchQueue.global(qos: .background)
+    let queue: DispatchQueue = DispatchQueue(label: "com.blueconnect.central-manager", qos: .userInitiated)
     var peripherals: [BlePeripheral] = []
     var scanTimer: DispatchSourceTimer?
     var scanCounter: Int = 0
@@ -78,40 +85,40 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
         mockPeripheral.state = .connecting
         queue.async { [weak self] in
             guard let self else { return }
-            lock.lock()
-            defer { lock.unlock() }
-            guard state == .poweredOn else {
-                mockPeripheral.state = .disconnected
-                centraManagerDelegate?.bleCentralManager(
-                    self,
-                    didFailToConnect: mockPeripheral,
-                    error: MockBleError.bluetoothIsOff)
-                return
-            }
-            guard errorOnConnection == nil else {
-                mockPeripheral.state = .disconnected
-                centraManagerDelegate?.bleCentralManager(
-                    self,
-                    didFailToConnect: mockPeripheral,
-                    error: errorOnConnection)
-                errorOnConnection = nil
-                return
-            }
-            @Sendable func _connectInternal() {
-                lock.lock()
-                defer { lock.unlock() }
-                guard state == .poweredOn else { return }
-                guard mockPeripheral.state == .connecting else { return }
-                mockPeripheral.state = .connected
-                centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
-            }
-            if let delayOnConnection {
-                queue.asyncAfter(deadline: .now() + delayOnConnection) {
+            lock.withLock {
+                guard state == .poweredOn else {
+                    mockPeripheral.state = .disconnected
+                    centraManagerDelegate?.bleCentralManager(
+                        self,
+                        didFailToConnect: mockPeripheral,
+                        error: MockBleError.bluetoothIsOff)
+                    return
+                }
+                guard errorOnConnection == nil else {
+                    mockPeripheral.state = .disconnected
+                    centraManagerDelegate?.bleCentralManager(
+                        self,
+                        didFailToConnect: mockPeripheral,
+                        error: errorOnConnection)
+                    errorOnConnection = nil
+                    return
+                }
+                @Sendable func _connectInternal() {
+                    guard state == .poweredOn else { return }
+                    guard mockPeripheral.state == .connecting else { return }
+                    mockPeripheral.state = .connected
+                    centraManagerDelegate?.bleCentralManager(self, didConnect: mockPeripheral)
+                }
+                if let delayOnConnection {
+                    queue.asyncAfter(deadline: .now() + delayOnConnection) {
+                        self.lock.withLock {
+                            _connectInternal()
+                        }
+                    }
+                    self.delayOnConnection = nil
+                } else {
                     _connectInternal()
                 }
-                self.delayOnConnection = nil
-            } else {
-                _connectInternal()
             }
         }
     }
@@ -122,109 +129,113 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
         mockPeripheral.state = .disconnecting
         queue.async { [weak self] in
             guard let self else { return }
-            lock.lock()
-            defer { lock.unlock() }
-            let error: Error?
-            if state != .poweredOn {
-                error = MockBleError.bluetoothIsOff
-            } else if let errorOnDisconnection {
-                error = errorOnDisconnection
-                self.errorOnDisconnection = nil
-            } else {
-                error = nil
-            }
-            @Sendable func _disconnectInternal() {
-                lock.lock()
-                defer { lock.unlock() }
-                guard mockPeripheral.state == .disconnecting else { return }
-                mockPeripheral.state = .disconnected
-                centraManagerDelegate?.bleCentralManager(
-                    self,
-                    didDisconnectPeripheral: mockPeripheral,
-                    error: error)
-            }
-            if let delayOnDisconnection {
-                queue.asyncAfter(deadline: .now() + delayOnDisconnection) {
+            lock.withLock {
+                let error: Error?
+                if state != .poweredOn {
+                    error = MockBleError.bluetoothIsOff
+                } else if let errorOnDisconnection {
+                    error = errorOnDisconnection
+                    self.errorOnDisconnection = nil
+                } else {
+                    error = nil
+                }
+                @Sendable func _disconnectInternal() {
+                    guard mockPeripheral.state == .disconnecting else { return }
+                    mockPeripheral.state = .disconnected
+                    centraManagerDelegate?.bleCentralManager(
+                        self,
+                        didDisconnectPeripheral: mockPeripheral,
+                        error: error)
+                }
+                if let delayOnDisconnection {
+                    queue.asyncAfter(deadline: .now() + delayOnDisconnection) {
+                        self.lock.withLock {
+                            _disconnectInternal()
+                        }
+                    }
+                    self.delayOnDisconnection = nil
+                } else {
                     _disconnectInternal()
                 }
-                self.delayOnDisconnection = nil
-            } else {
-                _disconnectInternal()
             }
         }
     }
     
     func retrievePeripherals(withIds identifiers: [UUID]) -> [BlePeripheral] {
-        lock.lock()
-        defer { lock.unlock() }
-        return peripherals.filter { peripheral in
-            identifiers.contains { $0 == peripheral.identifier }
+        lock.withLock {
+            peripherals.filter { peripheral in
+                identifiers.contains { $0 == peripheral.identifier }
+            }
         }
     }
     
     func retrieveConnectedPeripherals(withServiceIds serviceUUIDs: [CBUUID]) -> [BlePeripheral] {
-        lock.lock()
-        defer { lock.unlock() }
-        return peripherals.filter { peripheral in
-            guard peripheral.state == .connected else { return false }
-            guard let services = peripheral.services else { return false }
-            guard services.map({ $0.uuid }).contains(oneOf: serviceUUIDs) else { return false}
-            return true
+        lock.withLock {
+            peripherals.filter { peripheral in
+                guard peripheral.state == .connected else { return false }
+                guard let services = peripheral.services else { return false }
+                guard services.map({ $0.uuid }).contains(oneOf: serviceUUIDs) else { return false}
+                return true
+            }
         }
     }
     
     func scanForPeripherals(withServices: [CBUUID]?, options: [String: Any]?) {
-        lock.lock()
-        defer { lock.unlock() }
-        isScanning = true
-        scanCounter = 0
-        scanTimer?.cancel()
-        scanTimer = DispatchSource.makeTimerSource(queue: .global())
-        scanTimer?.schedule(deadline: .now() + .seconds(1), repeating: 1.0)
-        scanTimer?.setEventHandler { [weak self] in
-            guard let self else { return }
-            scanInterval()
+        lock.withLock {
+            isScanning = true
+            scanCounter = 0
+            scanTimer?.cancel()
+            scanTimer = DispatchSource.makeTimerSource(queue: queue)
+            scanTimer?.schedule(deadline: .now() + .seconds(1), repeating: 1.0)
+            scanTimer?.setEventHandler { [weak self] in
+                self?.scanInterval()
+            }
+            scanTimer?.resume()
         }
-        scanTimer?.resume()
     }
     
     func stopScan() {
-        lock.lock()
-        defer { lock.unlock() }
-        isScanning = false
-        scanCounter = 0
-        scanTimer?.cancel()
-        scanTimer = nil
+        lock.withLock {
+            scanTimer?.cancel()
+            scanTimer = nil
+            isScanning = false
+            scanCounter = 0
+        }
     }
     
     // MARK: - Internals
     
     private func disconnectAllPeripheralsIfNotPoweredOn() {
-        lock.lock()
-        defer { lock.unlock() }
-        guard state != .poweredOn else { return }
-        for peripheral in peripherals {
-            guard let mockPeripheral = peripheral as? MockBlePeripheral else { continue }
-            mockPeripheral.state = .disconnected
+        lock.withLock {
+            guard state != .poweredOn else { return }
+            for peripheral in peripherals {
+                guard let mockPeripheral = peripheral as? MockBlePeripheral else { continue }
+                mockPeripheral.state = .disconnected
+            }
         }
     }
     
     private func scanInterval() {
-        lock.lock()
-        defer { lock.unlock() }
-        guard !peripherals.isEmpty else { return }
-        scanCounter += 1
-        let peripheral = peripherals[scanCounter % peripherals.count]
-        var advertisementData: [String: Any] = [:]
-        advertisementData[CBAdvertisementDataIsConnectable] = true
-        if let name = peripheral.name {
-            advertisementData[CBAdvertisementDataLocalNameKey] = name
+        lock.withLock {
+            guard !peripherals.isEmpty else { return }
+            guard let scanTimer, !scanTimer.isCancelled else { return }
+            scanCounter += 1
+            let peripheral = peripherals[scanCounter % peripherals.count]
+            guard let mockPeripheral = peripheral as? MockBlePeripheral else { return }
+            queue.async { [weak self] in
+                guard let self else { return }
+                var advertisementData: [String: Any] = [:]
+                advertisementData[CBAdvertisementDataIsConnectable] = true
+                if let name = mockPeripheral.name {
+                    advertisementData[CBAdvertisementDataLocalNameKey] = name
+                }
+                centraManagerDelegate?.bleCentralManager( // FIX ADD QUEUE
+                    self,
+                    didDiscover: mockPeripheral,
+                    advertisementData: .init(advertisementData),
+                    rssi: Int.random(in: (-90)...(-50)))
+            }
         }
-        centraManagerDelegate?.bleCentralManager(
-            self,
-            didDiscover: peripheral,
-            advertisementData: .init(advertisementData),
-            rssi: Int.random(in: (-90)...(-50)))
     }
     
 }
