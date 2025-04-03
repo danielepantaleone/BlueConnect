@@ -488,7 +488,7 @@ extension BleCentralManagerProxy {
             return
         }
         discoverTimer?.cancel()
-        discoverTimer = DispatchSource.makeTimerSource()
+        discoverTimer = DispatchSource.makeTimerSource(queue: globalQueue)
         discoverTimer?.schedule(deadline: .now() + timeout, repeating: .never)
         discoverTimer?.setEventHandler { [weak self] in
             guard let self else { return }

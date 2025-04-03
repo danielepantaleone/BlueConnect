@@ -68,7 +68,7 @@ extension BlePeripheralManagerProxy: BlePeripheralManagerDelegate {
             
             // Start a monitor to check whether advertising is stopped.
             advertisingMonitor?.cancel()
-            advertisingMonitor = DispatchSource.makeTimerSource()
+            advertisingMonitor = DispatchSource.makeTimerSource(queue: globalQueue)
             advertisingMonitor?.schedule(deadline: .now() + .seconds(1), repeating: .seconds(1))
             advertisingMonitor?.setEventHandler { [weak self] in
                 guard let self else { return }

@@ -27,5 +27,5 @@
 
 import Foundation
 
-/// A global dispatch queue to ensure that the `continuation.resume(with:)` is only called on a single thread.
-let globalQueue = DispatchQueue(label: "com.blueconnect.queue")
+/// A global serial dispatch queue.
+let globalQueue = DispatchQueue(label: "com.blueconnect.queue", qos: .userInitiated)

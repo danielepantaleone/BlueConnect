@@ -110,7 +110,7 @@ class Subscription<ValueType>: Identifiable, Equatable {
         guard state == .created else { return }
         guard timeout != .never else { return }
         state = .started
-        timer = DispatchSource.makeTimerSource()
+        timer = DispatchSource.makeTimerSource(queue: globalQueue)
         timer?.schedule(deadline: .now() + timeout, repeating: .never)
         timer?.setEventHandler { [weak self] in
             guard let self else { return }
