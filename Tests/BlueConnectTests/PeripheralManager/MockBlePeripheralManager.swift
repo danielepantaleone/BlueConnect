@@ -32,6 +32,17 @@ import Foundation
 
 class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     
+    // MARK: - Atomic properties
+    
+    var _state: CBManagerState = .poweredOff {
+        didSet {
+            queue.async { [weak self] in
+                guard let self else { return }
+                peripheralManagerDelegate?.blePeripheralManagerDidUpdateState(self)
+            }
+        }
+    }
+    
     // MARK: - Properties
     
     var errorOnUpdateValue: Bool = false
@@ -42,13 +53,9 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     
     var authorization: CBManagerAuthorization { .allowedAlways }
     var isAdvertising: Bool = false
-    var state: CBManagerState = .poweredOff {
-        didSet {
-            queue.async { [weak self] in
-                guard let self else { return }
-                peripheralManagerDelegate?.blePeripheralManagerDidUpdateState(self)
-            }
-        }
+    var state: CBManagerState {
+        get { lock.withLock { _state } }
+        set { lock.withLock { _state = newValue } }
     }
     
     weak var peripheralManagerDelegate: BlePeripheralManagerDelegate?
@@ -64,37 +71,37 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     func startAdvertising(_ advertisementData: [String: Any]?) {
         queue.async { [weak self] in
             guard let self else { return }
-            lock.lock()
-            defer { lock.unlock() }
-            guard !isAdvertising else { return }
-            guard errorOnAdvertising == nil else {
-                peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: errorOnAdvertising)
-                errorOnAdvertising = nil
-                return
-            }
-            @Sendable func _advertiseInternal() {
-                lock.lock()
-                defer { lock.unlock() }
-                guard state == .poweredOn else { return }
-                isAdvertising = true
-                peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: nil)
-            }
-            if let delayOnAdvertising {
-                queue.asyncAfter(deadline: .now() + delayOnAdvertising) {
+            lock.withLock {
+                guard !isAdvertising else { return }
+                guard errorOnAdvertising == nil else {
+                    peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: errorOnAdvertising)
+                    errorOnAdvertising = nil
+                    return
+                }
+                @Sendable func _advertiseInternal() {
+                    guard state == .poweredOn else { return }
+                    isAdvertising = true
+                    peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: nil)
+                }
+                if let delayOnAdvertising {
+                    queue.asyncAfter(deadline: .now() + delayOnAdvertising) {
+                        self.lock.withLock {
+                            _advertiseInternal()
+                        }
+                    }
+                    self.delayOnAdvertising = nil
+                } else {
                     _advertiseInternal()
                 }
-                self.delayOnAdvertising = nil
-            } else {
-                _advertiseInternal()
             }
         }
     }
     
     func stopAdvertising() {
-        lock.lock()
-        defer { lock.unlock() }
-        guard isAdvertising else { return }
-        isAdvertising = false
+        lock.withLock {
+            guard isAdvertising else { return }
+            isAdvertising = false
+        }
     }
     
     func setDesiredConnectionLatency(_ latency: CBPeripheralManagerConnectionLatency, for central: any BlueConnect.BleCentral) {
@@ -102,21 +109,22 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     }
     
     func add(_ service: CBMutableService) {
-        lock.lock()
-        defer { lock.unlock() }
-        services.append(service)
+        lock.withLock {
+            services.append(service)
+        }
     }
     
     func remove(_ service: CBMutableService) {
-        lock.lock()
-        defer { lock.unlock() }
-        services.removeAll { $0.uuid == service.uuid }
+        lock.withLock {
+            defer { lock.unlock() }
+            services.removeAll { $0.uuid == service.uuid }
+        }
     }
     
     func removeAllServices() {
-        lock.lock()
-        defer { lock.unlock() }
-        services.removeAll()
+        lock.withLock {
+            services.removeAll()
+        }
     }
     
     func respond(to request: CBATTRequest, withResult result: CBATTError.Code) {
