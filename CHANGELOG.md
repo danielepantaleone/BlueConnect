@@ -1,6 +1,13 @@
 Release Notes
 =============
 
+## 1.3.4
+
+Released April 3, 2025
+
+- Fix data race in central manager proxy [52b7ed8](https://github.com/danielepantaleone/BlueConnect/commit/52b7ed8242f9a4dfe1cb1027df1995688fd3003e)
+- Make use of global serial queue instead of concurrent one [0055f18](https://github.com/danielepantaleone/BlueConnect/commit/0055f186a57a2b477306d5639e75eadc82368ba7)
+
 ## 1.3.3
 
 Released April 1, 2025
