@@ -39,9 +39,7 @@ public protocol BleCharacteristicWriteWithoutResponseProxy: BleCharacteristicPro
     /// This method converts the `ValueType` of the proxy into a raw `Data` representation suitable for writing to the BLE characteristic.
     /// The encoded data will be written to the characteristic on the BLE peripheral.
     ///
-    /// - Parameters:
-    ///   - value: The value of the proxy's `ValueType` to encode.
-    ///
+    /// - Parameter value: The value of the proxy's `ValueType` to encode.
     /// - Returns: The raw data representation of the provided value, ready to be written onto the characteristic.
     /// - Throws: An error if encoding the value fails.
     func encode(_ value: ValueType) throws -> Data
@@ -93,9 +91,7 @@ public extension BleCharacteristicWriteWithoutResponseProxy where ValueType == D
     
     /// Bypass data encoding and return raw data.
     ///
-    /// - Parameters:
-    ///   - value: The data to write on the characteristic
-    ///
+    /// - Parameter value: The data to write on the characteristic
     /// - Returns: The raw data representation of the provided value, ready to be written onto the characteristic.
     func encode(_ value: Data) throws -> Data {
         return value

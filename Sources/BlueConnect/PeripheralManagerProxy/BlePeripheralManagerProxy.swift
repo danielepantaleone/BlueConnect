@@ -215,8 +215,7 @@ extension BlePeripheralManagerProxy {
     ///
     /// Calling this method halts any active advertising by the peripheral manager, stopping the broadcast of services and advertisement data.
     ///
-    /// - Parameters:
-    ///   - callback: A closure that is called with the result of the stop advertising operation. The closure is passed a `Result` type, which is `.success` on successful advertising stop or `.failure` with an error if the operation fails. Defaults to a no-op closure.
+    /// - Parameter callback: A closure that is called with the result of the stop advertising operation. The closure is passed a `Result` type, which is `.success` on successful advertising stop or `.failure` with an error if the operation fails. Defaults to a no-op closure.
     public func stopAdvertising(callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
         
         lock.lock()

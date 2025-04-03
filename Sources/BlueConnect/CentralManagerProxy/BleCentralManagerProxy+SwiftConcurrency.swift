@@ -108,9 +108,7 @@ extension BleCentralManagerProxy {
     /// }
     /// ```
     ///
-    /// - Parameters:
-    ///   - timeout: The maximum duration to wait for the central manager to be ready. The default value is `.never`, indicating no timeout.
-    ///
+    /// - Parameter timeout: The maximum duration to wait for the central manager to be ready. The default value is `.never`, indicating no timeout.
     /// - Returns: The method returns asynchronously when the central manager is ready or an error occurs.
     /// - Throws: An error if the it's not possible to wait for the central manager to be ready within the provided timeout.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never) async throws {

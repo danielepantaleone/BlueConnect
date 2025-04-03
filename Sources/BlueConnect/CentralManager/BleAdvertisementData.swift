@@ -47,8 +47,7 @@ public struct BleAdvertisementData {
     /// This initializer allows you to create a `BleAdvertisementData` instance from the advertisement data provided by
     /// the CoreBluetooth framework during peripheral discovery.
     ///
-    /// - Parameters:
-    ///   - advertisementData: The CoreBluetooth advertisement data dictionary.
+    /// - Parameter advertisementData: The CoreBluetooth advertisement data dictionary.
     public init(_ advertisementData: [String: Any]) {
         self.raw = advertisementData
     }

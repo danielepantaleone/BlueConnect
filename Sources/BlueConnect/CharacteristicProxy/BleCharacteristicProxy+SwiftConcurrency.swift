@@ -32,9 +32,7 @@ public extension BleCharacteristicProxy {
     
     /// Discover the service and then characteristic.
     ///
-    /// - Parameters:
-    ///   - timeout: The timeout duration for the characteristic discovery operation. Defaults to 10 seconds.
-    ///
+    /// - Parameter timeout: The timeout duration for the characteristic discovery operation. Defaults to 10 seconds.
     /// - Throws: An error if the discovery fails within the specified timeout.
     /// - Returns: The discovered `CBCharacteristic`.
     @discardableResult

@@ -247,8 +247,7 @@ extension BlePeripheralProxy {
     ///
     /// The discovered services will trigger the `didDiscoverServicesPublisher` multiple times as services are discovered.
     ///
-    /// - Parameters:
-    ///   - serviceUUIDs: The UUIDs of the services to discover, or `nil` to discover all services on the peripheral.
+    /// - Parameter serviceUUIDs: The UUIDs of the services to discover, or `nil` to discover all services on the peripheral.
     public func discover(serviceUUIDs: [CBUUID]?) {
         
         lock.lock()

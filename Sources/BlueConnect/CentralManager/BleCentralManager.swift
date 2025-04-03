@@ -74,17 +74,14 @@ public protocol BleCentralManager: AnyObject {
     ///
     /// This method terminates a connection or cancels an ongoing connection attempt to a specified peripheral.
     ///
-    /// - Parameters:
-    ///   - peripheral: The peripheral to which the central manager is either trying to connect or has already connected.
+    /// - Parameter peripheral: The peripheral to which the central manager is either trying to connect or has already connected.
     func cancelConnection(_ peripheral: BlePeripheral)
     
     /// Retrieve all the peripherals with the corresponding identifiers.
     ///
     /// This method retrieves previously connected peripherals with specific identifiers.
     ///
-    /// - Parameters:
-    ///   - identifiers: A list of peripheral identifiers (represented by `UUID` objects) from which peripheral objects can be retrieved.
-    ///
+    /// - Parameter identifiers: A list of peripheral identifiers (represented by `UUID` objects) from which peripheral objects can be retrieved.
     /// - Returns: A list of objects implementing the `BlePeripheral` protocol.
     func retrievePeripherals(withIds identifiers: [UUID]) -> [BlePeripheral]
     
@@ -92,9 +89,7 @@ public protocol BleCentralManager: AnyObject {
     ///
     /// This method returns peripherals that are currently connected to the system and offer specific services.
     ///
-    /// - Parameters:
-    ///   - serviceUUIDs: A list of service UUIDs (represented by `CBUUID` objects) to filter connected peripherals.
-    ///
+    /// - Parameter serviceUUIDs: A list of service UUIDs (represented by `CBUUID` objects) to filter connected peripherals.
     /// - Returns: A list of objects implementing the `BlePeripheral` protocol.
     func retrieveConnectedPeripherals(withServiceIds serviceUUIDs: [CBUUID]) -> [BlePeripheral]
     

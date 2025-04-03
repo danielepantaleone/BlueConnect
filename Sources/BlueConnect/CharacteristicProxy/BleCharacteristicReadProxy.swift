@@ -41,9 +41,7 @@ public protocol BleCharacteristicReadProxy: BleCharacteristicProxy {
     ///
     /// This method takes the raw data received from a characteristic and converts it into the value type used by the proxy.
     ///
-    /// - Parameters:
-    ///   - data: The data received from the characteristic. This is expected to be in a format that can be converted to the proxy's value type.
-    ///
+    /// - Parameter data: The data received from the characteristic. This is expected to be in a format that can be converted to the proxy's value type.
     /// - Returns: The decoded value of type `ValueType`, which represents the converted data.
     /// - Throws: An error if the data cannot be decoded into the proxy's value type. The specific error thrown depends on the implementation of the `decode` method.
     func decode(_ data: Data) throws -> ValueType
