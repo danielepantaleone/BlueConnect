@@ -31,7 +31,19 @@ import Foundation
 @testable import BlueConnect
 
 class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
-        
+    
+    // MARK: - Atomic properties
+    
+    var _state: CBPeripheralState = .disconnected {
+        didSet {
+            if state == .connected {
+                startNotify()
+            } else {
+                stopNotify()
+            }
+        }
+    }
+    
     // MARK: - Protocol properties
     
     let identifier: UUID
@@ -44,14 +56,9 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
         }
     }
     var services: [CBService]? = nil
-    var state: CBPeripheralState = .disconnected {
-        didSet {
-            if state == .connected {
-                startNotify()
-            } else {
-                stopNotify()
-            }
-        }
+    var state: CBPeripheralState {
+        get { lock.withLock { _state } }
+        set { lock.withLock { _state = newValue } }
     }
     
     weak var peripheralDelegate: BlePeripheralDelegate?
