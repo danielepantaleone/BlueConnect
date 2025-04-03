@@ -18,14 +18,22 @@ on:
   workflow_dispatch:
 jobs:
   tests:
-    name: Swift ${{ matrix.swift }} on ${{ matrix.platform }}
+    name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
     strategy:
       matrix:
-        platform: ['macOS', 'iOS']
-        swift: ["5.9", "6.0"]
-    runs-on: macos-latest
+        os: [macos-latest]
+        swift: ["5.9", "5.10", "6.0"]
+    runs-on: ${{ matrix.os }}
     steps:
+      - name: Setup swift version ${{ matrix.swift }}
+        uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: ${{ matrix.swift }}
+      - name: Check swift version
+        run: swift --version
       - name: Repository checkout
         uses: actions/checkout@v4
-      - name: Run swift tests
+      - name: Build
+        run: swift build
+      - name: Run tests
         run: swift test
