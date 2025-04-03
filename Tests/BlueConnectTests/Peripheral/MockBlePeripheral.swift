@@ -89,7 +89,7 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     private let secret: String
     private let lock = NSRecursiveLock()
     private var timer: DispatchSourceTimer?
-    private let queue: DispatchQueue = DispatchQueue.global(qos: .background)
+    private let queue: DispatchQueue = DispatchQueue(label: "com.blueconnect.peripheral", qos: .userInitiated)
     
     // MARK: - Services
     

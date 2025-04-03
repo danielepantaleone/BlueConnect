@@ -63,7 +63,7 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     // MARK: - Internal properties
     
     let lock = NSRecursiveLock()
-    let queue: DispatchQueue = DispatchQueue.global(qos: .background)
+    let queue: DispatchQueue = DispatchQueue(label: "com.blueconnect.peripheral-manager", qos: .userInitiated)
     var services: [CBMutableService] = []
         
     // MARK: - Interface
