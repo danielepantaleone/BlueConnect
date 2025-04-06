@@ -38,7 +38,11 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
         didSet {
             queue.async { [weak self] in
                 guard let self else { return }
-                self.peripheralManagerDelegate?.blePeripheralManagerDidUpdateState(self)
+                let localDelegate: BlePeripheralManagerDelegate?
+                lock.lock()
+                localDelegate = peripheralManagerDelegate
+                lock.unlock()
+                localDelegate?.blePeripheralManagerDidUpdateState(self)
             }
         }
     }
@@ -69,39 +73,70 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     // MARK: - Interface
     
     func startAdvertising(_ advertisementData: [String: Any]?) {
+        
         queue.async { [weak self] in
+            
             guard let self else { return }
-            self.lock.withLock {
-                guard !self.isAdvertising else { return }
-                guard self.errorOnAdvertising == nil else {
-                    self.peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: self.errorOnAdvertising)
-                    self.errorOnAdvertising = nil
-                    return
-                }
-                @Sendable func _advertiseInternal() {
-                    guard self.state == .poweredOn else { return }
-                    self.isAdvertising = true
-                    self.peripheralManagerDelegate?.blePeripheralManagerDidStartAdvertising(self, error: nil)
-                }
-                if let delayOnAdvertising = self.delayOnAdvertising {
-                    self.queue.asyncAfter(deadline: .now() + delayOnAdvertising) {
-                        self.lock.withLock {
-                            _advertiseInternal()
-                        }
+            
+            let localDelegate: BlePeripheralManagerDelegate?
+            let localDelay: DispatchTimeInterval?
+            let localError: Error?
+            lock.lock()
+            guard !isAdvertising else {
+                lock.unlock()
+                return
+            }
+            localDelegate = peripheralManagerDelegate
+            if state != .poweredOn {
+                localDelay = nil
+                localError = MockBleError.bluetoothIsOff
+            } else if let errorOnAdvertising {
+                localDelay = nil
+                localError = errorOnAdvertising
+            } else {
+                localDelay = delayOnAdvertising
+                localError = nil
+            }
+            self.delayOnAdvertising = nil
+            self.errorOnAdvertising = nil
+            lock.unlock()
+            
+            if let localError {
+                localDelegate?.blePeripheralManagerDidStartAdvertising(self, error: localError)
+            } else {
+                
+                @Sendable
+                func _advertiseInternal() {
+                    let localDelegate: BlePeripheralManagerDelegate?
+                    lock.lock()
+                    guard state == .poweredOn, !isAdvertising else {
+                        lock.unlock()
+                        return
                     }
-                    self.delayOnAdvertising = nil
+                    localDelegate = peripheralManagerDelegate
+                    isAdvertising = true
+                    lock.unlock()
+                    localDelegate?.blePeripheralManagerDidStartAdvertising(self, error: nil)
+                }
+                
+                if let localDelay {
+                    queue.asyncAfter(deadline: .now() + localDelay) {
+                        _advertiseInternal()
+                    }
                 } else {
                     _advertiseInternal()
                 }
+                
             }
+          
         }
+        
     }
     
     func stopAdvertising() {
-        lock.withLock {
-            guard isAdvertising else { return }
-            isAdvertising = false
-        }
+        lock.lock()
+        defer { lock.unlock() }
+        isAdvertising = false
     }
     
     func setDesiredConnectionLatency(_ latency: CBPeripheralManagerConnectionLatency, for central: any BlueConnect.BleCentral) {
@@ -109,22 +144,21 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     }
     
     func add(_ service: CBMutableService) {
-        lock.withLock {
-            services.append(service)
-        }
+        lock.lock()
+        defer { lock.unlock() }
+        services.append(service)
     }
     
     func remove(_ service: CBMutableService) {
-        lock.withLock {
-            defer { lock.unlock() }
-            services.removeAll { $0.uuid == service.uuid }
-        }
+        lock.lock()
+        defer { lock.unlock() }
+        services.removeAll { $0.uuid == service.uuid }
     }
     
     func removeAllServices() {
-        lock.withLock {
-            services.removeAll()
-        }
+        lock.lock()
+        defer { lock.unlock() }
+        services.removeAll()
     }
     
     func respond(to request: CBATTRequest, withResult result: CBATTError.Code) {
@@ -132,6 +166,8 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     }
     
     func updateValue(_ value: Data, for characteristic: CBMutableCharacteristic, onSubscribedCentrals centrals: [BleCentral]?) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
         return !errorOnUpdateValue
     }
     

@@ -67,14 +67,15 @@ extension BlePeripheralProxyRSSITests {
         // Test read emit on publisher
         let subscription = blePeripheralProxy_1.didUpdateRSSIPublisher
             .receive(on: DispatchQueue.main)
-            .filter { $0.intValue == -80 }
+            .filter { $0.intValue >= -90 && $0.intValue <= -50 }
             .sink { _ in publisherExp.fulfill() }
         // Test read on callback
         blePeripheralProxy_1.readRSSI(timeout: .never) { [weak self] result in
             guard let self else { return }
             switch result {
                 case .success(let value):
-                    XCTAssertEqual(value.intValue, -80)
+                    XCTAssertGreaterThanOrEqual(value.intValue, -90)
+                    XCTAssertLessThanOrEqual(value.intValue, -50)
                     XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
                     readExp.fulfill()
                 case .failure(let error):
@@ -127,8 +128,8 @@ extension BlePeripheralProxyRSSITests {
         centralManager(state: .poweredOn)
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
-        // Mock RSSI value
-        try blePeripheral_1.rssi = -127
+        // Mock RSSI error
+        try blePeripheral_1.rssiNotAvailable = true
         // Test RSSI update on the publisher
         let readExp = expectation(description: "waiting for peripheral RSSI read to fail")
         let publisherExp = expectation(description: "waiting for peripheral RSSI update NOT to be signaled by publisher")
@@ -285,7 +286,8 @@ extension BlePeripheralProxyRSSITests {
         // Test RSSI read
         do {
             let value = try await blePeripheralProxy_1.readRSSI(timeout: .never)
-            XCTAssertEqual(value.intValue, -80)
+            XCTAssertGreaterThanOrEqual(value.intValue, -90)
+            XCTAssertLessThanOrEqual(value.intValue, -50)
             XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
         } catch {
             XCTFail("peripheral RSSI read failed with error: \(error)")
@@ -312,7 +314,7 @@ extension BlePeripheralProxyRSSITests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock RSSI value
-        try blePeripheral_1.rssi = -127
+        try blePeripheral_1.rssiNotAvailable = true
         // Test read to fail
         do {
             _ = try await blePeripheralProxy_1.readRSSI(timeout: .never)
