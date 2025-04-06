@@ -34,8 +34,8 @@ struct MockCharacteristicSecretProxy: BleCharacteristicWriteProxy {
     
     typealias ValueType = String
     
-    var characteristicUUID: CBUUID = MockBleDescriptor.secretCharacteristicUUID
-    var serviceUUID: CBUUID = MockBleDescriptor.customServiceUUID
+    let characteristicUUID: CBUUID = MockBleDescriptor.secretCharacteristicUUID
+    let serviceUUID: CBUUID = MockBleDescriptor.customServiceUUID
     var encodingError: Error?
     
     weak var peripheralProxy: BlePeripheralProxy?

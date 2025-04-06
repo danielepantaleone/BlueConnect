@@ -34,8 +34,8 @@ struct MockCharacteristicHardwareRevisionProxy: BleCharacteristicReadProxy {
     
     typealias ValueType = String
     
-    var characteristicUUID: CBUUID = MockBleDescriptor.hardwareRevisionCharacteristicUUID
-    var serviceUUID: CBUUID = MockBleDescriptor.deviceInformationServiceUUID
+    let characteristicUUID: CBUUID = MockBleDescriptor.hardwareRevisionCharacteristicUUID
+    let serviceUUID: CBUUID = MockBleDescriptor.deviceInformationServiceUUID
     
     weak var peripheralProxy: BlePeripheralProxy?
     

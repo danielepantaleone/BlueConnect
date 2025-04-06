@@ -34,8 +34,8 @@ struct MockCharacteristicBufferProxy: BleCharacteristicWriteWithoutResponseProxy
     
     typealias ValueType = Data
     
-    var characteristicUUID: CBUUID = MockBleDescriptor.bufferCharacteristicUUID
-    var serviceUUID: CBUUID = MockBleDescriptor.customServiceUUID
+    let characteristicUUID: CBUUID = MockBleDescriptor.bufferCharacteristicUUID
+    let serviceUUID: CBUUID = MockBleDescriptor.customServiceUUID
     
     weak var peripheralProxy: BlePeripheralProxy?
     

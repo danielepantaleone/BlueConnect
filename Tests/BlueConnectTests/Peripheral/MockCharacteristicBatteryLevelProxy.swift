@@ -34,8 +34,8 @@ struct MockCharacteristicBatteryLevelProxy: BleCharacteristicReadProxy {
     
     typealias ValueType = UInt8
     
-    var characteristicUUID: CBUUID = MockBleDescriptor.batteryLevelCharacteristicUUID
-    var serviceUUID: CBUUID = MockBleDescriptor.batteryServiceUUID
+    let characteristicUUID: CBUUID = MockBleDescriptor.batteryLevelCharacteristicUUID
+    let serviceUUID: CBUUID = MockBleDescriptor.batteryServiceUUID
     
     weak var peripheralProxy: BlePeripheralProxy?
     

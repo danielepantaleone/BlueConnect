@@ -34,8 +34,8 @@ struct MockCharacteristicHeartRateProxy: BleCharacteristicReadProxy, BleCharacte
     
     typealias ValueType = UInt8
     
-    var characteristicUUID: CBUUID = MockBleDescriptor.heartRateCharacteristicUUID
-    var serviceUUID: CBUUID = MockBleDescriptor.heartRateServiceUUID
+    let characteristicUUID: CBUUID = MockBleDescriptor.heartRateCharacteristicUUID
+    let serviceUUID: CBUUID = MockBleDescriptor.heartRateServiceUUID
     
     weak var peripheralProxy: BlePeripheralProxy?
     
