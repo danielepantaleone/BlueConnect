@@ -1,4 +1,4 @@
-![](https://github.com/danielepantaleone/BlueConnect/blob/main/Logo.png?raw=true)
+![](https://github.com/danielepantaleone/BlueConnect/blob/master/Banner.png?raw=true)
 
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
 [![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
