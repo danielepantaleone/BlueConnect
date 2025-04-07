@@ -13,17 +13,10 @@ let package = Package(
         .library(name: "BlueConnect", targets: ["BlueConnect"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/realm/SwiftLint.git", from: "0.58.2"),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.4.2"),
     ],
     targets: [
-        .target(
-            name: "BlueConnect",
-            dependencies: [],
-            plugins: [
-                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLint")
-            ]
-        ),
+        .target(name: "BlueConnect"),
         .testTarget(
             name: "BlueConnectTests",
             dependencies: [
