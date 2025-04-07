@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 1.3.5
+
+Released April 7, 2025
+
+- Removed swiftlint dependency [0377e63](https://github.com/danielepantaleone/BlueConnect/commit/0377e63009031384cc016398316d4aa4eb9d0238)
+
 ## 1.3.4
 
 Released April 3, 2025
