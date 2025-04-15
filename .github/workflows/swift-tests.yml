@@ -11,7 +11,9 @@ on:
       - 'LICENSE'
       - 'swift-generate-documentation.sh'
       - 'docs/**'
+      - '.periphery.yml'
       - '.spy.yml'
+      - '.swiftlint.yml'
       - '.gitignore'
   pull_request:
     branches: 
