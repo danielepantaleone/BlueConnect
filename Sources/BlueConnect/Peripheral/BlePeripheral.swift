@@ -34,7 +34,7 @@
 /// This protocol can be adopted by mock objects to simulate BLE peripheral behavior in tests, enabling controlled and repeatable testing of BLE operations without requiring a physical device.
 ///
 /// - Note: `CBPeripheral` conforms to `BlePeripheral`.
-public protocol BlePeripheral: AnyObject {
+public protocol BlePeripheral: AnyObject, Sendable {
     
     // MARK: - Properties
     
@@ -97,6 +97,12 @@ public protocol BlePeripheral: AnyObject {
     func writeValue(_ data: Data, for characteristic: CBCharacteristic, type: CBCharacteristicWriteType)
     
 }
+
+#if $RetroactiveAttribute
+extension CBPeripheral: @retroactive @unchecked Sendable { }
+#else
+extension CBPeripheral: @unchecked Sendable { }
+#endif
 
 extension CBPeripheral: BlePeripheral {
    

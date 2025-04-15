@@ -367,6 +367,57 @@ extension BleCentralManagerProxy {
 
     }
     
+    /// Scans for BLE peripherals with specified services and options.
+    ///
+    /// - Parameters:
+    ///   - serviceUUIDs: An optional array of service UUIDs to filter the scan results. If `nil`, it scans for all available peripherals.
+    ///   - options: Optional dictionary of options for customizing the scanning behavior.
+    ///   - timeout: The time interval after which the scan should stop automatically. Default is 60 seconds.
+    /// - Returns: A publisher that emits `BleCentralManagerScanRecord` instances as peripherals are discovered, and completes or fails on error.
+    ///
+    /// This function initiates a scan for BLE peripherals returning an `AsyncThrowingStream` that can be used to iterate over discovered peripherals.
+    /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
+    ///
+    /// - Note: If the central manager is not in the `.poweredOn` state, the scan fails, and the async stream is finished with an appropriate error.
+    public func scanForPeripherals(
+        withServices serviceUUIDs: [CBUUID]? = nil,
+        options: [String: Any]? = nil,
+        timeout: DispatchTimeInterval = .seconds(60)
+    ) -> AsyncThrowingStream<(
+        peripheral: BlePeripheral,
+        advertisementData: BleAdvertisementData,
+        RSSI: Int
+    ), Error> {
+        AsyncThrowingStream { continuation in
+            final class CancellableBox: @unchecked Sendable {
+                var cancellable: AnyCancellable?
+            }
+            let box = CancellableBox()
+            box.cancellable = scanForPeripherals(
+                withServices: serviceUUIDs,
+                options: options,
+                timeout: timeout
+            )
+            .receive(on: globalQueue)
+            .sink(
+                receiveCompletion: { completion in
+                    switch completion {
+                        case .finished:
+                            continuation.finish()
+                        case .failure(let error):
+                            continuation.finish(throwing: error)
+                    }
+                },
+                receiveValue: { peripheral, advertisementData, RSSI in
+                    continuation.yield((peripheral, advertisementData, RSSI))
+                }
+            )
+            continuation.onTermination = { @Sendable _ in
+                box.cancellable?.cancel()
+            }
+        }
+    }
+    
     /// Stops the current BLE peripheral scan.
     ///
     /// Stops the  BLE peripherals discovery and completes the scan's publisher with `.finished`.

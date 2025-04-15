@@ -31,7 +31,7 @@
 ///
 /// The `BleAdvertisementData` struct simplifies access to the advertisement data provided by BLE peripherals during discovery.
 /// It wraps CoreBluetooth's advertisement data dictionary and provides convenient properties to extract specific data points.
-public struct BleAdvertisementData {
+public struct BleAdvertisementData: @unchecked Sendable {
     
     // MARK: - Properties
     
