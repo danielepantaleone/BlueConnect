@@ -33,6 +33,13 @@ import XCTest
 @testable import BlueConnect
 
 final class BleCentralManagerProxyScanTests: BlueConnectTests {
+    
+}
+
+// MARK: - Test scan
+
+@MainActor
+extension BleCentralManagerProxyScanTests {
  
     func testScanWithTimeout() throws {
         // Turn on ble central manager
@@ -95,7 +102,6 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         XCTAssertNotNil(bleCentralManagerProxy.discoverSubject)
     }
     
-    @MainActor
     func testScanWithNoTimeoutManuallyStopped() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -208,6 +214,150 @@ final class BleCentralManagerProxyScanTests: BlueConnectTests {
         // Await expectation
         wait(for: [completionExp], timeout: 2.0)
         subscription.cancel()
+        XCTAssertFalse(bleCentralManager.isScanning)
+    }
+    
+}
+
+// MARK: - Test scan (async)
+
+@MainActor
+extension BleCentralManagerProxyScanTests {
+    
+    func testScanWithTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test scan discovery
+        let completionExp = expectation(description: "waiting for scan to be terminated")
+        let publisherExp = expectation(description: "waiting for peripheral discovery to be signaled by publisher")
+        publisherExp.assertForOverFulfill = false
+        do {
+            for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(2)) {
+                publisherExp.fulfill()
+            }
+            completionExp.fulfill()
+        } catch {
+            XCTFail("peripheral discovery terminated with error: \(error)")
+        }
+        await fulfillment(of: [completionExp, publisherExp], timeout: 4.0)
+        XCTAssertFalse(bleCentralManagerProxy.isScanning)
+        XCTAssertNil(bleCentralManagerProxy.discoverTimer)
+        XCTAssertNil(bleCentralManagerProxy.discoverSubject)
+    }
+    
+    func testScanWithNoTimeoutAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test scan discovery
+        var counter = 0
+        let completionExp = expectation(description: "waiting for scan to be terminated")
+        let publisherExp = expectation(description: "waiting for peripheral discovery to be signaled by publisher")
+        publisherExp.assertForOverFulfill = false
+        do {
+            for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .never) {
+                counter += 1
+                publisherExp.fulfill()
+                if counter > 2 {
+                    break
+                }
+            }
+            completionExp.fulfill()
+        } catch {
+            XCTFail("peripheral discovery terminated with error: \(error)")
+        }
+        await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
+        XCTAssertTrue(bleCentralManagerProxy.isScanning)
+        XCTAssertNil(bleCentralManagerProxy.discoverTimer)
+        XCTAssertNotNil(bleCentralManagerProxy.discoverSubject)
+    }
+    
+    func testScanWithNoTimeoutManuallyStoppedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test scan discovery
+        let completionExp = expectation(description: "waiting for scan to be terminated")
+        let publisherExp = expectation(description: "waiting for peripheral discovery to be signaled by publisher")
+        publisherExp.assertForOverFulfill = false
+        // Manually stop the scan in 4 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(4)) { [weak self] in
+            self?.bleCentralManagerProxy.stopScan()
+        }
+        do {
+            for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .never) {
+                publisherExp.fulfill()
+            }
+            completionExp.fulfill()
+        } catch {
+            XCTFail("peripheral discovery terminated with error: \(error)")
+        }
+        await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
+        XCTAssertTrue(bleCentralManagerProxy.isScanning)
+        XCTAssertNil(bleCentralManagerProxy.discoverTimer)
+        XCTAssertNil(bleCentralManagerProxy.discoverSubject)
+    }
+    
+    func testScanFailDueToBleCentralManagerOffAsync() async throws {
+        // Test scan discovery
+        let completionExp = expectation(description: "waiting for scan to terminate with failure")
+        let publisherExp = expectation(description: "waiting for peripheral discovery NOT to be signaled by publisher")
+        publisherExp.isInverted = true
+        do {
+            for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(2)) {
+                publisherExp.fulfill()
+            }
+            XCTFail("peripheral discovery terminated with success but failure was expected")
+        } catch {
+            guard let proxyError = error as? BleCentralManagerProxyError else {
+                XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                return
+            }
+            guard case .invalidState(let state) = proxyError else {
+                XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(proxyError)' instead")
+                return
+            }
+            XCTAssertEqual(state, .poweredOff)
+            XCTAssertFalse(bleCentralManagerProxy.isScanning)
+            completionExp.fulfill()
+        }
+    
+        // Await expectation
+        await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
+        XCTAssertFalse(bleCentralManagerProxy.isScanning)
+        XCTAssertNil(bleCentralManagerProxy.discoverTimer)
+        XCTAssertNil(bleCentralManagerProxy.discoverSubject)
+    }
+    
+    func testScanFailDueToProxyDestroyedAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Destroy the proxy
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) { [weak self] in
+            self?.bleCentralManagerProxy = nil
+        }
+        // Test scan discovery
+        let completionExp = expectation(description: "waiting for scan to terminate with failure")
+        // Test discovery stopped
+        do {
+            for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .never) {
+                // Check that we are scanning
+                XCTAssertTrue(bleCentralManagerProxy.isScanning)
+            }
+            XCTFail("peripheral discovery terminated with success but failure was expected")
+        } catch {
+            guard let proxyError = error as? BleCentralManagerProxyError else {
+                XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError, got '\(error)' instead")
+                return
+            }
+            guard case .destroyed = proxyError else {
+                XCTFail("peripheral discovery was expected to fail with BleCentralManagerProxyError 'destroyed', got '\(proxyError)' instead")
+                return
+            }
+            completionExp.fulfill()
+        }
+        // Destroy the proxy
+        bleCentralManagerProxy = nil
+        // Await expectation
+        await fulfillment(of: [completionExp], timeout: 4.0)
         XCTAssertFalse(bleCentralManager.isScanning)
     }
     

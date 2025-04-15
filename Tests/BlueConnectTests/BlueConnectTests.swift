@@ -97,7 +97,7 @@ class BlueConnectTests: XCTestCase {
         XCTAssertNotEqual(bleCentralManager.state, state)
         let expectation = expectation(description: "waiting for bluetooth central manager state to change to '\(state)'")
         let subscription = bleCentralManagerProxy.didUpdateStatePublisher
-            .receive(on: DispatchQueue.main)
+            .receive(on: DispatchQueue.global())
             .filter { $0 == state }
             .sink { _ in expectation.fulfill() }
         bleCentralManager.state = state
@@ -109,7 +109,7 @@ class BlueConnectTests: XCTestCase {
         XCTAssertNotEqual(blePeripheralManager.state, state)
         let expectation = expectation(description: "waiting for bluetooth peripheral manager state to change to '\(state)'")
         let subscription = blePeripheralManagerProxy.didUpdateStatePublisher
-            .receive(on: DispatchQueue.main)
+            .receive(on: DispatchQueue.global())
             .filter { $0 == state }
             .sink { _ in expectation.fulfill() }
         blePeripheralManager.state = state
