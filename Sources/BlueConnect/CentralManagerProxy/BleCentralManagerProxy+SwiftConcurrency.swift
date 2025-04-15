@@ -47,7 +47,6 @@ extension BleCentralManagerProxy {
     ///   - options: A dictionary of options to customize the connection behavior, such as `CBConnectPeripheralOptionNotifyOnConnectionKey`. Defaults to `nil`.
     ///   - timeout: A `DispatchTimeInterval` specifying how long to wait before considering the connection as failed due to timeout. Defaults to `.never`, meaning no timeout.
     ///
-    /// - Returns: The method returns asynchronously when the connection is successfully established or an error occurs.
     /// - Throws: An error if the connection fails or if the operation times out.
     public func connect(
         peripheral: BlePeripheral,
@@ -75,11 +74,8 @@ extension BleCentralManagerProxy {
     /// }
     /// ```
     ///
-    /// - Parameters:
-    ///   - peripheral: The `BlePeripheral` to disconnect.
-    ///   - callback: An optional closure that is called with a `Result<Void, Error>`, providing success or failure of the disconnection attempt.
+    /// - Parameter peripheral: The `BlePeripheral` to disconnect.
     ///
-    /// - Returns: The method returns asynchronously when the disconnection is successful or an error occurs.
     /// - Throws: An error if the disconnection fails.
     public func disconnect(peripheral: BlePeripheral) async throws {
         try await withCheckedThrowingContinuation { continuation in
@@ -109,7 +105,6 @@ extension BleCentralManagerProxy {
     /// ```
     ///
     /// - Parameter timeout: The maximum duration to wait for the central manager to be ready. The default value is `.never`, indicating no timeout.
-    /// - Returns: The method returns asynchronously when the central manager is ready or an error occurs.
     /// - Throws: An error if the it's not possible to wait for the central manager to be ready within the provided timeout.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never) async throws {
         try await withCheckedThrowingContinuation { continuation in

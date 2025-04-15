@@ -289,7 +289,7 @@ extension BlePeripheralManagerProxy {
     ///
     /// Unregisters previously added services, making them unavailable for centrals.
     ///
-    /// - Parameter servicew: A list of `CBMutableService` instance representing the services to remove.
+    /// - Parameter services: A list of `CBMutableService` instance representing the services to remove.
     public func remove(services: [CBMutableService]) {
         for service in services {
             peripheralManager.remove(service)
