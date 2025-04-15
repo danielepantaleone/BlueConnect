@@ -34,9 +34,6 @@
 /// By conforming to `BlePeripheralDelegate`, objects can simulate a BLE peripheral's behavior, allowing controlled testing of peripheral operations such as reading and writing
 /// characteristics, discovering services, and handling updates to RSSI and characteristics. This protocol includes methods corresponding to BLE operations that occur during
 /// communication with a peripheral.
-///
-/// Conforms to: `CBPeripheralDelegate`
-///
 public protocol BlePeripheralDelegate: CBPeripheralDelegate {
     
     /// Called when the BLE peripheral's name has been updated.
