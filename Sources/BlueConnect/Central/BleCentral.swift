@@ -43,6 +43,7 @@ public protocol BleCentral: AnyObject {
     ///
     /// This value represents the central’s maximum limit for data transfer, which may vary depending on the device capabilities.
     var maximumUpdateValueLength: Int { get }
+    
 }
 
 extension CBCentral: BleCentral {

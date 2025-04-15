@@ -394,7 +394,7 @@ extension BleCentralManagerProxy {
     ///
     /// - Parameter serviceUUIDs: A list of service UUIDs (represented by `CBUUID` objects) to filter connected peripherals.
     /// - Returns: A list of objects implementing the `BlePeripheral` protocol.
-    func retrieveConnectedPeripherals(withServices serviceUUIDs: [CBUUID]) -> [BlePeripheral] {
+    public func retrieveConnectedPeripherals(withServices serviceUUIDs: [CBUUID]) -> [BlePeripheral] {
         return centralManager.retrieveConnectedPeripherals(withServiceIds: serviceUUIDs)
     }
     
@@ -404,7 +404,7 @@ extension BleCentralManagerProxy {
     ///
     /// - Parameter identifiers: A list of peripheral identifiers (represented by `UUID` objects) from which peripheral objects can be retrieved.
     /// - Returns: A list of objects implementing the `BlePeripheral` protocol.
-    func retrievePeripherals(withIdentifiers identifiers: [UUID]) -> [BlePeripheral] {
+    public func retrievePeripherals(withIdentifiers identifiers: [UUID]) -> [BlePeripheral] {
         return centralManager.retrievePeripherals(withIds: identifiers)
     }
     
