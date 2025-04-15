@@ -290,9 +290,8 @@ extension BleCentralManagerProxy {
             return
         }
         
-        disconnectionRegistry.register(
-            key: peripheral.identifier,
-            callback: callback)
+        // Track disconnection callback in the disconnection registry.
+        disconnectionRegistry.register(key: peripheral.identifier, callback: callback)
 
         // If already disconnecting, no need to reinitiate disconnection.
         guard peripheral.state != .disconnecting else {
@@ -461,10 +460,7 @@ extension BleCentralManagerProxy {
         }
         
         // Register a callback to be notified when central manager is powered on.
-        waitUntilReadyRegistry.register(
-            callback: callback,
-            timeout: timeout
-        ) {
+        waitUntilReadyRegistry.register(callback: callback, timeout: timeout) {
             $0.notify(.failure(BleCentralManagerProxyError.readyTimeout))
         }
         

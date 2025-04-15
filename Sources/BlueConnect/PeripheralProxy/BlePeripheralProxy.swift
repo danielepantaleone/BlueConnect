@@ -581,10 +581,7 @@ extension BlePeripheralProxy {
             return
         }
        
-        rssiReadRegistry.register(
-            callback: callback,
-            timeout: timeout
-        ) {
+        rssiReadRegistry.register(callback: callback, timeout: timeout) {
             $0.notify(.failure(BlePeripheralProxyError.rssiReadTimeout))
         }
       
