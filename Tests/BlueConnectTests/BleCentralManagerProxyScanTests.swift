@@ -340,7 +340,7 @@ extension BleCentralManagerProxyScanTests {
         do {
             for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .never) {
                 // Check that we are scanning
-                XCTAssertTrue(bleCentralManagerProxy.isScanning)
+                XCTAssertTrue(bleCentralManager.isScanning)
             }
             XCTFail("peripheral discovery terminated with success but failure was expected")
         } catch {
