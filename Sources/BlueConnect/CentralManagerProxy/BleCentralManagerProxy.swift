@@ -540,17 +540,7 @@ extension BleCentralManagerProxy {
         discoverTimer = DispatchSource.makeTimerSource(queue: globalQueue)
         discoverTimer?.schedule(deadline: .now() + timeout, repeating: .never)
         discoverTimer?.setEventHandler { [weak self] in
-            guard let self else { return }
-            lock.lock()
-            defer { lock.unlock() }
-            // Stop scanning for peripherals.
-            centralManager.stopScan()
-            // Kill the timer and reset.
-            discoverTimer?.cancel()
-            discoverTimer = nil
-            // Send out completion on the publisher.
-            discoverSubject?.send(completion: .finished)
-            discoverSubject = nil
+            self?.stopScan()
         }
         discoverTimer?.resume()
     }
