@@ -6,6 +6,7 @@ Release Notes
 TBD
 
 - Added missing sendable conformance to library proxies [91b3a3b](https://github.com/danielepantaleone/BlueConnect/commit/91b3a3b7df55469ff2b3c99e36f22446aa6cdd20)
+- Fix central manager proxy not stopping BLE scan when manually requested [a0d453b](https://github.com/danielepantaleone/BlueConnect/commit/a0d453bdee2582a98d795c16e31019d5614fa5ac)
 - Fix missing public accessibility to central manager proxy methods [e6b6980](https://github.com/danielepantaleone/BlueConnect/commit/e6b698072e51c7cc052819ba1c41db368a8ff22a)
 - Implement peripheral scan using async throwing stream [ff32606](https://github.com/danielepantaleone/BlueConnect/commit/ff326066e50b1038061cb5e34a51eaee5cc214e6)
 
