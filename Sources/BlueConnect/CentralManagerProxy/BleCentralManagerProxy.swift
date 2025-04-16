@@ -426,6 +426,8 @@ extension BleCentralManagerProxy {
     public func stopScan() {
         lock.lock()
         defer { lock.unlock() }
+        // Stop scanning for peripherals.
+        centralManager.stopScan()
         // Stop discover timer.
         discoverTimer?.cancel()
         discoverTimer = nil
