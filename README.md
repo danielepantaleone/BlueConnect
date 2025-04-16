@@ -38,12 +38,12 @@ This combination of asynchronous communication, event-driven architecture, and t
 
 - [x] Supports both iOS and macOS.
 - [x] Completely covered by unit tests.
-- [x] Replaces the delegate-based interface of **CBCentralManager**, **CBPeripheralManager** and **CBPeripheral** with closures and Swift concurrency (async/await).
-- [x] Delivers event notifications via Combine publishers for **CBCentralManager**, **CBPeripheralManager** and **CBPeripheral**.
+- [x] Replaces the delegate-based interface with closures and Swift concurrency (async/await).
+- [x] Delivers event notifications via Combine publishers.
 - [x] Includes connection timeout handling for **CBPeripheral**.
 - [x] Includes characteristic operations timeout handling for **CBPeripheral** (discovery, read, write, set notify).
 - [x] Provides direct interaction with **CBPeripheral** characteristics with no need to manage **CBPeripheral** data.
-- [x] Provides an optional cache policy for **CBPeripheral** data retrieval, ideal for scenarios where characteristic data remains static over time.
+- [x] Provides optional cache policy for **CBPeripheral** data retrieval, ideal for scenarios where characteristic data remains static over time.
 - [x] Provides automatic service/characteristic discovery when characteristic operations are requested (read, write, set notify).
 - [x] Provides notification via Combine publisher when advertising is stopped on the **CBPeripheralManager**.
 - [x] Correct routing of **CBCentralManager** disconnection events towards connection failure publisher and callbacks if the connection didn't happen at all.
@@ -84,15 +84,12 @@ failure events.
 
 ```swift
 import BlueConnect
-import Combine
-import CoreBluetooth
 
-var subscriptions: Set<AnyCancellable> = []
 let centralManagerProxy = BleCentralManagerProxy()
 
 do {
     try await centralManagerProxy.waitUntilReady()
-    centralManagerProxy.scanForPeripherals(timeout: .seconds(30))
+    let subscription = centralManagerProxy.scanForPeripherals(timeout: .seconds(30))
         .receive(on: DispatchQueue.main)
         .sink(
             receiveCompletion: { completion in
@@ -109,14 +106,29 @@ do {
                 print("peripheral '\(peripheral.identifier)' was discovered")
             }
         )
-        .store(in: &subscriptions)
 } catch {
     print("peripheral scan failed with error: \(error)")
 }
 ```
 
-The peripheral scan will automatically stop if a timeout is specified. However, you can also manually stop the scan at 
-any time by calling `stopScan` on the **BleCentralManagerProxy**.
+You can alternatively make use of Swift Concurrency async stream to iterate over discovered peripherals:
+
+```swift
+import BlueConnect
+
+let centralManagerProxy = BleCentralManagerProxy()
+
+do {
+    try await centralManagerProxy.waitUntilReady()
+    for try await result in bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(30)) {
+        print("peripheral '\(result.peripheral.identifier)' was discovered")
+    }
+} catch {
+    print("peripheral scan failed with error: \(error)")
+}
+```
+
+The peripheral scan will automatically stop if a timeout is specified. However, you can also manually stop the scan at any time by calling `stopScan` on the **BleCentralManagerProxy**.
 
 ### Connecting a peripheral
 
@@ -128,27 +140,22 @@ to react to the connection status.
 
 ```swift
 import BlueConnect
-import Combine
-import CoreBluetooth
 
-var subscriptions: Set<AnyCancellable> = []
 let centralManagerProxy = BleCentralManagerProxy()
 
 // You can optionally subscribe a publisher to be notified when a connection is established.
-centralManagerProxy.didConnectPublisher
+let subscription1 = centralManagerProxy.didConnectPublisher
     .receive(on: DispatchQueue.main)
     .sink { peripheral in 
         print("peripheral '\(peripheral.identifier)' connected")
     }
-    .store(in: &subscriptions)
 
 // You can optionally subscribe a publisher to be notified when a connection attempt fails.
-centralManagerProxy.didFailToConnectPublisher
+let subscription2 = centralManagerProxy.didFailToConnectPublisher
     .receive(on: DispatchQueue.main)
     .sink { peripheral, error in 
         print("peripheral '\(peripheral.identifier)' failed to connect with error: \(error)")
     }
-    .store(in: &subscriptions)
 
 do {
     // The following will try to establish a connection to a BLE peripheral for at most 60 seconds.
@@ -173,19 +180,15 @@ connection status.
 
 ```swift
 import BlueConnect
-import Combine
-import CoreBluetooth
 
-var subscriptions: Set<AnyCancellable> = []
 let centralManagerProxy = BleCentralManagerProxy()
 
 // You can optionally subscribe a publisher to be notified when a peripheral is disconnected.
-centralManagerProxy.didDisconnectPublisher
+let subscription = centralManagerProxy.didDisconnectPublisher
     .receive(on: DispatchQueue.main)
     .sink { peripheral in 
         print("peripheral '\(peripheral.identifier)' disconnected")
     }
-    .store(in: &subscriptions)
 
 do {
     // The following will disconnect a BLE peripheral.
@@ -203,19 +206,15 @@ To read connected peripheral RSSI you can use the `readRSSI` method of the `BleP
 
 ```swift
 import BlueConnect
-import Combine
-import CoreBluetooth
 
-var subscriptions: Set<AnyCancellable> = []
 let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
 
 // You can optionally subscribe a publisher to be triggered when the RSSI value is read.
-peripheralProxy.didUpdateRSSIPublisher
+let subscription = peripheralProxy.didUpdateRSSIPublisher
     .receive(on: DispatchQueue.main)
     .sink { value in 
         print("RSSI: \(value)")
     }
-    .store(in: &subscriptions)
 
 do {
     // The following will read the RSSI value from a connected peripheral.
@@ -233,7 +232,6 @@ which provides the necessary functionality for reading data from a characteristi
 
 ```swift
 import BlueConnect
-import Combine
 import CoreBluetooth
 
 // Declare your type conforming to the BleCharacteristicReadProxy protocol.
@@ -256,18 +254,16 @@ struct SerialNumberProxy: BleCharacteristicReadProxy {
         
 }
 
-var subscriptions: Set<AnyCancellable> = []
 let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
 let serialNumberProxy = SerialNumberProxy(peripheralProxy: peripheralProxy)
 
 // You can optionally subscribe a publisher to be notified when data is read from the characteristic.
 // The publisher sink method won't be triggered when reading data from local cache.
-serialNumberProxy.didUpdateValuePublisher
+let subscription = serialNumberProxy.didUpdateValuePublisher
     .receive(on: DispatchQueue.main)
     .sink { serialNumber in 
         print("serial number is \(serialNumber)")
      }
-    .store(in: &subscriptions)
 
 do {
     // The following will read the serial number of the characteristic.
@@ -287,7 +283,6 @@ which provides the necessary functionality for writing data to a characteristic.
 
 ```swift
 import BlueConnect
-import Combine
 import CoreBluetooth
 
 // Declare your type conforming to the BleCharacteristicWriteProxy protocol.
@@ -310,17 +305,15 @@ struct PinProxy: BleCharacteristicWriteProxy {
         
 }
 
-var subscriptions: Set<AnyCancellable> = []
 let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
 let pinProxy = PinProxy(peripheralProxy: peripheralProxy)
 
 // You can optionally subscribe a publisher to be notified when data is written to the characteristic.
-pinProxy.didWriteValuePublisher
+let subscription = pinProxy.didWriteValuePublisher
     .receive(on: DispatchQueue.main)
     .sink {  
         print("data was written to the characteristic")
      }
-    .store(in: &subscriptions)
 
 do {
     // The following will write the PIN to the PIN characteristic.
@@ -341,7 +334,6 @@ provides the necessary functionality to enable data notify on the characteristic
 
 ```swift
 import BlueConnect
-import Combine
 import CoreBluetooth
 
 // Declare your type conforming to the BleCharacteristicNotifyProxy and BleCharacteristicReadProxy protocols.
@@ -366,25 +358,22 @@ struct HeartRateProxy: BleCharacteristicReadProxy, BleCharacteristicNotifyProxy 
         
 }
 
-var subscriptions: Set<AnyCancellable> = []
 let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
 let heartRateProxy = HeartRateProxy(peripheralProxy: peripheralProxy)
 
 // You can optionally subscribe a publisher to be triggered when the notify flag is changed.
-heartRateProxy.didUpdateNotificationStatePublisher
+let subscription1 = heartRateProxy.didUpdateNotificationStatePublisher
     .receive(on: DispatchQueue.main)
     .sink { enabled in 
         print("notification enabled: \(enabled)")
     }
-    .store(in: &subscriptions)
 
 // You can optionally subscribe a publisher to be notified when data is received from the characteristic.
-heartRateProxy.didUpdateValuePublisher
+let subscription2 = heartRateProxy.didUpdateValuePublisher
     .receive(on: DispatchQueue.main)
     .sink { heartRate in 
         print("heart rate is \(heartRate)")
      }
-    .store(in: &subscriptions)
 
 do {
     // The following will enable data notify on the Heart Rate characteristic

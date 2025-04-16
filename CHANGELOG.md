@@ -9,6 +9,7 @@ TBD
 - Fix central manager proxy not stopping BLE scan when manually requested [a0d453b](https://github.com/danielepantaleone/BlueConnect/commit/a0d453bdee2582a98d795c16e31019d5614fa5ac)
 - Fix missing public accessibility to central manager proxy methods [e6b6980](https://github.com/danielepantaleone/BlueConnect/commit/e6b698072e51c7cc052819ba1c41db368a8ff22a)
 - Implement peripheral scan using async throwing stream [ff32606](https://github.com/danielepantaleone/BlueConnect/commit/ff326066e50b1038061cb5e34a51eaee5cc214e6)
+- Make use of integer type to deal with RSSI [6149272](https://github.com/danielepantaleone/BlueConnect/commit/6149272080b53ef5e2ea57aaa3b288b676511ebb)
 
 ## 1.3.5
 
