@@ -266,9 +266,10 @@ extension BleCentralManagerProxyScanTests {
             XCTFail("peripheral discovery terminated with error: \(error)")
         }
         await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
-        XCTAssertTrue(bleCentralManagerProxy.isScanning)
+        // We assert like it's finished because of the termination handling in the async stream
+        XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
-        XCTAssertNotNil(bleCentralManagerProxy.discoverSubject)
+        XCTAssertNil(bleCentralManagerProxy.discoverSubject)
     }
     
     func testScanWithNoTimeoutManuallyStoppedAsync() async throws {
