@@ -199,10 +199,7 @@ extension BlePeripheralManagerProxy {
         }
         
         // Register a callback to be notified when advertising is started.
-        startAdvertisingRegistry.register(
-            callback: callback,
-            timeout: timeout
-        ) {
+        startAdvertisingRegistry.register(callback: callback, timeout: timeout) {
             $0.notify(.failure(BlePeripheralManagerProxyError.advertisingTimeout))
         }
         
@@ -397,10 +394,7 @@ extension BlePeripheralManagerProxy {
         }
         
         // Register a callback to be notified when peripheral manager is powered on.
-        waitUntilReadyRegistry.register(
-            callback: callback,
-            timeout: timeout
-        ) {
+        waitUntilReadyRegistry.register(callback: callback, timeout: timeout) {
             $0.notify(.failure(BlePeripheralManagerProxyError.readyTimeout))
         }
         

@@ -57,9 +57,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         
         // Notify on the callbacks (for each service already discovered).
         services.forEach { service in
-            discoverServiceRegistry.notify(
-                key: service.uuid,
-                value: .success(service))
+            discoverServiceRegistry.notify(key: service.uuid, value: .success(service))
         }
     
     }
@@ -85,9 +83,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         
         // Notify on the callbacks (for each service already discovered).
         characteristics.forEach { characteristic in
-            discoverCharacteristicRegistry.notify(
-                key: characteristic.uuid,
-                value: .success(characteristic))
+            discoverCharacteristicRegistry.notify(key: characteristic.uuid, value: .success(characteristic))
         }
         
     }
@@ -134,9 +130,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         didUpdateNotificationStateSubject.send((characteristic, characteristic.isNotifying))
 
         // Notify callbacks.
-        characteristicNotifyRegistry.notify(
-            key: characteristic.uuid,
-            value: .success(characteristic.isNotifying))
+        characteristicNotifyRegistry.notify(key: characteristic.uuid, value: .success(characteristic.isNotifying))
         
     }
     
@@ -150,30 +144,22 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         
         // Notify any error on awaiting callbacks.
         if let error {
-            characteristicReadRegistry.notify(
-                key: characteristic.uuid,
-                value: .failure(error))
+            characteristicReadRegistry.notify(key: characteristic.uuid, value: .failure(error))
             return
         }
         
         // Notify missing data error on awaiting callbacks.
         guard let data = characteristic.value else {
-            characteristicReadRegistry.notify(
-                key: characteristic.uuid,
-                value: .failure(BlePeripheralProxyError.characteristicDataIsNil(characteristicUUID: characteristic.uuid)))
+            characteristicReadRegistry.notify(key: characteristic.uuid, value: .failure(BlePeripheralProxyError.characteristicDataIsNil(characteristicUUID: characteristic.uuid)))
            return
         }
         
         // Save to local cache (will be reused in the future according with the provided read policy).
         cache[characteristic.uuid] = .init(data: data)
-
         // Notify on the publisher.
         didUpdateValueSubject.send((characteristic, data))
-
         // Notify callbacks.
-        characteristicReadRegistry.notify(
-            key: characteristic.uuid,
-            value: .success(data))
+        characteristicReadRegistry.notify(key: characteristic.uuid, value: .success(data))
 
     }
     
@@ -184,19 +170,14 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
             
         // Notify any error on awaiting callbacks.
         if let error {
-            characteristicWriteRegistry.notify(
-                key: characteristic.uuid,
-                value: .failure(error))
+            characteristicWriteRegistry.notify(key: characteristic.uuid, value: .failure(error))
             return
         }
         
         // Notify on the publisher.
         didWriteValueSubject.send(characteristic)
-        
         // Notify callbacks.
-        characteristicWriteRegistry.notify(
-            key: characteristic.uuid,
-            value: .success(()))
+        characteristicWriteRegistry.notify(key: characteristic.uuid, value: .success(()))
         
     }
     
