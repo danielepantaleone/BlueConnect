@@ -45,6 +45,8 @@ final class BlePeripheralProxyTests: BlueConnectTests {
         try super.setUpWithError()
         blePeripheralProxy_1 = .init(peripheral: try blePeripheral_1)
         blePeripheralProxy_2 = .init(peripheral: try blePeripheral_2)
+        XCTAssertNotNil(try blePeripheral_1.peripheralDelegate)
+        XCTAssertNotNil(try blePeripheral_2.peripheralDelegate)
     }
     
     override func tearDownWithError() throws {
