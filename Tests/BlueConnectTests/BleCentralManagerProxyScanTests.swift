@@ -133,7 +133,7 @@ extension BleCentralManagerProxyScanTests {
         // Await expectation
         wait(for: [completionExp, publisherExp], timeout: 5.0)
         subscription.cancel()
-        XCTAssertTrue(bleCentralManagerProxy.isScanning)
+        XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
     }
@@ -292,7 +292,7 @@ extension BleCentralManagerProxyScanTests {
             XCTFail("peripheral discovery terminated with error: \(error)")
         }
         await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
-        XCTAssertTrue(bleCentralManagerProxy.isScanning)
+        XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
     }
@@ -319,7 +319,7 @@ extension BleCentralManagerProxyScanTests {
             task.cancel()
         }
         await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
-        XCTAssertTrue(bleCentralManagerProxy.isScanning)
+        XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
     }
