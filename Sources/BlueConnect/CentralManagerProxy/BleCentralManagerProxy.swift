@@ -377,6 +377,7 @@ extension BleCentralManagerProxy {
     ///
     /// This function initiates a scan for BLE peripherals returning an `AsyncThrowingStream` that can be used to iterate over discovered peripherals.
     /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
+    /// The scan is stopped gracefully if the container `Task` is canceled.
     ///
     /// - Note: If the central manager is not in the `.poweredOn` state, the scan fails, and the async stream is finished with an appropriate error.
     public func scanForPeripherals(
