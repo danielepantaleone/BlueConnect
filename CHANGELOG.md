@@ -3,7 +3,7 @@ Release Notes
 
 ## 1.4.0
 
-TBD
+Released April 16, 2025
 
 - Added missing sendable conformance to library proxies [91b3a3b](https://github.com/danielepantaleone/BlueConnect/commit/91b3a3b7df55469ff2b3c99e36f22446aa6cdd20)
 - Added support for RSSI signal strength notification [0a89664](https://github.com/danielepantaleone/BlueConnect/commit/0a89664d3678123c6ecab5229e4822526fe6fa22)
