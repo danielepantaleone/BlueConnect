@@ -296,6 +296,33 @@ extension BleCentralManagerProxyScanTests {
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
     }
     
+    func testScanWithNoTimeoutStoppedByTaskCancellationAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test scan discovery
+        let completionExp = expectation(description: "waiting for scan to be terminated")
+        let publisherExp = expectation(description: "waiting for peripheral discovery to be signaled by publisher")
+        publisherExp.assertForOverFulfill = false
+        let task = Task {
+            do {
+                for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .never) {
+                    publisherExp.fulfill()
+                }
+                completionExp.fulfill()
+            } catch {
+                XCTFail("peripheral discovery terminated with error: \(error)")
+            }
+        }
+        // Manually cancel the task in 4 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) {
+            task.cancel()
+        }
+        await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
+        XCTAssertTrue(bleCentralManagerProxy.isScanning)
+        XCTAssertNil(bleCentralManagerProxy.discoverTimer)
+        XCTAssertNil(bleCentralManagerProxy.discoverSubject)
+    }
+    
     func testScanFailDueToBleCentralManagerOffAsync() async throws {
         // Test scan discovery
         let completionExp = expectation(description: "waiting for scan to terminate with failure")

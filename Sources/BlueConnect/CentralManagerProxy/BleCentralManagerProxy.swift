@@ -32,7 +32,7 @@ import Foundation
 /// `BleCentralManagerProxy` provides a higher-level abstraction for managing BLE peripherals via `BleCentralManager`.
 ///
 /// This class uses Combine publishers to emit updates on BLE-related events, such as peripheral discovery, peripheral connection/disconnection and state updates.
-public class BleCentralManagerProxy: NSObject {
+public class BleCentralManagerProxy: NSObject, @unchecked Sendable {
     
     // MARK: - Public properties
     
@@ -412,8 +412,9 @@ extension BleCentralManagerProxy {
                     continuation.yield((peripheral, advertisementData, RSSI))
                 }
             )
-            continuation.onTermination = { @Sendable _ in
+            continuation.onTermination = { @Sendable [weak self]  _ in
                 box.cancellable?.cancel()
+                self?.stopScan()
             }
         }
     }
@@ -428,8 +429,9 @@ extension BleCentralManagerProxy {
         discoverTimer?.cancel()
         discoverTimer = nil
         // Send publisher completion.
-        discoverSubject?.send(completion: .finished)
+        let subject = discoverSubject
         discoverSubject = nil
+        subject?.send(completion: .finished)
     }
     
 }
