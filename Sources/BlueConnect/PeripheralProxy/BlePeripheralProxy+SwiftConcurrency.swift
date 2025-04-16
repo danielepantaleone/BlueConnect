@@ -87,7 +87,7 @@ public extension BlePeripheralProxy {
     /// - Parameter timeout: The maximum time to wait for an RSSI read operation. Defaults to 10 seconds.
     /// - Returns: The RSSI value representing the signal strength in dBm.
     /// - Throws: An error if the peripheral RSSI value cannot be read within the specified timeout or is not valid.
-    func readRSSI(timeout: DispatchTimeInterval = .seconds(10)) async throws -> NSNumber {
+    func readRSSI(timeout: DispatchTimeInterval = .seconds(10)) async throws -> Int {
         try await withCheckedThrowingContinuation { continuation in
             readRSSI(timeout: timeout) { result in
                 globalQueue.async {

@@ -452,7 +452,7 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             let localDelegate: BlePeripheralDelegate?
             let localError: Error?
             let localDelay: DispatchTimeInterval?
-            let localRSSI: NSNumber
+            let localRSSI: Int
             lock.lock()
             localDelegate = peripheralDelegate
             if state != .connected {
@@ -472,7 +472,7 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 localError = nil
                 localDelay = delayOnRSSI
             }
-            localRSSI = NSNumber(value: rssi)
+            localRSSI = rssi
             self.delayOnRSSI = nil
             self.errorOnRSSI = nil
             self.rssiNotAvailable = false

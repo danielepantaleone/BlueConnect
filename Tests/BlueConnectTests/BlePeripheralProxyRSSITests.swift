@@ -67,15 +67,15 @@ extension BlePeripheralProxyRSSITests {
         // Test read emit on publisher
         let subscription = blePeripheralProxy_1.didUpdateRSSIPublisher
             .receive(on: DispatchQueue.main)
-            .filter { $0.intValue >= -90 && $0.intValue <= -50 }
+            .filter { $0 >= -90 && $0 <= -50 }
             .sink { _ in publisherExp.fulfill() }
         // Test read on callback
         blePeripheralProxy_1.readRSSI(timeout: .never) { [weak self] result in
             guard let self else { return }
             switch result {
                 case .success(let value):
-                    XCTAssertGreaterThanOrEqual(value.intValue, -90)
-                    XCTAssertLessThanOrEqual(value.intValue, -50)
+                    XCTAssertGreaterThanOrEqual(value, -90)
+                    XCTAssertLessThanOrEqual(value, -50)
                     XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
                     readExp.fulfill()
                 case .failure(let error):
@@ -286,8 +286,8 @@ extension BlePeripheralProxyRSSITests {
         // Test RSSI read
         do {
             let value = try await blePeripheralProxy_1.readRSSI(timeout: .never)
-            XCTAssertGreaterThanOrEqual(value.intValue, -90)
-            XCTAssertLessThanOrEqual(value.intValue, -50)
+            XCTAssertGreaterThanOrEqual(value, -90)
+            XCTAssertLessThanOrEqual(value, -50)
             XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
         } catch {
             XCTFail("peripheral RSSI read failed with error: \(error)")

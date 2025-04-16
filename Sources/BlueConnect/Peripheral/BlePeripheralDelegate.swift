@@ -75,9 +75,9 @@ public protocol BlePeripheralDelegate: CBPeripheralDelegate {
     ///
     /// - Parameters:
     ///   - peripheral: The mock `BlePeripheral` that read its RSSI.
-    ///   - RSSI: The current RSSI value as an `NSNumber`.
+    ///   - RSSI: The current RSSI value as an `Int`.
     ///   - error: An optional error if the operation failed.
-    func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: NSNumber, error: Error?)
+    func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: Int, error: Error?)
     
     /// Called when the BLE peripheral has updated the notification state for a characteristic.
     ///
@@ -111,7 +111,7 @@ extension BlePeripheralDelegate {
     public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverIncludedServicesFor service: CBService, error: Error?) { }
     public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverServices error: Error?) { }
     public func blePeripheral(_ peripheral: BlePeripheral, didModifyServices invalidatedServices: [CBService]) { }
-    public func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: NSNumber, error: Error?) { }
+    public func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: Int, error: Error?) { }
     public func blePeripheral(_ peripheral: BlePeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) { }
     public func blePeripheral(_ peripheral: BlePeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) { }
     public func blePeripheral(_ peripheral: BlePeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) { }

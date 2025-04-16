@@ -38,7 +38,7 @@ extension BlePeripheralProxy: CBPeripheralDelegate {
     }
     
     public func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
-        blePeripheral(peripheral, didReadRSSI: RSSI, error: error)
+        blePeripheral(peripheral, didReadRSSI: RSSI.intValue, error: error)
     }
     
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {

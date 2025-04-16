@@ -88,7 +88,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         
     }
     
-    public func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
+    public func blePeripheral(_ peripheral: BlePeripheral, didReadRSSI RSSI: Int, error: Error?) {
         
         lock.lock()
         defer { lock.unlock() }
@@ -100,7 +100,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         }
         
         // A value of 127 dBm (or 0x7F in hexadecimal) is a special indicator, meaning the RSSI reading is unavailable.
-        if RSSI.intValue == -127 {
+        if RSSI == -127 {
             rssiReadRegistry.notifyAll(.failure(BlePeripheralProxyError.rssiReadNotAvailable))
             return
         }

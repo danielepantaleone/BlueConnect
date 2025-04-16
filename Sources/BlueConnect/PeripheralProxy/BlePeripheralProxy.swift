@@ -67,8 +67,8 @@ public final class BlePeripheralProxy: NSObject, @unchecked Sendable {
     }
     
     /// A publisher that emits the updated RSSI (Received Signal Strength Indicator) value for the peripheral.
-    /// It emits an `NSNumber` representing the RSSI.
-    public var didUpdateRSSIPublisher: AnyPublisher<NSNumber, Never> {
+    /// It emits an `Int` representing the RSSI.
+    public var didUpdateRSSIPublisher: AnyPublisher<Int, Never> {
         didUpdateRSSISubject.eraseToAnyPublisher()
     }
     
@@ -95,13 +95,13 @@ public final class BlePeripheralProxy: NSObject, @unchecked Sendable {
     let characteristicWriteRegistry: KeyedRegistry<CBUUID, Void> = .init()
     let discoverCharacteristicRegistry: KeyedRegistry<CBUUID, CBCharacteristic> = .init()
     let discoverServiceRegistry: KeyedRegistry<CBUUID, CBService> = .init()
-    let rssiReadRegistry: ListRegistry<NSNumber> = .init()
+    let rssiReadRegistry: ListRegistry<Int> = .init()
 
     let didDiscoverCharacteristicsSubject: PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never> = .init()
     let didDiscoverServicesSubject: PassthroughSubject<[CBService], Never> = .init()
     let didUpdateNameSubject: PassthroughSubject<String?, Never> = .init()
     let didUpdateNotificationStateSubject: PassthroughSubject<(characteristic: CBCharacteristic, enabled: Bool), Never> = .init()
-    let didUpdateRSSISubject: PassthroughSubject<NSNumber, Never> = .init()
+    let didUpdateRSSISubject: PassthroughSubject<Int, Never> = .init()
     let didUpdateValueSubject: PassthroughSubject<(characteristic: CBCharacteristic, data: Data), Never> = .init()
     let didWriteValueSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
     
@@ -568,10 +568,7 @@ extension BlePeripheralProxy {
     /// - Parameters:
     ///   - timeout: The maximum time to wait for an RSSI read operation. Defaults to 10 seconds.
     ///   - callback: A closure that is called with the result of the RSSI read operation. The closure is passed a `Result` containing the RSSI value or an error if the read fails.
-    public func readRSSI(
-        timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<NSNumber, Error>) -> Void = { _ in }
-    ) {
+    public func readRSSI(timeout: DispatchTimeInterval = .seconds(10), callback: @escaping (Result<Int, Error>) -> Void = { _ in }) {
         
         lock.lock()
         defer { lock.unlock() }
