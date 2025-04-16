@@ -33,7 +33,7 @@ import Foundation
 ///
 /// This class uses Combine publishers to emit updates on BLE-related events, such as service discovery, characteristic updates, and RSSI changes.
 /// It also manages caching of BLE characteristics and handles asynchronous BLE operations like read, write, and notifications.
-public class BlePeripheralProxy: NSObject {
+public final class BlePeripheralProxy: NSObject, @unchecked Sendable {
     
     // MARK: - Public properties
     

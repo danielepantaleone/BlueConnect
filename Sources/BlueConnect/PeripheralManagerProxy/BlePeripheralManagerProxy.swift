@@ -32,7 +32,7 @@ import Foundation
 /// A proxy class to manage a `BlePeripheralManager` instance, providing reactive publishers for various BLE events.
 ///
 /// `BlePeripheralManagerProxy` offers a wrapper around a `BlePeripheralManager`, exposing key properties and providing publishers for Combine-based event handling.
-public class BlePeripheralManagerProxy: NSObject {
+public class BlePeripheralManagerProxy: NSObject, @unchecked Sendable {
     
     // MARK: - Public properties
     
@@ -262,6 +262,8 @@ extension BlePeripheralManagerProxy {
     ///
     /// - Parameter service: A `CBMutableService` instance representing the service to add.
     public func add(_ service: CBMutableService) {
+        lock.lock()
+        defer { lock.unlock() }
         peripheralManager.add(service)
     }
     
@@ -271,6 +273,8 @@ extension BlePeripheralManagerProxy {
     ///
     /// - Parameter services: A list of `CBMutableService` instance representing the services to add.
     public func add(services: [CBMutableService]) {
+        lock.lock()
+        defer { lock.unlock() }
         for service in services {
             peripheralManager.add(service)
         }
@@ -282,6 +286,8 @@ extension BlePeripheralManagerProxy {
     ///
     /// - Parameter service: A `CBMutableService` instance representing the service to remove.
     public func remove(_ service: CBMutableService) {
+        lock.lock()
+        defer { lock.unlock() }
         peripheralManager.remove(service)
     }
     
@@ -291,6 +297,8 @@ extension BlePeripheralManagerProxy {
     ///
     /// - Parameter services: A list of `CBMutableService` instance representing the services to remove.
     public func remove(services: [CBMutableService]) {
+        lock.lock()
+        defer { lock.unlock() }
         for service in services {
             peripheralManager.remove(service)
         }
@@ -300,6 +308,8 @@ extension BlePeripheralManagerProxy {
     ///
     /// This function clears all previously added services, ensuring no services are available for discovery by centrals.
     public func removeAllServices() {
+        lock.lock()
+        defer { lock.unlock() }
         peripheralManager.removeAllServices()
     }
     

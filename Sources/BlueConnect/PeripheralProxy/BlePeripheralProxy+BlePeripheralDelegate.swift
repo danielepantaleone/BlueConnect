@@ -31,6 +31,8 @@ import Foundation
 extension BlePeripheralProxy: BlePeripheralDelegate {
     
     public func blePeripheralDidUpdateName(_ peripheral: BlePeripheral) {
+        lock.lock()
+        defer { lock.unlock() }
         didUpdateNameSubject.send(peripheral.name)
     }
     
