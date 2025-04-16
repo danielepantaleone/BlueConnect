@@ -88,6 +88,7 @@ public final class BlePeripheralProxy: NSObject, @unchecked Sendable {
     
     var cache: [CBUUID: BlePeripheralCacheRecord] = [:]
     var readingCharacteristics: Set<CBUUID> = []
+    var rssiTimer: DispatchSourceTimer?
     let lock = NSRecursiveLock()
     
     let characteristicReadRegistry: KeyedRegistry<CBUUID, Data> = .init()
@@ -132,6 +133,8 @@ public final class BlePeripheralProxy: NSObject, @unchecked Sendable {
         peripheral.peripheralDelegate = nil
         readingCharacteristics.removeAll()
         cache.removeAll()
+        rssiTimer?.cancel()
+        rssiTimer = nil
         
         // Notify registries about shutdown.
         characteristicReadRegistry.notifyAll(.failure(BlePeripheralProxyError.destroyed))
@@ -584,6 +587,42 @@ extension BlePeripheralProxy {
       
         peripheral.readRSSI()
 
+    }
+    
+    /// Enables or disables RSSI signal strength notifications.
+    ///
+    /// When enabled, the peripheral periodically reads its RSSI (Received Signal Strength Indicator),
+    /// and the values are emitted through a Combine publisher at the specified interval.
+    ///
+    /// - Parameters:
+    ///   - enabled: Set to `true` to enable RSSI notifications, or `false` to disable them.
+    ///   - rate: The interval at which RSSI updates are emitted. Ignored when disabling notifications.
+    ///
+    /// - Throws: `BlePeripheralProxyError.peripheralNotConnected` if the peripheral is not currently connected.
+    ///
+    /// - Note: If the requested state is already active, no action is taken.
+    public func setRSSINotify(enabled: Bool, rate: DispatchTimeInterval = .seconds(1)) throws {
+        
+        lock.lock()
+        defer { lock.unlock() }
+        
+        guard peripheral.state == .connected else {
+            throw BlePeripheralProxyError.peripheralNotConnected
+        }
+        
+        if enabled && rssiTimer == nil {
+            rssiTimer?.cancel()
+            rssiTimer = DispatchSource.makeTimerSource(queue: globalQueue)
+            rssiTimer?.schedule(deadline: .now() + rate, repeating: rate)
+            rssiTimer?.setEventHandler { [weak self] in
+                self?.peripheral.readRSSI()
+            }
+            rssiTimer?.resume()
+        } else if !enabled && rssiTimer != nil  {
+            rssiTimer?.cancel()
+            rssiTimer = nil
+        }
+        
     }
     
 }

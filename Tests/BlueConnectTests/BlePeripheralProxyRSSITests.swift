@@ -363,3 +363,56 @@ extension BlePeripheralProxyRSSITests {
     }
 
 }
+
+// MARK: - RSSI notify
+
+extension BlePeripheralProxyRSSITests {
+    
+    func testPeripheralRSSISetNotify() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Test RSSI update on the publisher
+        let enabledExp = expectation(description: "waiting for peripheral RSSI update to be signaled by publisher")
+        enabledExp.expectedFulfillmentCount = 2
+        enabledExp.assertForOverFulfill = false
+        // Test read emit on publisher
+        let subscription1 = blePeripheralProxy_1.didUpdateRSSIPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0 >= -90 && $0 <= -50 }
+            .sink { _ in enabledExp.fulfill() }
+        // Test set notify enabled.
+        try blePeripheralProxy_1.setRSSINotify(enabled: true, rate: .seconds(1))
+        // Await enabled expectation
+        wait(for: [enabledExp], timeout: 4.0)
+        subscription1.cancel()
+        // Turn off notification for RSSI
+        try blePeripheralProxy_1.setRSSINotify(enabled: false)
+        let disabledExp = expectation(description: "waiting for peripheral RSSI update NOT to be signaled by publisher")
+        disabledExp.isInverted = true
+        // Test read emit on publisher
+        let subscription2 = blePeripheralProxy_1.didUpdateRSSIPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0 >= -90 && $0 <= -50 }
+            .sink { _ in disabledExp.fulfill() }
+        // Await enabled expectation
+        wait(for: [disabledExp], timeout: 2.0)
+        subscription2.cancel()
+    }
+    
+    func testPeripheralRSSISetNotifyFailDueToPeripheralDisconnected() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Test read to fail
+        do {
+            try blePeripheralProxy_1.setRSSINotify(enabled: true, rate: .seconds(1))
+            XCTFail("peripheral RSSI set notify was expected to fail but succeeded instead")
+        } catch BlePeripheralProxyError.peripheralNotConnected {
+
+        } catch {
+            XCTFail("peripheral RSSI set notify was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
+        }
+    }
+    
+}
