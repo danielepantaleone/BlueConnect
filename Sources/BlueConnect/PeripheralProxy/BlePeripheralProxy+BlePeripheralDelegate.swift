@@ -100,7 +100,7 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
         }
         
         // A value of 127 dBm (or 0x7F in hexadecimal) is a special indicator, meaning the RSSI reading is unavailable.
-        if RSSI == -127 {
+        if RSSI == 127 {
             rssiReadRegistry.notifyAll(.failure(BlePeripheralProxyError.rssiReadNotAvailable))
             return
         }

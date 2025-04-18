@@ -460,7 +460,7 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 localDelay = nil
                 localError = MockBleError.peripheralNotConnected
             } else if rssiNotAvailable {
-                rssi = -127
+                rssi = 127
                 localDelay = nil
                 localError = nil
             } else if let errorOnRSSI {
