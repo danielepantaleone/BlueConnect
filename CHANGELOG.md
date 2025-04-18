@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 1.4.1
+
+Released April 18, 2025
+
+- Fix RSSI unavailability detection [c6d5c1a](https://github.com/danielepantaleone/BlueConnect/commit/c6d5c1a490dcaf0bc3206f839983d904bbfb680d)
+
 ## 1.4.0
 
 Released April 16, 2025
