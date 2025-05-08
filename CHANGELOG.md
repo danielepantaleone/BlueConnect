@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 1.4.2
+
+Released May 08, 2025
+
+- Fix disconnecting peripheral not triggering connection failed publisher if link was not established [a8417cf](https://github.com/danielepantaleone/BlueConnect/commit/a8417cf94edfcca5669bb83edaf670270a1663d7)
+
 ## 1.4.1
 
 Released April 18, 2025
