@@ -298,8 +298,11 @@ extension BleCentralManagerProxy {
             return
         }
         
-        // Track connection state.
-        connectionState[peripheral.identifier] = .disconnecting
+        // We do not track connection state anymore here. If we do so we lose current connectivity
+        // information of the BLE peripheral and we'll be unable to route the disconnection event
+        // towards the disconnection publisher or the connection failed publisher
+        // connectionState[peripheral.identifier] = .disconnecting
+        
         // Initiate disconnection.
         centralManager.cancelConnection(peripheral)
         
