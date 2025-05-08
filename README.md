@@ -23,6 +23,7 @@ This combination of asynchronous communication, event-driven architecture, and t
     * [Connecting a peripheral](#connecting-a-peripheral)
     * [Disconnecting a peripheral](#disconnecting-a-peripheral)
     * [Reading connected peripheral RSSI](#reading-connected-peripheral-rssi)
+    * [Enabling RSSI notify on a connected peripheral](#enabling-rssi-notify-on-a-connected-peripheral)
     * [Reading a characteristic](#reading-a-characteristic)
     * [Writing a characteristic](#writing-a-characteristic)
     * [Enabling notify on a characteristic](#enabling-notify-on-a-characteristic)
@@ -222,6 +223,30 @@ do {
     print("RSSI: \(value)")
 } catch {
     print("failed to read peripheral RSSI with error: \(error)")
+}
+```
+
+### Enabling RSSI notify on a connected peripheral
+
+To enable RSSI signal notify on a connected peripheral `setRSSINotify` method of the `BlePeripheralProxy`.
+
+```swift
+import BlueConnect
+
+let peripheralProxy = BlePeripheralProxy(peripheral: peripheral)
+
+// You can subscribe a publisher to be triggered when the RSSI value is notified.
+let subscription = peripheralProxy.didUpdateRSSIPublisher
+    .receive(on: DispatchQueue.main)
+    .sink { value in 
+        print("RSSI: \(value)")
+    }
+
+do {
+    // The following will enable RSSI notify on the connected peripheral. Notification will occur every 2 seconds 
+    try await peripheralProxy.setRSSINotify(enabled: true, rate: .seconds(2))
+} catch {
+    print("failed to enable RSSI notify on connected peripheral with error: \(error)")
 }
 ```
 
