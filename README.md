@@ -12,7 +12,7 @@ BlueConnect is a Swift framework built on top of CoreBluetooth, designed to simp
 By wrapping Core Bluetooth functionalities, BlueConnect provides a modern approach to BLE communication. 
 It leverages asynchronous programming models, allowing you to interact with peripherals using either traditional callbacks or Swift concurrency with async/await. 
 
-Additionally, BlueConnect supports event notifications through Combine publishers, offering a more streamlined and reactive way to handle BLE events. 
+Additionally, BlueConnect supports event notifications through [Combine](https://developer.apple.com/documentation/combine)  publishers, offering a more streamlined and reactive way to handle BLE events. 
 By leveraging Swift protocols, BlueConnect also facilitates unit testing, making it easier to build testable libraries and apps that interact with BLE peripherals. 
 This combination of asynchronous communication, event-driven architecture, and testability ensures a highly flexible and modern BLE development experience.
 
@@ -38,50 +38,38 @@ This combination of asynchronous communication, event-driven architecture, and t
 
 ## Feature Highlights
 
-- [x] Supports both iOS and macOS.
-- [x] Completely covered by unit tests.
-- [x] Replaces the delegate-based interface with closures and Swift concurrency (async/await).
-- [x] Delivers event notifications via Combine publishers.
-- [x] Includes connection timeout handling for **CBPeripheral**.
-- [x] Includes characteristic operations timeout handling for **CBPeripheral** (discovery, read, write, set notify).
-- [x] Provides direct interaction with **CBPeripheral** characteristics with no need to manage **CBPeripheral** data.
-- [x] Provides optional cache policy for **CBPeripheral** data retrieval, ideal for scenarios where characteristic data remains static over time.
-- [x] Provides automatic service/characteristic discovery when characteristic operations are requested (read, write, set notify).
-- [x] Provides notification via Combine publisher when advertising is stopped on the **CBPeripheralManager**.
-- [x] Correct routing of **CBCentralManager** disconnection events towards connection failure publisher and callbacks if the connection didn't happen at all.
-- [x] Facilitates unit testing by supporting BLE central and peripheral mocks, enabling easier testing for libraries and apps that interact with BLE peripherals.
+- [x] Works on iOS and macOS.  
+- [x] Fully covered by unit tests.  
+- [x] Uses closures and async/await instead of delegates.  
+- [x] Sends events via [Combine](https://developer.apple.com/documentation/combine) publishers.  
+- [x] Handles **CBPeripheral** connection timeouts.  
+- [x] Handles **CBPeripheral** characteristics operation timeouts.  
+- [x] Accesses **CBPeripheral** characteristics without managing its data.  
+- [x] Offers optional cache for static **CBPeripheral** data.  
+- [x] Auto-discovers services/characteristics on operation.  
+- [x] Publishes when **CBPeripheralManager** stops advertising.  
+- [x] Routes failed **CBCentralManager** connections to the right callbacks.  
+- [x] Supports BLE mocks for easier unit testing.
 
 ## Usage
 
 BlueConnect delegates its functionality to several proxies:
 
-- **BleCentralManagerProxy**: A wrapper around **CBCentralManager**, responsible for connecting, disconnecting, and 
-scanning for peripherals. 
-- **BlePeripheralManagerProxy**: A wrapper around **CBPeripheralManager**, responsible for advertising BLE services, 
-managing local services and characteristics, and reacting to BLE centrals requests. 
-It publishes events using both asynchronous methods (via callbacks or Swift concurrency) and Combine publishers.
-- **BlePeripheralProxy**: A wrapper around **CBPeripheral** that handles communication with BLE peripherals and manages 
-data transmission. 
-Like the central manager proxy, it publishes events through asynchronous methods and Combine publishers.
+- **BleCentralManagerProxy**: Wraps **CBCentralManager** for connecting, disconnecting, and scanning.  
+- **BlePeripheralManagerProxy**: Wraps **CBPeripheralManager** for advertising and handling BLE requests. 
+- **BlePeripheralProxy**: Wraps **CBPeripheral** for communication and data transfer.
 
-Since communication with BLE peripherals requires encoding and decoding raw data, BlueConnect simplifies this 
-interaction by offering various proxy protocols that wrap around **BlePeripheralProxy**. You can create custom proxies 
-by conforming to these protocols, enabling you to perform operations like reading, writing, and enabling notifications 
-on BLE peripheral characteristics:
+Since communication with BLE peripherals requires encoding and decoding raw data, BlueConnect simplifies this interaction by offering various proxy protocols that wrap around **BlePeripheralProxy**. You can create custom proxies by conforming to these protocols, enabling you to perform operations like reading, writing, and enabling notifications on BLE peripheral characteristics:
 
 - **BleCharacteristicProxy**: The base proxy for discovering characteristics.
 - **BleCharacteristicReadProxy**: A proxy for reading data from a characteristic.
 - **BleCharacteristicWriteProxy**: A proxy for writing data to a characteristic.
-- **BleCharacteristicWriteWithoutResponseProxy**: A proxy for writing data to a characteristic without awaiting a 
-response from the BLE peripheral.
+- **BleCharacteristicWriteWithoutResponseProxy**: A proxy for writing data to a characteristic without awaiting a response from the BLE peripheral.
 - **BleCharacteristicNotifyProxy**: A proxy for enabling notifications on a characteristic.
 
 ### Scanning for peripherals
 
-You can start scanning for BLE peripherals by calling `scanForPeripherals` on the **BleCentralManagerProxy**. 
-This method allows you to provide BLE scan options, which are passed directly to the underlying **CBCentralManager**. 
-You can also specify an optional timeout (defaulting to 60 seconds if not provided). 
-The method returns a publisher that you can use to listen for discovered BLE peripherals, along with completion or 
+You can start scanning for BLE peripherals by calling `scanForPeripherals` on the **BleCentralManagerProxy**. This method allows you to provide BLE scan options, which are passed directly to the underlying **CBCentralManager**. You can also specify an optional timeout (defaulting to 60 seconds if not provided). The method returns a publisher that you can use to listen for discovered BLE peripherals, along with completion or 
 failure events.
 
 ```swift
@@ -134,10 +122,7 @@ The peripheral scan will automatically stop if a timeout is specified. However, 
 
 ### Connecting a peripheral
 
-To connect to a BLE peripheral, use the `connect` method on the **BleCentralManagerProxy**. 
-You can provide connection options that will be forwarded to the underlying **CBCentralManager**. 
-Additionally, you have the option to specify a timeout (defaulting to no timeout if not provided).
-The establishment of the connection will also be notified through the Combine publishers, allowing you 
+To connect to a BLE peripheral, use the `connect` method on the **BleCentralManagerProxy**. You can provide connection options that will be forwarded to the underlying **CBCentralManager**. Additionally, you have the option to specify a timeout (defaulting to no timeout if not provided). The establishment of the connection will also be notified through the Combine publishers, allowing you 
 to react to the connection status.
 
 ```swift
@@ -176,9 +161,7 @@ do {
 
 ### Disconnecting a peripheral
 
-To disconnect a connected BLE peripheral, use the `disconnect` method on the **BleCentralManagerProxy**. The 
-disconnection event will be notified through the Combine publisher, enabling you to respond to changes in the 
-connection status.
+To disconnect a connected BLE peripheral, use the `disconnect` method on the **BleCentralManagerProxy**. The disconnection event will be notified through the Combine publisher, enabling you to respond to changes in the connection status.
 
 ```swift
 import BlueConnect
@@ -253,8 +236,7 @@ do {
 
 ### Reading a characteristic
 
-To read a characteristic, you can create your own proxy by conforming to the **BleCharacteristicReadProxy** protocol, 
-which provides the necessary functionality for reading data from a characteristic.
+To read a characteristic, you can create your own proxy by conforming to the **BleCharacteristicReadProxy** protocol, which provides the necessary functionality for reading data from a characteristic.
 
 ```swift
 import BlueConnect
@@ -304,8 +286,7 @@ do {
 
 ### Writing a characteristic
 
-To write a characteristic, you can create your own proxy by conforming to the **BleCharacteristicWriteProxy** protocol, 
-which provides the necessary functionality for writing data to a characteristic.
+To write a characteristic, you can create your own proxy by conforming to the **BleCharacteristicWriteProxy** protocol, which provides the necessary functionality for writing data to a characteristic.
 
 ```swift
 import BlueConnect
@@ -354,9 +335,7 @@ do {
 
 ### Enabling notify on a characteristic
 
-To be notified when characteristic data is updated, you can create your own proxy by conforming to the 
-**BleCharacteristicNotifyProxy** and **BleCharacteristicReadProxy** protocols. The **BleCharacteristicNotifyProxy**
-provides the necessary functionality to enable data notify on the characteristic while the **BleCharacteristicReadProxy** provides the necessary functionality for receiving data from a characteristic.
+To be notified when characteristic data is updated, you can create your own proxy by conforming to the **BleCharacteristicNotifyProxy** and **BleCharacteristicReadProxy** protocols. The **BleCharacteristicNotifyProxy** provides the necessary functionality to enable data notify on the characteristic while the **BleCharacteristicReadProxy** provides the necessary functionality for receiving data from a characteristic.
 
 ```swift
 import BlueConnect
@@ -415,16 +394,13 @@ do {
 
 ## Providing unit tests in your codebase
 
-By leveraging the power of **BleCentralManagerProxy**, **BlePeripheralManagerProxy** and **BlePeripheralProxy**, you can easily create mocks for your codebase, allowing you to run unit tests in a controlled environment. 
-This is made possible because **BleCentralManagerProxy**, **BlePeripheralManagerProxy** and **BlePeripheralProxy** rely on protocols during initialization:
+By leveraging the power of **BleCentralManagerProxy**, **BlePeripheralManagerProxy** and **BlePeripheralProxy**, you can easily create mocks for your codebase, allowing you to run unit tests in a controlled environment. This is made possible because **BleCentralManagerProxy**, **BlePeripheralManagerProxy** and **BlePeripheralProxy** rely on protocols during initialization:
 
 - **BleCentralManager**: A protocol that defines all public methods of **CBCentralManager**. **CBCentralManager** itself conforms to this protocol.
 - **BlePeripheralManager**: A protocol that defines all public methods of **CBPeripheralManager**. **CBPeripheralManager** itself conforms to this protocol.
 - **BlePeripheral**: A protocol that defines all public methods of **CBPeripheral**. **CBPeripheral** itself conforms to this protocol.
 
-You can create mock versions of your central manager and peripheral(s) and supply them during the initialization of 
-**BleCentralManagerProxy**, **BlePeripheralManagerProxy** and **BlePeripheralProxy**. 
-This can be easily achieved by using a dependency injection (DI) container such as [Factory](https://github.com/hmlongco/Factory?tab=readme-ov-file#mocking).
+You can create mock versions of your central manager and peripheral(s) and supply them during the initialization of **BleCentralManagerProxy**, **BlePeripheralManagerProxy** and **BlePeripheralProxy**. This can be easily achieved by using a dependency injection (DI) container such as [Factory](https://github.com/hmlongco/Factory?tab=readme-ov-file#mocking).
 
 - An example of a mocked central manager can be found [here](https://github.com/danielepantaleone/BlueConnect/blob/master/Tests/BlueConnectTests/CentralManager/MockBleCentralManager.swift).
 - An example of a mocked peripheral manager can be found [here](https://github.com/danielepantaleone/BlueConnect/blob/master/Tests/BlueConnectTests/PeripheralManager/MockBlePeripheralManager.swift).
@@ -448,10 +424,19 @@ dependencies: [
 
 ## Contributing
 
-If you like this project, you can contribute by:
+Contributions are welcome and appreciated!
 
-- Submitting a bug report via an [issue](https://github.com/danielepantaleone/BlueConnect/issues)
-- Contributing code through a [pull request](https://github.com/danielepantaleone/BlueConnect/pulls)
+If you'd like to help improve **BlueConnect**, you can contribute in the following ways:
+
+- **Report issues**: Found a bug or unexpected behavior? Please [open an issue](https://github.com/danielepantaleone/BlueConnect/issues) with as much detail as possible. Provide also a minimal complete verifiable example to reproduce the issue.
+
+- **Submit code**: Fixes, improvements, or new features are welcome. Fork the repository, create a feature branch, and submit a [pull request](https://github.com/danielepantaleone/BlueConnect/pulls). Please follow the existing code style and include unit tests when applicable.
+
+- **Improve documentation**: If something in the README or code comments could be clearer, feel free to submit a pull request with improvements.
+
+- **Suggest enhancements**: If you have an idea to improve the library, you're welcome to open an issue.
+
+Thank you for your interest in supporting the project!
 
 ## License
 
