@@ -1,11 +1,12 @@
-![](https://github.com/danielepantaleone/BlueConnect/blob/master/Banner.png?raw=true)
+![Logo](https://github.com/danielepantaleone/BlueConnect/blob/master/Banner.png?raw=true)
 
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
-[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
-![Cocoapods Version](https://img.shields.io/cocoapods/v/BlueConnect)
-![GitHub Release](https://img.shields.io/github/v/release/danielepantaleone/BlueConnect)
-![GitHub License](https://img.shields.io/github/license/danielepantaleone/BlueConnect)
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/danielepantaleone/BlueConnect/swift-tests.yml)
+[![Swift](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
+[![Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
+![Cocoapods](https://img.shields.io/cocoapods/v/BlueConnect)
+![SPM](https://img.shields.io/github/v/release/danielepantaleone/BlueConnect)
+![License](https://img.shields.io/github/license/danielepantaleone/BlueConnect)
+![CI](https://img.shields.io/github/actions/workflow/status/danielepantaleone/BlueConnect/swift-tests.yml)
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=danielepantaleone.blue-connect)
 
 BlueConnect is a Swift framework built on top of CoreBluetooth, designed to simplify interaction with Bluetooth Low Energy (BLE) peripherals. 
 By wrapping Core Bluetooth functionalities, BlueConnect provides a modern approach to BLE communication. 
