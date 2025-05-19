@@ -85,6 +85,7 @@ public class BleCentralManagerProxy: NSObject, @unchecked Sendable {
     
     var connectionState: [UUID: CBPeripheralState] = [:]
     var connectionTimeouts: Set<UUID> = []
+    var disconnectionRequests: Set<UUID> = []
     let connectionRegistry: KeyedRegistry<UUID, Void> = .init()
     let disconnectionRegistry: KeyedRegistry<UUID, Void> = .init()
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
@@ -278,13 +279,13 @@ extension BleCentralManagerProxy {
         lock.lock()
         defer {lock.unlock() }
                 
-        // Ensure central manager is in a powered-on state
+        // Ensure central manager is in a powered-on state.
         guard centralManager.state == .poweredOn else {
             callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
             return
         }
         
-        // If already disconnected, notify success (not on publisher since it's already disconnected)
+        // If already disconnected, notify success (not on publisher since it's already disconnected).
         guard peripheral.state != .disconnected else {
             callback(.success(()))
             return
@@ -292,16 +293,12 @@ extension BleCentralManagerProxy {
         
         // Track disconnection callback in the disconnection registry.
         disconnectionRegistry.register(key: peripheral.identifier, callback: callback)
-
+        disconnectionRequests.insert(peripheral.identifier)
+        
         // If already disconnecting, no need to reinitiate disconnection.
         guard peripheral.state != .disconnecting else {
             return
         }
-        
-        // We do not track connection state anymore here. If we do so we lose current connectivity
-        // information of the BLE peripheral and we'll be unable to route the disconnection event
-        // towards the disconnection publisher or the connection failed publisher
-        // connectionState[peripheral.identifier] = .disconnecting
         
         // Initiate disconnection.
         centralManager.cancelConnection(peripheral)

@@ -140,6 +140,7 @@ extension BleCentralManagerProxyStateChangeTests {
         XCTAssertEqual(bleCentralManagerProxy.connectionState[MockBleDescriptor.peripheralUUID_1], .disconnected)
         XCTAssertEqual(bleCentralManagerProxy.connectionState[MockBleDescriptor.peripheralUUID_2], .disconnected)
         XCTAssertEqual(bleCentralManagerProxy.connectionTimeouts.count, 0 )
+        XCTAssertEqual(bleCentralManagerProxy.disconnectionRequests.count, 0 )
     }
     
 }

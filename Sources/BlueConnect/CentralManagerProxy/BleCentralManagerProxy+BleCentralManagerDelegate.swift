@@ -79,8 +79,9 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
                 
             }
             
-            // Remove any tracked connection timeout.
+            // Remove any tracked connection/disconnection data.
             connectionTimeouts.removeAll()
+            disconnectionRequests.removeAll()
             
             // If we go unauthorized or unsupported stop waiting for central to be ready.
             if central.state == .unauthorized {
@@ -123,6 +124,13 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         if connectionTimeouts.contains(peripheral.identifier) {
             // This is a disconnection caused by canceling a peripheral connection after timeout.
             didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionTimeout))
+        } else if disconnectionRequests.contains(peripheral.identifier) {
+            // This disconnection was manually requested by canceling the peripheral connection.
+            if connectionState[peripheral.identifier] == .connecting {
+                didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionCanceled))
+            } else {
+                didDisconnectSubject.send((peripheral, error))
+            }
         } else if connectionState[peripheral.identifier] == .connecting {
             // Here the peripheral did not connect at all so we route this over the connection failed publisher.
             didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
@@ -137,6 +145,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         // Track connection state.
         connectionState[peripheral.identifier] = .disconnected
         connectionTimeouts.remove(peripheral.identifier)
+        disconnectionRequests.remove(peripheral.identifier)
 
     }
     

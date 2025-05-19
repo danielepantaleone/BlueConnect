@@ -52,7 +52,52 @@ extension BleCentralManagerProxyDisconnectionTests {
         let subscription = bleCentralManagerProxy.didDisconnectPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
-            .sink { _ in publisherExp.fulfill() }
+            .sink { _, error in
+                guard error == nil else {
+                    XCTFail("peripheral disconnection was not expected to generate an error")
+                    return
+                }
+                publisherExp.fulfill()
+            }
+        // Test connection on callback
+        bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1) { result in
+                switch result {
+                    case .success:
+                        disconnectExp.fulfill()
+                    case .failure(let error):
+                        XCTFail("peripheral disconnection failed with error: \(error)")
+                }
+            }
+        wait(for: [disconnectExp, publisherExp], timeout: 2.0)
+        subscription.cancel()
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+    }
+    
+    func testPeripheralDisconnectWithPeripheralConnecting() throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Delay connection to mock connecting state
+        bleCentralManager.delayOnConnection = .seconds(4)
+        // Connect the peripheral
+        bleCentralManagerProxy.connect(peripheral: try blePeripheral_1, options: nil, timeout: .never)
+        // Test disconnection
+        let disconnectExp = expectation(description: "waiting for peripheral to disconnect")
+        let publisherExp = expectation(description: "waiting for peripheral disconnection to be signaled by publisher")
+        // Test disconnection emit on publisher
+        let subscription = bleCentralManagerProxy.didFailToConnectPublisher
+            .receive(on: DispatchQueue.main)
+            .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
+            .sink { _, error in
+                guard let proxyError = error as? BleCentralManagerProxyError else {
+                    XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError, got '\(String(describing: error))' instead")
+                    return
+                }
+                guard case .connectionCanceled = proxyError else {
+                    XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(proxyError)' instead")
+                    return
+                }
+                publisherExp.fulfill()
+            }
         // Test connection on callback
         bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1) { result in
                 switch result {
@@ -78,7 +123,13 @@ extension BleCentralManagerProxyDisconnectionTests {
         let subscription = bleCentralManagerProxy.didDisconnectPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
-            .sink { _ in publisherExp.fulfill() }
+            .sink { _, error in
+                guard error == nil else {
+                    XCTFail("peripheral disconnection was not expected to generate an error")
+                    return
+                }
+                publisherExp.fulfill()
+            }
         // Test connection on callback
         bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1) { result in
             switch result {
@@ -108,7 +159,13 @@ extension BleCentralManagerProxyDisconnectionTests {
         let subscription = bleCentralManagerProxy.didDisconnectPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
-            .sink { _ in publisherExp.fulfill() }
+            .sink { _, error in
+                guard error == nil else {
+                    XCTFail("peripheral disconnection was not expected to generate an error")
+                    return
+                }
+                publisherExp.fulfill()
+            }
         // Test connection on callback
         for _ in 0..<3 {
             bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1) { result in
@@ -136,7 +193,18 @@ extension BleCentralManagerProxyDisconnectionTests {
         let subscription = bleCentralManagerProxy.didDisconnectPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0.peripheral.identifier == MockBleDescriptor.peripheralUUID_1 }
-            .sink { _ in expectation.fulfill() }
+            .sink { peripheral, error in
+                guard let proxyError = error as? BleCentralManagerProxyError else {
+                    XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError, got '\(String(describing: error))' instead")
+                    return
+                }
+                guard case .invalidState(let state) = proxyError else {
+                    XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(proxyError)' instead")
+                    return
+                }
+                XCTAssertEqual(state, .poweredOff)
+                expectation.fulfill()
+            }
         // Turn off ble central manager
         centralManager(state: .poweredOff)
         // Check final state

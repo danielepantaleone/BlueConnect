@@ -33,6 +33,11 @@
 /// the central manager proxy, such as connection timeouts, invalid states, or unknown issues.
 public enum BleCentralManagerProxyError: Error {
     
+    /// Indicates that a connection to a peripheral was manually canceled.
+    ///
+    /// This error is provided when a peripheral connection is canceled using central manager proxy `disconnect`.
+    case connectionCanceled
+    
     /// Indicates that a timeout occurred during peripheral connection.
     ///
     /// This error is thrown when a peripheral connection attempt exceeds the allowed time limit.
