@@ -6,7 +6,6 @@
 ![SPM](https://img.shields.io/github/v/release/danielepantaleone/BlueConnect)
 ![License](https://img.shields.io/github/license/danielepantaleone/BlueConnect)
 ![CI](https://img.shields.io/github/actions/workflow/status/danielepantaleone/BlueConnect/swift-tests.yml)
-![Visitors](https://visitor-badge.laobi.icu/badge?page_id=danielepantaleone.blue-connect)
 
 BlueConnect is a Swift framework built on top of CoreBluetooth, designed to simplify interaction with Bluetooth Low Energy (BLE) peripherals. 
 By wrapping Core Bluetooth functionalities, BlueConnect provides a modern approach to BLE communication. 
@@ -411,14 +410,14 @@ You can create mock versions of your central manager and peripheral(s) and suppl
 ### Cocoapods
 
 ```ruby
-pod 'BlueConnect', '~> 1.4.2'
+pod 'BlueConnect', '~> 1.4.3'
 ```
 
 ### Swift Package Manager
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.4.2"))
+    .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.4.3"))
 ]
 ```
 

@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 1.4.3
+
+Released May 19, 2025
+
+- Provide dedicated error to manual connection canceling [49facd5](https://github.com/danielepantaleone/BlueConnect/commit/49facd5421910e06f8dd4c092edff6f978988fe3)
+
 ## 1.4.2
 
 Released May 08, 2025
