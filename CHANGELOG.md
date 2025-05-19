@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 1.4.4
+
+Released May 19, 2025
+
+- Minor improvements to connection canceled handler [e8bdc85](https://github.com/danielepantaleone/BlueConnect/commit/e8bdc85c21b5b8d2f987b50af5f415c27a200d4c)
+
 ## 1.4.3
 
 Released May 19, 2025
