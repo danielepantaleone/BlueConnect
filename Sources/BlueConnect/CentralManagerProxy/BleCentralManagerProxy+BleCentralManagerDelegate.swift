@@ -109,6 +109,9 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         
         // Track connection state.
         connectionState[peripheral.identifier] = .connected
+        // Remove connection timeouts and disconnection requests for this peripheral.
+        connectionTimeouts.remove(peripheral.identifier)
+        disconnectionRequests.remove(peripheral.identifier)
         // Notify publisher.
         didConnectSubject.send(peripheral)
         // Notify registered callbacks.
@@ -166,6 +169,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         // Track connection state.
         connectionState[peripheral.identifier] = .disconnected
         connectionTimeouts.remove(peripheral.identifier)
+        disconnectionRequests.remove(peripheral.identifier)
         // Notify publisher.
         didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
         // Notify registered callbacks.

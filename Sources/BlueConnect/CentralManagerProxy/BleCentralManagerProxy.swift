@@ -241,6 +241,8 @@ extension BleCentralManagerProxy {
         
         // Track connection state.
         connectionState[peripheral.identifier] = .connecting
+        // Remove any disconnection request for this peripheral.
+        disconnectionRequests.remove(peripheral.identifier)
         // Initiate connection.
         centralManager.connect(peripheral, options: options)
         
