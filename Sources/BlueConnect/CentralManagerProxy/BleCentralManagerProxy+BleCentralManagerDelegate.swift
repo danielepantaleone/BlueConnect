@@ -127,16 +127,13 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         if connectionTimeouts.contains(peripheral.identifier) {
             // This is a disconnection caused by canceling a peripheral connection after timeout.
             didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionTimeout))
-        } else if disconnectionRequests.contains(peripheral.identifier) {
-            // This disconnection was manually requested by canceling the peripheral connection.
-            if connectionState[peripheral.identifier] == .connecting {
-                didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionCanceled))
-            } else {
-                didDisconnectSubject.send((peripheral, error))
-            }
         } else if connectionState[peripheral.identifier] == .connecting {
             // Here the peripheral did not connect at all so we route this over the connection failed publisher.
-            didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
+            if disconnectionRequests.contains(peripheral.identifier) {
+                didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionCanceled))
+            } else {
+                didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
+            }
         } else {
             // Regular disconnection.
             didDisconnectSubject.send((peripheral, error))
