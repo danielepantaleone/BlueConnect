@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+## 1.4.5
+
+Released May 20, 2025
+
+- Fix not calling connection callbacks when connection is manually canceled [5053834](https://github.com/danielepantaleone/BlueConnect/commit/5053834901dbcf43cc266387b417a5e9aaed1640)
+
 ## 1.4.4
 
 Released May 19, 2025
