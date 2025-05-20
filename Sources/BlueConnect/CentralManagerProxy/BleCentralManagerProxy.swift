@@ -85,7 +85,7 @@ public class BleCentralManagerProxy: NSObject, @unchecked Sendable {
     
     var connectionState: [UUID: CBPeripheralState] = [:]
     var connectionTimeouts: Set<UUID> = []
-    var disconnectionRequests: Set<UUID> = []
+    var connectionCanceled: Set<UUID> = []
     let connectionRegistry: KeyedRegistry<UUID, Void> = .init()
     let disconnectionRegistry: KeyedRegistry<UUID, Void> = .init()
     let waitUntilReadyRegistry: ListRegistry<Void> = .init()
@@ -223,12 +223,15 @@ extension BleCentralManagerProxy {
                 return
             }
             
-            // We track the connection timeout for this peripheral to trigger the correct
-            // callbacks and publisher after disconnecting the peripheral from the central.
+            // We track the connection timeout for this peripheral to trigger the
+            // correct publisher after disconnecting the peripheral from the central.
             connectionTimeouts.insert(peripheral.identifier)
             
             // We attempt to disconnect the peripheral prior notifying.
             disconnect(peripheral: peripheral) { _ in
+                // Notify only the subscription, the published is triggered by the the delegate.
+                // This is because when the timeout handler is executed, the subscription is removed
+                // from the registry hence we cannot execute the callback from the delegate.
                 subscription.notify(.failure(BleCentralManagerProxyError.connectionTimeout))
             }
             
@@ -241,8 +244,14 @@ extension BleCentralManagerProxy {
         
         // Track connection state.
         connectionState[peripheral.identifier] = .connecting
-        // Remove any disconnection request for this peripheral.
-        disconnectionRequests.remove(peripheral.identifier)
+        // Remove any connection cancel tracking for this peripheral.
+        connectionCanceled.remove(peripheral.identifier)
+        
+        // If already connecting, no need to reinitiate connection
+        guard peripheral.state != .connecting else {
+            return
+        }
+        
         // Initiate connection.
         centralManager.connect(peripheral, options: options)
         
@@ -279,7 +288,7 @@ extension BleCentralManagerProxy {
     public func disconnect(peripheral: BlePeripheral, callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
         
         lock.lock()
-        defer {lock.unlock() }
+        defer { lock.unlock() }
                 
         // Ensure central manager is in a powered-on state.
         guard centralManager.state == .poweredOn else {
@@ -295,11 +304,15 @@ extension BleCentralManagerProxy {
         
         // Track disconnection callback in the disconnection registry.
         disconnectionRegistry.register(key: peripheral.identifier, callback: callback)
-        disconnectionRequests.insert(peripheral.identifier)
         
         // If already disconnecting, no need to reinitiate disconnection.
         guard peripheral.state != .disconnecting else {
             return
+        }
+        
+        // If this peripheral is not yet fully connected track connection cancel.
+        if peripheral.state == .connecting {
+            connectionCanceled.insert(peripheral.identifier)
         }
         
         // Initiate disconnection.

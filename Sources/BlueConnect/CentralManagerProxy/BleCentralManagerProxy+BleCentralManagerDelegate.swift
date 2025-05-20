@@ -58,30 +58,22 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
                 connectionState[peripheral.identifier] = .disconnected
                 
                 if state == .connecting {
-                  
                     // Notify publisher.
                     didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
                     // Notify registered callbacks.
-                    connectionRegistry.notify(
-                        key: peripheral.identifier,
-                        value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
-                    
+                    connectionRegistry.notify(key: peripheral.identifier, value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
                 } else if state == .connected {
-                    
                     // Notify publisher.
                     didDisconnectSubject.send((peripheral, BleCentralManagerProxyError.invalidState(central.state)))
                     // Notify registered callbacks.
-                    disconnectionRegistry.notify(
-                        key: peripheral.identifier,
-                        value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
-                    
+                    disconnectionRegistry.notify(key: peripheral.identifier, value: .failure(BleCentralManagerProxyError.invalidState(central.state)))
                 }
                 
             }
             
-            // Remove any tracked connection/disconnection data.
+            // Remove any tracked connection data.
             connectionTimeouts.removeAll()
-            disconnectionRequests.removeAll()
+            connectionCanceled.removeAll()
             
             // If we go unauthorized or unsupported stop waiting for central to be ready.
             if central.state == .unauthorized {
@@ -109,9 +101,9 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         
         // Track connection state.
         connectionState[peripheral.identifier] = .connected
-        // Remove connection timeouts and disconnection requests for this peripheral.
+        // Remove connection timeouts and cancel requests for this peripheral.
         connectionTimeouts.remove(peripheral.identifier)
-        disconnectionRequests.remove(peripheral.identifier)
+        connectionCanceled.remove(peripheral.identifier)
         // Notify publisher.
         didConnectSubject.send(peripheral)
         // Notify registered callbacks.
@@ -124,28 +116,33 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         lock.lock()
         defer { lock.unlock() }
         
-        if connectionTimeouts.contains(peripheral.identifier) {
-            // This is a disconnection caused by canceling a peripheral connection after timeout.
-            didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionTimeout))
-        } else if connectionState[peripheral.identifier] == .connecting {
-            // Here the peripheral did not connect at all so we route this over the connection failed publisher.
-            if disconnectionRequests.contains(peripheral.identifier) {
-                didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionCanceled))
-            } else {
-                didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
-            }
-        } else {
-            // Regular disconnection.
-            didDisconnectSubject.send((peripheral, error))
-        }
-        
-        // Notify registered callbacks (always notify success since peripheral is disconnected at this point).
-        disconnectionRegistry.notify(key: peripheral.identifier, value: .success(()))
+        let isConnecting = connectionState[peripheral.identifier] == .connecting
+        let isTimeout = connectionTimeouts.contains(peripheral.identifier)
+        let isCanceled = connectionCanceled.contains(peripheral.identifier)
         
         // Track connection state.
         connectionState[peripheral.identifier] = .disconnected
         connectionTimeouts.remove(peripheral.identifier)
-        disconnectionRequests.remove(peripheral.identifier)
+        connectionCanceled.remove(peripheral.identifier)
+        
+        if isTimeout { // Disconnection caused by canceling a peripheral connection after timeout.
+            didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionTimeout))
+        } else if isCanceled { // Did not connect at all so we route this over the connection failed publisher (manual canceling).
+            didFailToConnectSubject.send((peripheral, BleCentralManagerProxyError.connectionCanceled))
+        } else if isConnecting { // Did not connect at all so we route this over the connection failed publisher (regular failure).
+            didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
+        } else { // Regular disconnection.
+            didDisconnectSubject.send((peripheral, error))
+        }
+        
+        if isCanceled && !isTimeout { // Did not connect at all and no timeout so we route this over the connection failed publisher (manual canceling).
+            connectionRegistry.notify(key: peripheral.identifier, value: .failure(BleCentralManagerProxyError.connectionCanceled))
+        } else if isConnecting && !isTimeout { // Did not connect at all and no timeout so we route this over the connection failed publisher (regular failure).
+            connectionRegistry.notify(key: peripheral.identifier, value: .failure(error ?? BleCentralManagerProxyError.unknown))
+        }
+        
+        // Always notify disconnection on the callbacks because we may have disconnected a connecting peripheral.
+        disconnectionRegistry.notify(key: peripheral.identifier, value: .success(()))
 
     }
     
@@ -166,7 +163,7 @@ extension BleCentralManagerProxy: BleCentralManagerDelegate {
         // Track connection state.
         connectionState[peripheral.identifier] = .disconnected
         connectionTimeouts.remove(peripheral.identifier)
-        disconnectionRequests.remove(peripheral.identifier)
+        connectionCanceled.remove(peripheral.identifier)
         // Notify publisher.
         didFailToConnectSubject.send((peripheral, error ?? BleCentralManagerProxyError.unknown))
         // Notify registered callbacks.
