@@ -78,11 +78,27 @@ extension BleCentralManagerProxyDisconnectionTests {
         centralManager(state: .poweredOn)
         // Delay connection to mock connecting state
         bleCentralManager.delayOnConnection = .seconds(4)
-        // Connect the peripheral
-        bleCentralManagerProxy.connect(peripheral: try blePeripheral_1, options: nil, timeout: .never)
-        // Test disconnection
+        // Test disconnection and connection failure
+        let connectFailExp = expectation(description: "waiting for peripheral to fail connection")
         let disconnectExp = expectation(description: "waiting for peripheral to disconnect")
-        let publisherExp = expectation(description: "waiting for peripheral disconnection to be signaled by publisher")
+        let publisherExp = expectation(description: "waiting for peripheral connection failure to be signaled by publisher")
+        // Connect the peripheral
+        bleCentralManagerProxy.connect(peripheral: try blePeripheral_1, options: nil, timeout: .never) { result in
+            switch result {
+                case .success:
+                    XCTFail("peripheral connection succeeded but was expected to fail")
+                case .failure(let error):
+                    guard let proxyError = error as? BleCentralManagerProxyError else {
+                        XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError, got '\(String(describing: error))' instead")
+                        return
+                    }
+                    guard case .connectionCanceled = proxyError else {
+                        XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(proxyError)' instead")
+                        return
+                    }
+                    connectFailExp.fulfill()
+            }
+        }
         // Test disconnection emit on publisher
         let subscription = bleCentralManagerProxy.didFailToConnectPublisher
             .receive(on: DispatchQueue.main)
@@ -107,7 +123,7 @@ extension BleCentralManagerProxyDisconnectionTests {
                         XCTFail("peripheral disconnection failed with error: \(error)")
                 }
             }
-        wait(for: [disconnectExp, publisherExp], timeout: 2.0)
+        wait(for: [disconnectExp, publisherExp, connectFailExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
     }
