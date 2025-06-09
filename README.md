@@ -29,8 +29,8 @@ This combination of asynchronous communication, event-driven architecture, and t
     * [Enabling notify on a characteristic](#enabling-notify-on-a-characteristic)
 * [Providing unit tests in your codebase](#providing-unit-tests-in-your-codebase)
 * [Installation](#installation)
-    * [Cocoapods](#cocoapods)
     * [Swift package manager](#swift-package-manager)
+    * [Cocoapods](#cocoapods)
 * [Documentation](https://danielepantaleone.github.io/BlueConnect/documentation/blueconnect/)
 * [Contributing](#contributing)
 * [License](#license)
@@ -382,12 +382,19 @@ let subscription2 = heartRateProxy.didUpdateValuePublisher
 do {
     // The following will enable data notify on the Heart Rate characteristic
     // If the Heart Rate characteristic, or the service backing the Heart Rate characteristic, has not 
-    // been discovered yet, a silent discovery is performed before attempting to enable data notify on the
-    // characteristic.
+    // been discovered yet, a silent discovery is performed before attempting to enable data notify on the characteristic.
     try await heartRateProxy.setNotify(enabled: true, timeout: .seconds(10))
     print("notify enabled on the characteristic")
 } catch {
     print("failed to enable notify on the characteristic with error: \(error)")
+}
+
+do {
+    // You can also check for characteristic notification state without toggling the value.
+    let enabled = try await heartRateProxy.isNotifying
+    print("notification state of the characteristic: \(enabled ? "enabled" : "disabled")")
+} catch {
+    print("failed to check notification state of characteristic with error: \(error)")
 }
 ```
 
@@ -407,18 +414,18 @@ You can create mock versions of your central manager and peripheral(s) and suppl
 
 ## Installation
 
-### Cocoapods
-
-```ruby
-pod 'BlueConnect', '~> 1.4.5'
-```
-
 ### Swift Package Manager
 
 ```swift
 dependencies: [
     .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.4.5"))
 ]
+```
+
+### Cocoapods
+
+```ruby
+pod 'BlueConnect', '~> 1.4.5'
 ```
 
 ## Contributing
