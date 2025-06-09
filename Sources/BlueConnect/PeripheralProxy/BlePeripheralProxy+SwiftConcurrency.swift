@@ -80,6 +80,30 @@ public extension BlePeripheralProxy {
         }
     }
     
+    /// Asynchronously checks whether notifications are currently enabled for a specified Bluetooth characteristic.
+    ///
+    /// This method  checks the `isNotifying` flag of a characteristic on a connected peripheral. If the peripheral is not connected,
+    /// the characteristic is not found, or it does not support notifications, the method will throw an appropriate error.
+    ///
+    /// - Parameters:
+    ///   - characteristicUUID: The UUID of the characteristic to check for notification state.
+    ///   - timeout: The maximum duration to wait for the notification state check. Defaults to 10 seconds. *(Note: currently unused in implementation)*.
+    ///
+    /// - Returns: `true` if notifications are enabled for the characteristic; `false` otherwise.
+    /// - Throws: An error if the peripheral is not connected, the characteristic is not found, or notification is not supported.
+    func isNotifying(
+        characteristicUUID: CBUUID,
+        timeout: DispatchTimeInterval = .seconds(10)
+    ) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            isNotifying(characteristicUUID: characteristicUUID, timeout: timeout) { result in
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
+            }
+        }
+    }
+    
     /// Reads the RSSI (Received Signal Strength Indicator) value of the peripheral.
     ///
     /// This method attempts to read the RSSI value of the connected peripheral within a specified timeout period.

@@ -506,6 +506,41 @@ extension BlePeripheralProxy {
 // MARK: - Characteristic notify
 
 extension BlePeripheralProxy {
+    
+    /// Checks whether notification is enabled for a specific characteristic.
+    ///
+    /// This method verifies if the `isNotifying` flag is set for a characteristic on a connected peripheral.
+    /// If the peripheral is not connected, the characteristic is not found, or the characteristic does not support notifications, the method will return a corresponding error via the callback.
+    /// 
+    /// - Parameters:
+    ///   - characteristicUUID: The UUID of the characteristic for which to check the notification state.
+    ///   - timeout: The timeout duration for the notification check operation. If the operation does not complete within this time, it will fail.
+    ///   - callback: A closure to execute when the characteristic notification state is retrieved. The closure receives a `Result` indicating success or failure, with the current notification state as a success value.
+    public func isNotifying(
+        characteristicUUID: CBUUID,
+        timeout: DispatchTimeInterval = .seconds(10),
+        callback: @escaping (Result<Bool, Error>) -> Void
+    ) {
+        
+        lock.lock()
+        defer { lock.unlock() }
+        
+        guard peripheral.state == .connected else {
+            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            return
+        }
+        guard let characteristic = getCharacteristic(characteristicUUID) else {
+            callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            return
+        }
+        guard characteristic.properties.contains(.notify) else {
+            callback(.failure(BlePeripheralProxyError.notifyNotSupported(characteristicUUID: characteristicUUID)))
+            return
+        }
+        
+        callback(.success(characteristic.isNotifying))
+        
+    }
  
     /// Enables or disables notifications for a specific characteristic.
     ///
