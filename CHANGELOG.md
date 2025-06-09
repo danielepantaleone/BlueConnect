@@ -5,6 +5,7 @@ Release Notes
 
 Released Jun 10, 2025
 
+- Detach RSSI notify timer if the peripheral is not connected anymore [77fd081](https://github.com/danielepantaleone/BlueConnect/commit/77fd08198f2d07b5a56bd9301e4159757343debb)
 - Provide notification state check support in characteristic proxy [0da6606](https://github.com/danielepantaleone/BlueConnect/commit/0da6606502f44257f175f221d2eb3c3bb21bfb69)
 - Provide notification state check support in peripheral proxy [0a9305e](https://github.com/danielepantaleone/BlueConnect/commit/0a9305e02782d7e5a2cb5e490b4f33a232c45518)
 - Provide isRSSINotifying property to peripheral proxy [b08dca0](https://github.com/danielepantaleone/BlueConnect/commit/b08dca04ebb20c98a909901aba4b2db03b382329)
