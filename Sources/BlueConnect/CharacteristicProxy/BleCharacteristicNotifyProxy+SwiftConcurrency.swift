@@ -38,7 +38,26 @@ public extension BleCharacteristicNotifyProxy {
     /// - Returns: A Boolean value: `true` if notifications are enabled; otherwise, `false`.
     var isNotifying: Bool {
         get async throws {
-            return try await discover().isNotifying
+            return try await isNotifying(timeout: .never)
+        }
+    }
+    
+    /// Asynchronously checks whether notifications are currently enabled for the characteristic.
+    ///
+    /// This method  checks the `isNotifying` flag of a characteristic on a connected peripheral. If the peripheral is not connected,
+    /// the characteristic is not found, or it does not support notifications, the method will throw an appropriate error.
+    ///
+    /// - Parameter timeout: The maximum duration to wait for the notification state check. Defaults to 10 seconds. *(Note: currently unused in implementation)*.
+    ///
+    /// - Returns: `true` if notifications are enabled for the characteristic; `false` otherwise.
+    /// - Throws: An error if the peripheral is not connected, the characteristic is not found, or notification is not supported.
+    func isNotifying(timeout: DispatchTimeInterval = .seconds(10)) async throws -> Bool {
+        try await withCheckedThrowingContinuation { continuation in
+            isNotifying(timeout: timeout) { result in
+                globalQueue.async {
+                    continuation.resume(with: result)
+                }
+            }
         }
     }
     

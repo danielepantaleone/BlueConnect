@@ -48,6 +48,34 @@ public extension BleCharacteristicNotifyProxy {
             .eraseToAnyPublisher() ?? Empty().eraseToAnyPublisher()
     }
     
+    /// Checks whether notification is enabled for the characteristic.
+    ///
+    /// This method verifies if the `isNotifying` flag is set for a characteristic on a connected peripheral.
+    /// If the peripheral is not connected, the characteristic is not found, or the characteristic does not support notifications, the method will return a corresponding error via the callback.
+    ///
+    /// - Parameters:
+    ///   - timeout: The timeout duration for the notification check operation. If the operation does not complete within this time, it will fail.
+    ///   - callback: A closure to execute when the characteristic notification state is retrieved. The closure receives a `Result` indicating success or failure, with the current notification state as a success value.
+    func isNotifying(
+        timeout: DispatchTimeInterval = .seconds(10),
+        callback: @escaping (Result<Bool, Error>) -> Void
+    ) {
+        let start: DispatchTime = .now()
+        discover(timeout: timeout) { characteristicDiscoveryResult in
+            characteristicDiscoveryResult.forwardError(to: callback)
+            characteristicDiscoveryResult.onSuccess { characteristic in
+                peripheralProxy?.isNotifying(
+                    characteristicUUID: characteristic.uuid,
+                    timeout: timeout - start.distance(to: .now()),
+                    callback: { notifyResult in
+                        notifyResult.forwardError(to: callback)
+                        notifyResult.forwardSuccess(to: callback)
+                    }
+                )
+            }
+        }
+    }
+    
     /// Enable or disable notifications for the characteristic.
     ///
     /// This method enables or disables notifications for the characteristic on the BLE peripheral.
