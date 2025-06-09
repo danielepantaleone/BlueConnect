@@ -38,7 +38,7 @@ public extension BleCharacteristicNotifyProxy {
     /// - Returns: A Boolean value: `true` if notifications are enabled; otherwise, `false`.
     var isNotifying: Bool {
         get async throws {
-            return try await isNotifying(timeout: .never)
+            return try await isNotifying(timeout: .seconds(10))
         }
     }
     
