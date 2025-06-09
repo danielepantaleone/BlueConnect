@@ -387,6 +387,8 @@ extension BlePeripheralProxyRSSITests {
         // Await enabled expectation
         wait(for: [enabledExp], timeout: 4.0)
         subscription1.cancel()
+        // Assert boolean status
+        XCTAssertTrue(blePeripheralProxy_1.isRSSINotifying)
         // Turn off notification for RSSI
         try blePeripheralProxy_1.setRSSINotify(enabled: false)
         let disabledExp = expectation(description: "waiting for peripheral RSSI update NOT to be signaled by publisher")
@@ -399,6 +401,8 @@ extension BlePeripheralProxyRSSITests {
         // Await enabled expectation
         wait(for: [disabledExp], timeout: 2.0)
         subscription2.cancel()
+        // Assert boolean status
+        XCTAssertFalse(blePeripheralProxy_1.isRSSINotifying)
     }
     
     func testPeripheralRSSISetNotifyFailDueToPeripheralDisconnected() throws {
@@ -409,7 +413,8 @@ extension BlePeripheralProxyRSSITests {
             try blePeripheralProxy_1.setRSSINotify(enabled: true, rate: .seconds(1))
             XCTFail("peripheral RSSI set notify was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.peripheralNotConnected {
-
+            // Assert boolean status
+            XCTAssertFalse(blePeripheralProxy_1.isRSSINotifying)
         } catch {
             XCTFail("peripheral RSSI set notify was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }

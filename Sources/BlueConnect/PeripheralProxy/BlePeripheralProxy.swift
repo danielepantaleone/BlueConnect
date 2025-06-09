@@ -595,10 +595,22 @@ extension BlePeripheralProxy {
     
 }
 
-// MARK: - RSSI read
+// MARK: - RSSI
 
 extension BlePeripheralProxy {
 
+    /// Indicates whether RSSI notifications are currently active for the connected peripheral.
+    ///
+    /// - Returns: A Boolean value: `true` if RSSI notifications are enabled; otherwise, `false`.
+    public var isRSSINotifying: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        guard peripheral.state == .connected else { return false }
+        guard let rssiTimer else { return false }
+        guard !rssiTimer.isCancelled else { return false }
+        return true
+    }
+    
     /// Reads the RSSI (Received Signal Strength Indicator) value of the peripheral.
     ///
     /// This method attempts to read the RSSI value of the connected peripheral within a specified timeout period.
