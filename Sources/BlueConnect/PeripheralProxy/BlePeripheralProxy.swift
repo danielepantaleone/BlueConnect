@@ -662,7 +662,15 @@ extension BlePeripheralProxy {
             rssiTimer = DispatchSource.makeTimerSource(queue: globalQueue)
             rssiTimer?.schedule(deadline: .now() + rate, repeating: rate)
             rssiTimer?.setEventHandler { [weak self] in
-                self?.peripheral.readRSSI()
+                guard let self else { return }
+                lock.lock()
+                defer { lock.unlock() }
+                guard peripheral.state == .connected else {
+                    rssiTimer?.cancel()
+                    rssiTimer = nil
+                    return
+                }
+                peripheral.readRSSI()
             }
             rssiTimer?.resume()
         } else if !enabled && rssiTimer != nil  {
