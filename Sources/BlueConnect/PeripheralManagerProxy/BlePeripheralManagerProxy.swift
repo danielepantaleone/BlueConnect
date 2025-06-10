@@ -26,7 +26,11 @@
 //
 
 import Combine
+#if swift(>=6.0)
 @preconcurrency import CoreBluetooth
+#else
+import CoreBluetooth
+#endif
 import Foundation
 
 /// A proxy class to manage a `BlePeripheralManager` instance, providing reactive publishers for various BLE events.

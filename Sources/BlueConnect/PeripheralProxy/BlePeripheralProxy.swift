@@ -26,7 +26,11 @@
 //
 
 import Combine
+#if swift(>=6.0)
 @preconcurrency import CoreBluetooth
+#else
+import CoreBluetooth
+#endif
 import Foundation
 
 /// `BlePeripheralProxy` provides an interface for interacting with a BLE peripheral and managing BLE operations.

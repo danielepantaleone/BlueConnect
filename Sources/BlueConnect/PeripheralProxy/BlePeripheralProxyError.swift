@@ -25,7 +25,11 @@
 //  THE SOFTWARE.
 //
 
+#if swift(>=6.0)
 @preconcurrency import CoreBluetooth
+#else
+import CoreBluetooth
+#endif
 import Foundation
 
 /// An enumeration representing various errors that can occur while interacting with a BLE peripheral via the `BlePeripheralProxy`.

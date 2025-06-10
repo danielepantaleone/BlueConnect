@@ -25,7 +25,11 @@
 //  THE SOFTWARE.
 //
 
+#if swift(>=6.0)
 @preconcurrency import CoreBluetooth
+#else
+import CoreBluetooth
+#endif
 
 /// A convenience class that helps interpret and access Bluetooth Low Energy (BLE) advertisement data.
 ///

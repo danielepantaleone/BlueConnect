@@ -25,7 +25,11 @@
 //  THE SOFTWARE.
 //
 
+#if swift(>=6.0)
 @preconcurrency import CoreBluetooth
+#else
+import CoreBluetooth
+#endif
 
 /// A protocol to mimic the capabilities of a `CBCentral`.
 ///

@@ -25,7 +25,11 @@
 //  THE SOFTWARE.
 //
 
+#if swift(>=6.0)
 @preconcurrency import CoreBluetooth
+#else
+import CoreBluetooth
+#endif
 
 /// A protocol extending `CBPeripheralDelegate` to provide additional functionality for unit testing BLE peripherals.
 ///

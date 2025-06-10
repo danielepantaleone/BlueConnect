@@ -25,7 +25,11 @@
 //  THE SOFTWARE.
 //
 
+#if swift(>=6.0)
 @preconcurrency import CoreBluetooth
+#else
+import CoreBluetooth
+#endif
 import Foundation
 
 /// A protocol defining the ability to write data to a BLE characteristic without expecting a response.

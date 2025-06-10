@@ -26,7 +26,11 @@
 //
 
 import Combine
+#if swift(>=6.0)
 @preconcurrency import CoreBluetooth
+#else
+import CoreBluetooth
+#endif
 import Foundation
 
 /// A protocol representing a proxy that handles notifications for a BLE characteristic.
