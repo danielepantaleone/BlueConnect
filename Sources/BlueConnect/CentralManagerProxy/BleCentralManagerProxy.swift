@@ -193,18 +193,28 @@ extension BleCentralManagerProxy {
         callback: @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
         
-        lock.lock()
-        defer { lock.unlock() }
+        var localCallback: (() -> Void)? = nil
         
+        lock.lock()
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+    
         // Ensure central manager is in a powered-on state
         guard centralManager.state == .poweredOn else {
-            callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
+            let state = centralManager.state
+            localCallback = {
+                callback(.failure(BleCentralManagerProxyError.invalidState(state)))
+            }
             return
         }
         
         // If already connected, notify success on callback (not on publisher since it's not a new connection)
         guard peripheral.state != .connected else {
-            callback(.success(()))
+            localCallback = {
+                callback(.success(()))
+            }
             return
         }
         
@@ -217,9 +227,6 @@ extension BleCentralManagerProxy {
             guard let self else { return }
             guard let peripheral else { return }
             
-            lock.lock()
-            defer { lock.unlock() }
-            
             // If the peripheral managed to connect somehow, avoid to disconnect it.
             // We assume the connection was already advertised on the callback and combine publisher.
             guard peripheral.state != .connected else {
@@ -228,7 +235,9 @@ extension BleCentralManagerProxy {
             
             // We track the connection timeout for this peripheral to trigger the
             // correct publisher after disconnecting the peripheral from the central.
+            lock.lock()
             connectionTimeouts.insert(peripheral.identifier)
+            lock.unlock()
             
             // We attempt to disconnect the peripheral prior notifying.
             disconnect(peripheral: peripheral) { _ in
@@ -290,34 +299,44 @@ extension BleCentralManagerProxy {
     /// - Note: If the peripheral is already in the process of disconnecting (`.disconnecting` state), the method does not reinitiate the disconnection.
     public func disconnect(peripheral: BlePeripheral, callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
         
+        var localCallback: (() -> Void)? = nil
+
         lock.lock()
-        defer { lock.unlock() }
-                
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         // Ensure central manager is in a powered-on state.
         guard centralManager.state == .poweredOn else {
-            callback(.failure(BleCentralManagerProxyError.invalidState(centralManager.state)))
+            let state = centralManager.state
+            localCallback = {
+                callback(.failure(BleCentralManagerProxyError.invalidState(state)))
+            }
             return
         }
-        
+
         // If already disconnected, notify success (not on publisher since it's already disconnected).
         guard peripheral.state != .disconnected else {
-            callback(.success(()))
+            localCallback = {
+                callback(.success(()))
+            }
             return
         }
-        
+
         // Track disconnection callback in the disconnection registry.
         disconnectionRegistry.register(key: peripheral.identifier, callback: callback)
-        
+
         // If already disconnecting, no need to reinitiate disconnection.
         guard peripheral.state != .disconnecting else {
             return
         }
-        
+
         // If this peripheral is not yet fully connected track connection cancel.
         if peripheral.state == .connecting {
             connectionCanceled.insert(peripheral.identifier)
         }
-        
+
         // Initiate disconnection.
         centralManager.cancelConnection(peripheral)
         
@@ -511,31 +530,45 @@ extension BleCentralManagerProxy {
     ///
     /// - Note: If the state is already `.poweredOn`, the callback is called immediately with success.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
-                
+             
+        var localCallback: (() -> Void)? = nil
+
         lock.lock()
-        defer { lock.unlock() }
-                
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         // Ensure central manager is not already powered on.
         guard centralManager.state != .poweredOn else {
-            callback(.success(()))
+            localCallback = {
+                callback(.success(()))
+            }
             return
         }
-        
+
         // Ensure central manager is authorized.
         guard centralManager.state != .unauthorized else {
-            callback(.failure(BleCentralManagerProxyError.invalidState(.unauthorized)))
+            localCallback = {
+                callback(.failure(BleCentralManagerProxyError.invalidState(.unauthorized)))
+            }
             return
         }
-        
+
         // Ensure central manager is supported.
         guard centralManager.state != .unsupported else {
-            callback(.failure(BleCentralManagerProxyError.invalidState(.unsupported)))
+            localCallback = {
+                callback(.failure(BleCentralManagerProxyError.invalidState(.unsupported)))
+            }
             return
         }
-        
+
         // Register a callback to be notified when central manager is powered on.
-        waitUntilReadyRegistry.register(callback: callback, timeout: timeout) {
-            $0.notify(.failure(BleCentralManagerProxyError.readyTimeout))
+        waitUntilReadyRegistry.register(
+            callback: callback,
+            timeout: timeout
+        ) { subscription in
+            subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
         }
         
     }

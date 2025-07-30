@@ -225,16 +225,25 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<CBService, Error>) -> Void
     ) {
         
+        var localCallback: (() -> Void)? = nil
+        
         lock.lock()
-        defer { lock.unlock() }
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
         
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            }
             return
         }
         
         if let service = getService(serviceUUID) {
-            callback(.success(service))
+            localCallback = {
+                callback(.success(service))
+            }
             return
         }
         
@@ -242,12 +251,12 @@ extension BlePeripheralProxy {
             key: serviceUUID,
             callback: callback,
             timeout: timeout
-        ) {
-            $0.notify(.failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
+        ) { subscription in
+            subscription.notify(.failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
         }
         
         peripheral.discoverServices([serviceUUID])
-                
+        
     }
     
     /// Initiates the discovery of a set of services, or discovers all available services if `nil` is specified as `serviceUUIDs`.
@@ -264,7 +273,6 @@ extension BlePeripheralProxy {
             return
         }
         
-        // Will eventually rediscover already discovered services and notify on the publisher.
         peripheral.discoverServices(serviceUUIDs)
         
     }
@@ -290,21 +298,32 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<CBCharacteristic, Error>) -> Void
     ) {
         
+        var localCallback: (() -> Void)? = nil
+        
         lock.lock()
-        defer { lock.unlock() }
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
         
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            }
             return
         }
         
         guard let service = getService(serviceUUID) else {
-            callback(.failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
+            }
             return
         }
         
         if let characteristic = getCharacteristic(characteristicUUID, serviceUUID: serviceUUID) {
-            callback(.success(characteristic))
+            localCallback = {
+                callback(.success(characteristic))
+            }
             return
         }
         
@@ -312,12 +331,12 @@ extension BlePeripheralProxy {
             key: characteristicUUID,
             callback: callback,
             timeout: timeout
-        ) {
-            $0.notify(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+        ) { subscription in
+            subscription.notify(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
         }
         
         peripheral.discoverCharacteristics([characteristicUUID], for: service)
-      
+        
     }
     
     /// Discover a set of characteristics for the provided service, or all available characteristics if `nil` is specified for `characteristicUUIDs`.
@@ -340,7 +359,6 @@ extension BlePeripheralProxy {
             return
         }
         
-        // Will eventually rediscover already discovered characteristics and notify on the publisher.
         peripheral.discoverCharacteristics(characteristicUUIDs, for: service)
         
     }
@@ -370,35 +388,50 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<Data, Error>) -> Void
     ) {
         
+        var localCallback: (() -> Void)? = nil
+
         lock.lock()
-        defer { lock.unlock() }
-        
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         if let record = cache[characteristicUUID], cachePolicy.isValid(time: record.time) {
-            callback(.success(record.data))
+            localCallback = {
+                callback(.success(record.data))
+            }
             return
         }
-        
+
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            }
             return
         }
+
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            }
             return
         }
+
         guard characteristic.properties.contains(.read) else {
-            callback(.failure(BlePeripheralProxyError.readNotSupported(characteristicUUID: characteristicUUID)))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.readNotSupported(characteristicUUID: characteristicUUID)))
+            }
             return
         }
-        
+
         characteristicReadRegistry.register(
             key: characteristicUUID,
             callback: callback,
             timeout: timeout
-        ) {
-            $0.notify(.failure(BlePeripheralProxyError.readTimeout(characteristicUUID: characteristicUUID)))
+        ) { subscription in
+            subscription.notify(.failure(BlePeripheralProxyError.readTimeout(characteristicUUID: characteristicUUID)))
         }
-        
+
         guard !readingCharacteristics.contains(characteristicUUID) else {
             // Characteristic is already being read from the peripheral so avoid sending multiple read requests
             return
@@ -444,30 +477,43 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<Void, Error>) -> Void
     ) {
         
+        var localCallback: (() -> Void)? = nil
+
         lock.lock()
-        defer { lock.unlock() }
-        
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            }
             return
         }
+
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            }
             return
         }
+
         guard characteristic.properties.contains(.write) else {
-            callback(.failure(BlePeripheralProxyError.writeNotSupported(characteristicUUID: characteristicUUID)))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.writeNotSupported(characteristicUUID: characteristicUUID)))
+            }
             return
         }
-        
+
         characteristicWriteRegistry.register(
             key: characteristicUUID,
             callback: callback,
             timeout: timeout
-        ) {
-            $0.notify(.failure(BlePeripheralProxyError.writeTimeout(characteristicUUID: characteristicUUID)))
+        ) { subscription in
+            subscription.notify(.failure(BlePeripheralProxyError.writeTimeout(characteristicUUID: characteristicUUID)))
         }
-        
+
         peripheral.writeValue(data, for: characteristic, type: .withResponse)
         
     }
@@ -494,9 +540,11 @@ extension BlePeripheralProxy {
         guard peripheral.state == .connected else {
             throw BlePeripheralProxyError.peripheralNotConnected
         }
+        
         guard let characteristic = getCharacteristic(characteristicUUID) else {
             throw BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)
         }
+        
         guard characteristic.properties.contains(.writeWithoutResponse) else {
             throw BlePeripheralProxyError.writeNotSupported(characteristicUUID: characteristicUUID)
         }
@@ -526,23 +574,38 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<Bool, Error>) -> Void
     ) {
         
+        var localCallback: (() -> Void)? = nil
+
         lock.lock()
-        defer { lock.unlock() }
-        
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            }
             return
         }
+
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            }
             return
         }
+
         guard characteristic.properties.contains(.notify) else {
-            callback(.failure(BlePeripheralProxyError.notifyNotSupported(characteristicUUID: characteristicUUID)))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.notifyNotSupported(characteristicUUID: characteristicUUID)))
+            }
             return
         }
-        
-        callback(.success(characteristic.isNotifying))
+
+        localCallback = {
+            callback(.success(characteristic.isNotifying))
+        }
         
     }
  
@@ -565,36 +628,52 @@ extension BlePeripheralProxy {
         callback: @escaping (Result<Bool, Error>) -> Void
     ) {
         
+        var localCallback: (() -> Void)? = nil
+
         lock.lock()
-        defer { lock.unlock() }
-        
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            }
             return
         }
+
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            }
             return
         }
+
         guard characteristic.properties.contains(.notify) else {
-            callback(.failure(BlePeripheralProxyError.notifyNotSupported(characteristicUUID: characteristicUUID)))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.notifyNotSupported(characteristicUUID: characteristicUUID)))
+            }
             return
         }
+
         guard enabled != characteristic.isNotifying else {
-            callback(.success(characteristic.isNotifying))
+            localCallback = {
+                callback(.success(characteristic.isNotifying))
+            }
             return
         }
-        
+
         characteristicNotifyRegistry.register(
             key: characteristicUUID,
             callback: callback,
             timeout: timeout
-        ) {
-            $0.notify(.failure(BlePeripheralProxyError.notifyTimeout(characteristicUUID: characteristicUUID)))
+        ) { subscription in
+            subscription.notify(.failure(BlePeripheralProxyError.notifyTimeout(characteristicUUID: characteristicUUID)))
         }
-        
+
         peripheral.setNotifyValue(enabled, for: characteristic)
-        
+    
     }
     
 }
@@ -624,18 +703,28 @@ extension BlePeripheralProxy {
     ///   - callback: A closure that is called with the result of the RSSI read operation. The closure is passed a `Result` containing the RSSI value or an error if the read fails.
     public func readRSSI(timeout: DispatchTimeInterval = .seconds(10), callback: @escaping (Result<Int, Error>) -> Void = { _ in }) {
         
+        var localCallback: (() -> Void)? = nil
+
         lock.lock()
-        defer { lock.unlock() }
-        
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         guard peripheral.state == .connected else {
-            callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            localCallback = {
+                callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
+            }
             return
         }
-       
-        rssiReadRegistry.register(callback: callback, timeout: timeout) {
-            $0.notify(.failure(BlePeripheralProxyError.rssiReadTimeout))
+
+        rssiReadRegistry.register(
+            callback: callback,
+            timeout: timeout
+        ) { subscription in
+            subscription.notify(.failure(BlePeripheralProxyError.rssiReadTimeout))
         }
-      
+
         peripheral.readRSSI()
 
     }

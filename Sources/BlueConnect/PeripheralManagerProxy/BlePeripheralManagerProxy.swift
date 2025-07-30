@@ -187,26 +187,39 @@ extension BlePeripheralManagerProxy {
         callback: @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
         
+        var localCallback: (() -> Void)? = nil
+
         lock.lock()
-        defer { lock.unlock() }
-        
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         // Ensure peripheral manager is in a powered-on state.
         guard peripheralManager.state == .poweredOn else {
-            callback(.failure(BlePeripheralManagerProxyError.invalidState(peripheralManager.state)))
+            let state = peripheralManager.state
+            localCallback = {
+                callback(.failure(BlePeripheralManagerProxyError.invalidState(state)))
+            }
             return
         }
-        
+
         // Exit early if already advertising.
         guard !isAdvertising else {
-            callback(.success(()))
+            localCallback = {
+                callback(.success(()))
+            }
             return
         }
-        
+
         // Register a callback to be notified when advertising is started.
-        startAdvertisingRegistry.register(callback: callback, timeout: timeout) {
-            $0.notify(.failure(BlePeripheralManagerProxyError.advertisingTimeout))
+        startAdvertisingRegistry.register(
+            callback: callback,
+            timeout: timeout
+        ) { subscription in
+            subscription.notify(.failure(BlePeripheralManagerProxyError.advertisingTimeout))
         }
-        
+
         // Try to start advertising.
         peripheralManager.startAdvertising(advertisementData)
         
@@ -216,36 +229,56 @@ extension BlePeripheralManagerProxy {
     ///
     /// Calling this method halts any active advertising by the peripheral manager, stopping the broadcast of services and advertisement data.
     ///
-    /// - Parameter callback: A closure that is called with the result of the stop advertising operation. The closure is passed a `Result` type, which is `.success` on successful advertising stop or `.failure` with an error if the operation fails. Defaults to a no-op closure.
-    public func stopAdvertising(callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
+    /// - Parameters:
+    ///   - timeout: The time interval to wait for the advertising to stop before timing out. Defaults to `.never`, meaning no timeout is applied.
+    ///   - callback: A closure that is called with the result of the stop advertising operation. The closure is passed a `Result` type, which is `.success` on successful advertising stop or `.failure` with an error if the operation fails. Defaults to a no-op closure.
+    public func stopAdvertising(
+        timeout: DispatchTimeInterval = .never,
+        callback: @escaping (Result<Void, Error>) -> Void = { _ in }
+    ) {
+        
+        var localCallback: (() -> Void)? = nil
         
         lock.lock()
-        defer { lock.unlock() }
-        
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         // Ensure peripheral manager is in a powered-on state.
         guard peripheralManager.state == .poweredOn else {
-            callback(.failure(BlePeripheralManagerProxyError.invalidState(peripheralManager.state)))
+            let state = peripheralManager.state
+            localCallback = {
+                callback(.failure(BlePeripheralManagerProxyError.invalidState(state)))
+            }
             return
         }
-        
+
         // Exit early if not advertising.
         guard isAdvertising else {
-            callback(.success(()))
+            localCallback = {
+                callback(.success(()))
+            }
             return
         }
-        
-        // If we do not have an advertising monitor running (very unlikely) we have to provide early feeback.
+
+        // If we do not have an advertising monitor running (very unlikely) we have to provide early feedback.
         guard advertisingMonitor == nil || advertisingMonitor!.isCancelled else {
             peripheralManager.stopAdvertising()
-            callback(.success(()))
+            localCallback = {
+                callback(.success(()))
+            }
             return
         }
-        
+
         // Register a callback to be notified when advertising is stopped.
-        stopAdvertisingRegistry.register(callback: callback) {
-            $0.notify(.failure(BlePeripheralManagerProxyError.advertisingTimeout))
+        stopAdvertisingRegistry.register(
+            callback: callback,
+            timeout: timeout
+        ) { subscription in
+            subscription.notify(.failure(BlePeripheralManagerProxyError.advertisingTimeout))
         }
-        
+
         // Try to stop advertising.
         peripheralManager.stopAdvertising()
         
@@ -376,27 +409,38 @@ extension BlePeripheralManagerProxy {
     /// - Note: If the state is already `.poweredOn`, the callback is called immediately with success.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
         
+        var localCallback: (() -> Void)? = nil
+
         lock.lock()
-        defer { lock.unlock() }
-        
+        defer {
+            lock.unlock()
+            localCallback?()
+        }
+
         // Ensure peripheral manager is not already powered on.
         guard peripheralManager.state != .poweredOn else {
-            callback(.success(()))
+            localCallback = {
+                callback(.success(()))
+            }
             return
         }
-        
+
         // Ensure peripheral manager is authorized.
         guard peripheralManager.state != .unauthorized else {
-            callback(.failure(BlePeripheralManagerProxyError.invalidState(.unauthorized)))
+            localCallback = {
+                callback(.failure(BlePeripheralManagerProxyError.invalidState(.unauthorized)))
+            }
             return
         }
-        
+
         // Ensure peripheral manager is supported.
         guard peripheralManager.state != .unsupported else {
-            callback(.failure(BlePeripheralManagerProxyError.invalidState(.unsupported)))
+            localCallback = {
+                callback(.failure(BlePeripheralManagerProxyError.invalidState(.unsupported)))
+            }
             return
         }
-        
+
         // Register a callback to be notified when peripheral manager is powered on.
         waitUntilReadyRegistry.register(callback: callback, timeout: timeout) {
             $0.notify(.failure(BlePeripheralManagerProxyError.readyTimeout))
