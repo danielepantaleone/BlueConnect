@@ -182,8 +182,7 @@ extension BleCentralManagerProxy {
     ///   - peripheral: The `BlePeripheral` to connect to.
     ///   - options: A dictionary of options to customize the connection behavior, such as `CBConnectPeripheralOptionNotifyOnConnectionKey`. Defaults to `nil`.
     ///   - timeout: A `DispatchTimeInterval` specifying how long to wait before considering the connection as failed due to timeout. Defaults to `.never`, meaning no timeout.
-    ///   - callback: A closure called with a `Result<Void, Error>` indicating the success or failure of the connection attempt. If the connection is successful,
-    ///     `.success(())` is passed. If it fails, `.failure(Error)` is passed with an appropriate error.
+    ///   - callback: A closure called with a `Result<Void, Error>` indicating the success or failure of the connection attempt. If the connection is successful, `.success(())` is passed. If it fails, `.failure(Error)` is passed with an appropriate error.
     ///
     /// - Note: If the peripheral is already in a `.connected` state, the callback is immediately invoked with success.
     /// - Note: If the peripheral is already in the process of connecting (`.connecting` state), the method does not reinitiate the connection.

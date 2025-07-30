@@ -110,9 +110,7 @@ public extension BleCharacteristicReadProxy where ValueType == Data {
     
     /// Bypass data decoding and return raw data.
     ///
-    /// - Parameters:
-    ///   - data: The data received from the characteristic.
-    ///
+    /// - Parameter data: The data received from the characteristic.
     /// - Returns: The characteristic raw data.
     func decode(_ data: Data) throws -> ValueType {
         return data
