@@ -418,14 +418,14 @@ You can create mock versions of your central manager and peripheral(s) and suppl
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.4.6"))
+    .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.5.0"))
 ]
 ```
 
 ### Cocoapods
 
 ```ruby
-pod 'BlueConnect', '~> 1.4.6'
+pod 'BlueConnect', '~> 1.5.0'
 ```
 
 ## Contributing
