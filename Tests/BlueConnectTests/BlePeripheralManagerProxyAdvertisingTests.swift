@@ -120,7 +120,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         let publisherExp = expectation(description: "waiting for peripheral manager advertising NOT to be emitted on publisher")
         publisherExp.isInverted = true
         // Mock advertising timeout.
-        blePeripheralManager.delayOnAdvertising = .seconds(10)
+        blePeripheralManager.delayOnStartAdvertising = .seconds(10)
         // Assert over publisher notify.
         let subscription = blePeripheralManagerProxy.didUpdateAdvertisingPublisher
             .receive(on: DispatchQueue.main)
@@ -160,7 +160,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         let publisherExp = expectation(description: "waiting for peripheral manager advertising NOT to be emitted on publisher")
         publisherExp.isInverted = true
         // Mock advertising timeout.
-        blePeripheralManager.errorOnAdvertising = MockBleError.mockedError
+        blePeripheralManager.errorOnStartAdvertising = MockBleError.mockedError
         // Assert over publisher notify.
         let subscription = blePeripheralManagerProxy.didUpdateAdvertisingPublisher
             .receive(on: DispatchQueue.main)
@@ -226,7 +226,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         // Assert initial advertising state.
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
         // Mock advertising timeout
-        blePeripheralManager.delayOnAdvertising = .seconds(10)
+        blePeripheralManager.delayOnStartAdvertising = .seconds(10)
         // Test timeout
         do {
             try await blePeripheralManagerProxy.startAdvertising(timeout: .seconds(2))
@@ -243,7 +243,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         // Assert initial advertising state.
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
         // Mock advertising timeout
-        blePeripheralManager.errorOnAdvertising = MockBleError.mockedError
+        blePeripheralManager.errorOnStartAdvertising = MockBleError.mockedError
         // Test timeout
         do {
             try await blePeripheralManagerProxy.startAdvertising(timeout: .seconds(2))
@@ -252,6 +252,35 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         } catch {
             XCTFail("peripheral manager advertising start was expected to fail with MockBleError.mockedError, got '\(error)' instead")
         }
+    }
+    
+    func testStartAdvertisingFailDueToTaskCancellation() async throws {
+        // Turn on ble peripheral manager.
+        peripheralManager(state: .poweredOn)
+        // Assert initial advertising state.
+        XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
+        // Mock delay
+        blePeripheralManager.delayOnStartAdvertising = .seconds(2)
+        // Test
+        let proxy: BlePeripheralManagerProxy! = blePeripheralManagerProxy
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                try await proxy.startAdvertising()
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
     }
     
 }
@@ -414,5 +443,35 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         }
     }
     
+    func testStopAdvertisingFailDueToTaskCancellationAsync() async throws {
+        // Turn on ble peripheral manager.
+        peripheralManager(state: .poweredOn)
+        // Start advertising.
+        try startAdvertising()
+        // Check for monitor to be running.
+        XCTAssertNotNil(blePeripheralManagerProxy.advertisingMonitor)
+        // Mock delay
+        blePeripheralManager.delayOnStopAdvertising = .seconds(2)
+        // Test
+        let proxy: BlePeripheralManagerProxy! = blePeripheralManagerProxy
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                try await proxy.stopAdvertising()
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
+    }
 }
 

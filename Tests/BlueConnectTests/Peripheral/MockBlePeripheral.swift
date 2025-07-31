@@ -122,11 +122,10 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            let localDelegate: BlePeripheralDelegate?
+            lock.lock()
+            let localDelegate: BlePeripheralDelegate? = peripheralDelegate
             let localDelay: DispatchTimeInterval?
             let localError: Error?
-            lock.lock()
-            localDelegate = peripheralDelegate
             if state != .connected {
                 localDelay = nil
                 localError = MockBleError.peripheralNotConnected
@@ -190,11 +189,10 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            let localDelegate: BlePeripheralDelegate?
+            lock.lock()
+            let localDelegate: BlePeripheralDelegate? = peripheralDelegate
             let localDelay: DispatchTimeInterval?
             let localError: Error?
-            lock.lock()
-            localDelegate = peripheralDelegate
             if state != .connected {
                 localDelay = nil
                 localError = MockBleError.peripheralNotConnected
@@ -246,12 +244,11 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            let localDelegate: BlePeripheralDelegate?
+            lock.lock()
+            let localDelegate: BlePeripheralDelegate? = peripheralDelegate
             let localError: Error?
             let localDelay: DispatchTimeInterval?
             let localCharacteristic: MockCBCharacteristic?
-            lock.lock()
-            localDelegate = peripheralDelegate
             if state != .connected {
                 localCharacteristic = nil
                 localDelay = nil
@@ -310,13 +307,12 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
         queue.async { [weak self] in
             
             guard let self else { return }
-            
-            let localDelegate: BlePeripheralDelegate?
+
+            lock.lock()
+            let localDelegate: BlePeripheralDelegate? = peripheralDelegate
             let localError: Error?
             let localDelay: DispatchTimeInterval?
             let localCharacteristic: MockCBCharacteristic?
-            lock.lock()
-            localDelegate = peripheralDelegate
             if state != .connected {
                 localCharacteristic = nil
                 localDelay = nil
@@ -384,12 +380,11 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            let localDelegate: BlePeripheralDelegate?
+            lock.lock()
+            let localDelegate: BlePeripheralDelegate? = peripheralDelegate
             let localError: Error?
             let localDelay: DispatchTimeInterval?
             let localCharacteristic: MockCBCharacteristic?
-            lock.lock()
-            localDelegate = peripheralDelegate
             if state != .connected {
                 localCharacteristic = nil
                 localDelay = nil
@@ -453,12 +448,11 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
             
             guard let self else { return }
             
-            let localDelegate: BlePeripheralDelegate?
+            lock.lock()
+            let localDelegate: BlePeripheralDelegate? = peripheralDelegate
             let localError: Error?
             let localDelay: DispatchTimeInterval?
             let localRSSI: Int
-            lock.lock()
-            localDelegate = peripheralDelegate
             if state != .connected {
                 rssi = -1
                 localDelay = nil
@@ -516,12 +510,9 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func discoverDeviceInformationServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
-        let localDelegate: BlePeripheralDelegate?
-        let localService: CBService
-      
         lock.lock()
-        localDelegate = peripheralDelegate
-        localService = deviceInformationService
+        let localDelegate: BlePeripheralDelegate? = peripheralDelegate
+        let localService: CBService = deviceInformationService
         addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.serialNumberCharacteristicUUID,
@@ -554,12 +545,9 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func discoverBatteryServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
 
-        let localDelegate: BlePeripheralDelegate?
-        let localService: CBService
-      
         lock.lock()
-        localDelegate = peripheralDelegate
-        localService = batteryService
+        let localDelegate: BlePeripheralDelegate? = peripheralDelegate
+        let localService: CBService = batteryService
         addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.batteryLevelCharacteristicUUID,
@@ -575,13 +563,10 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     }
     
     private func discoverHeartRateServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
-        
-        let localDelegate: BlePeripheralDelegate?
-        let localService: CBService
       
         lock.lock()
-        localDelegate = peripheralDelegate
-        localService = heartRateService
+        let localDelegate: BlePeripheralDelegate? = peripheralDelegate
+        let localService: CBService = heartRateService
         addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.heartRateCharacteristicUUID,
@@ -598,12 +583,9 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func discoverCustomServiceCharacteristics(_ characteristicUUIDs: [CBUUID]?) {
         
-        let localDelegate: BlePeripheralDelegate?
-        let localService: CBService
-      
         lock.lock()
-        localDelegate = peripheralDelegate
-        localService = customService
+        let localDelegate: BlePeripheralDelegate? = peripheralDelegate
+        let localService: CBService = customService
         addCharacteristicIfNeeded(
             MockCBCharacteristic(
                 type: MockBleDescriptor.secretCharacteristicUUID,
@@ -673,14 +655,11 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     
     private func notifyInterval() {
         
-        let localDelegate: BlePeripheralDelegate?
-        let localCharacteristic: MockCBCharacteristic?
-        let localServices: [CBService]?
         lock.lock()
-        localDelegate = peripheralDelegate
-        localCharacteristic = findInternalMutableCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
+        let localDelegate: BlePeripheralDelegate? = peripheralDelegate
+        let localServices: [CBService]? = services
+        let localCharacteristic: MockCBCharacteristic? = findInternalMutableCharacteristic(MockBleDescriptor.heartRateCharacteristicUUID)
         localCharacteristic?.value = Data(with: heartRateProvider())
-        localServices = services
         lock.unlock()
         
         localServices?.forEach {
@@ -704,9 +683,8 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
     func setName(_ name: String?, after timeout: DispatchTimeInterval) {
         queue.asyncAfter(deadline: .now() + timeout) { [weak self] in
             guard let self else { return }
-            let localDelegate: BlePeripheralDelegate?
             lock.lock()
-            localDelegate = peripheralDelegate
+            let localDelegate: BlePeripheralDelegate? = peripheralDelegate
             self.name = name
             lock.unlock()
             localDelegate?.blePeripheralDidUpdateName(self)

@@ -414,4 +414,62 @@ extension BleCentralManagerProxyConnectionTests {
         }
     }
     
+    func testPeripheralConnectFailDueToTaskCancellation() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Assert initial peripheral state
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        // Mock connection delay
+        bleCentralManager.delayOnConnection = .seconds(2)
+        // Begin test
+        let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
+        let peripheral: BlePeripheral = try blePeripheral_1
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
+    }
+    
+    func testPeripheralConnectAndWaitUntilReadyFailDueToTaskCancellation() async throws {
+        // Assert initial state
+        XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        // Begin test
+        let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
+        let peripheral: BlePeripheral = try blePeripheral_1
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                try await proxy.waitUntilReady()
+                try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
+    }
+    
 }

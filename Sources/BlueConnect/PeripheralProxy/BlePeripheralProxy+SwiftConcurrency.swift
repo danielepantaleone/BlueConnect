@@ -49,12 +49,16 @@ public extension BlePeripheralProxy {
         serviceUUID: CBUUID,
         timeout: DispatchTimeInterval = .seconds(10)
     ) async throws -> CBService {
-        try await withCheckedThrowingContinuation { continuation in
-            discover(serviceUUID: serviceUUID, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                discover(serviceUUID: serviceUUID, timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            discoverServiceRegistry.notify(key: serviceUUID, value: .failure(CancellationError()))
         }
     }
     
@@ -75,12 +79,16 @@ public extension BlePeripheralProxy {
         in serviceUUID: CBUUID,
         timeout: DispatchTimeInterval = .seconds(10)
     ) async throws -> CBCharacteristic {
-        try await withCheckedThrowingContinuation { continuation in
-            discover(characteristicUUID: characteristicUUID, in: serviceUUID, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                discover(characteristicUUID: characteristicUUID, in: serviceUUID, timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            discoverCharacteristicRegistry.notify(key: characteristicUUID, value: .failure(CancellationError()))
         }
     }
     
@@ -116,12 +124,16 @@ public extension BlePeripheralProxy {
     /// - Returns: The RSSI value representing the signal strength in dBm.
     /// - Throws: An error if the peripheral RSSI value cannot be read within the specified timeout or is not valid.
     func readRSSI(timeout: DispatchTimeInterval = .seconds(10)) async throws -> Int {
-        try await withCheckedThrowingContinuation { continuation in
-            readRSSI(timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                readRSSI(timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            rssiReadRegistry.notifyAll(.failure(CancellationError()))
         }
     }
     
@@ -142,12 +154,16 @@ public extension BlePeripheralProxy {
         cachePolicy: BlePeripheralCachePolicy,
         timeout: DispatchTimeInterval = .seconds(10)
     ) async throws -> Data {
-        try await withCheckedThrowingContinuation { continuation in
-            read(characteristicUUID: characteristicUUID, cachePolicy: cachePolicy, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                read(characteristicUUID: characteristicUUID, cachePolicy: cachePolicy, timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            characteristicReadRegistry.notify(key: characteristicUUID, value: .failure(CancellationError()))
         }
     }
     
@@ -166,12 +182,16 @@ public extension BlePeripheralProxy {
         to characteristicUUID: CBUUID,
         timeout: DispatchTimeInterval = .seconds(10)
     ) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            write(data: data, to: characteristicUUID, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                write(data: data, to: characteristicUUID, timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            characteristicWriteRegistry.notify(key: characteristicUUID, value: .failure(CancellationError()))
         }
     }
     
@@ -193,12 +213,16 @@ public extension BlePeripheralProxy {
         for characteristicUUID: CBUUID,
         timeout: DispatchTimeInterval = .seconds(10)
     ) async throws -> Bool {
-        try await withCheckedThrowingContinuation { continuation in
-            setNotify(enabled: enabled, for: characteristicUUID, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                setNotify(enabled: enabled, for: characteristicUUID, timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            characteristicNotifyRegistry.notify(key: characteristicUUID, value: .failure(CancellationError()))
         }
     }
     

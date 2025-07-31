@@ -44,12 +44,16 @@ extension BlePeripheralManagerProxy {
     ///
     /// - Throws: An error if the advertising start operation fails or times out.
     public func startAdvertising(_ advertisementData: [String: Any]? = nil, timeout: DispatchTimeInterval = .never) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            startAdvertising(advertisementData, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                startAdvertising(advertisementData, timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            startAdvertisingRegistry.notifyAll(.failure(CancellationError()))
         }
     }
     
@@ -59,12 +63,16 @@ extension BlePeripheralManagerProxy {
     ///
     /// - Throws: An error if the advertising stop operation fails or times out.
     public func stopAdvertising() async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            stopAdvertising { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                stopAdvertising { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            stopAdvertisingRegistry.notifyAll(.failure(CancellationError()))
         }
     }
     
@@ -88,12 +96,16 @@ extension BlePeripheralManagerProxy {
     /// - Parameter timeout: The maximum duration to wait for the peripheral manager to be ready. The default value is `.never`, indicating no timeout.
     /// - Throws: An error if the it's not possible to wait for the peripheral manager to be ready within the provided timeout.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            waitUntilReady(timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                waitUntilReady(timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            waitUntilReadyRegistry.notifyAll(.failure(CancellationError()))
         }
     }
     

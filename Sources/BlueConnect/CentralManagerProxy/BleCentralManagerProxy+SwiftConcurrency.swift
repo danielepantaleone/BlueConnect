@@ -57,12 +57,16 @@ extension BleCentralManagerProxy {
         options: [String: Any]? = nil,
         timeout: DispatchTimeInterval = .never
     ) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            connect(peripheral: peripheral, options: options, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                connect(peripheral: peripheral, options: options, timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            connectionRegistry.notify(key: peripheral.identifier, value: .failure(CancellationError()))
         }
     }
     
@@ -82,12 +86,16 @@ extension BleCentralManagerProxy {
     ///
     /// - Throws: An error if the disconnection fails.
     public func disconnect(peripheral: BlePeripheral) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            disconnect(peripheral: peripheral) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                disconnect(peripheral: peripheral) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            disconnectionRegistry.notify(key: peripheral.identifier, value: .failure(CancellationError()))
         }
     }
     
@@ -111,12 +119,16 @@ extension BleCentralManagerProxy {
     /// - Parameter timeout: The maximum duration to wait for the central manager to be ready. The default value is `.never`, indicating no timeout.
     /// - Throws: An error if the it's not possible to wait for the central manager to be ready within the provided timeout.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            waitUntilReady(timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                waitUntilReady(timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
                 }
             }
+        } onCancel: {
+            waitUntilReadyRegistry.notifyAll(.failure(CancellationError()))
         }
     }
     

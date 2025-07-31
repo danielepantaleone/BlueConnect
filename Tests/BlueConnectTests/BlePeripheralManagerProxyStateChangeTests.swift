@@ -309,4 +309,27 @@ extension BlePeripheralManagerProxyStateChangeTests {
         }
     }
     
+    func testWaitUntilReadyFailDueToTaskCancellationAsync() async throws {
+        XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
+        let proxy: BlePeripheralManagerProxy! = blePeripheralManagerProxy
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                try await proxy.waitUntilReady(timeout: .seconds(2))
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
+    }
+    
 }

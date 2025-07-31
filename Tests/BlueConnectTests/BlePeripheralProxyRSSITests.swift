@@ -365,6 +365,35 @@ extension BlePeripheralProxyRSSITests {
             XCTFail("peripheral RSSI read was expected to fail with MockBleError 'mockedError', got '\(error)' instead")
         }
     }
+    
+    func testPeripheralRSSIUpdateFailDueToTaskCancellation() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Mock delay
+        try blePeripheral_1.delayOnRSSI = .seconds(2)
+        // Begin test
+        let proxy: BlePeripheralProxy! = blePeripheralProxy_1
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                _ = try await proxy.readRSSI(timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
+    }
 
 }
 
