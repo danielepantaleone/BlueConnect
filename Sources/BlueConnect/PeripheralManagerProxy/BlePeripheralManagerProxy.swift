@@ -263,7 +263,7 @@ extension BlePeripheralManagerProxy {
         }
 
         // If we do not have an advertising monitor running (very unlikely) we have to provide early feedback.
-        guard advertisingMonitor == nil || advertisingMonitor!.isCancelled else {
+        guard advertisingMonitor != nil && !advertisingMonitor!.isCancelled else {
             peripheralManager.stopAdvertising()
             localCallback = {
                 callback(.success(()))
