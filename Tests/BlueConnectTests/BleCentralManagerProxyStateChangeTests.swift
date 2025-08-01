@@ -423,4 +423,39 @@ extension BleCentralManagerProxyStateChangeTests {
         _ = await task.result
     }
     
+    func testWaitUntilReadyFailOnSingleTaskDueToTaskCancellation() async throws {
+        XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
+        let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
+        let started = XCTestExpectation(description: "Task started")
+        started.expectedFulfillmentCount = 2
+        let task1 = Task {
+            started.fulfill() // Signal that the first task has started
+            do {
+                try await proxy.waitUntilReady(timeout: .seconds(2))
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        let task2 = Task {
+            started.fulfill() // Signal that the second task has started
+            do {
+                try await proxy.waitUntilReady(timeout: .seconds(2))
+            } catch is CancellationError {
+                XCTFail("Test failed due to cancellation of first task")
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task1.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task1.result
+        _ = await task2.result
+    }
+    
 }
