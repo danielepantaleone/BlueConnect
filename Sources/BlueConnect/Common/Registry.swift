@@ -73,7 +73,7 @@ class Subscription<ValueType>: Identifiable, Equatable {
     ///   - callback: A closure to be called when the subscription is notified with a result.
     ///   - timeout: The time duration after which the subscription times out.
     ///   - timeoutHandler: A closure to be called when the subscription times out.
-    init(
+    fileprivate init(
         callback: @escaping (Result<ValueType, Error>) -> Void,
         timeout: DispatchTimeInterval,
         timeoutHandler: @escaping (Subscription) -> Void
@@ -88,7 +88,7 @@ class Subscription<ValueType>: Identifiable, Equatable {
     /// Notifies the subscription with the specified result, triggering the callback and cancelling the timer.
     ///
     /// - Parameter value: The result to notify the subscription with.
-    func notify(_ value: Result<ValueType, Error>) {
+    func notify(_ value: Result<ValueType, Error>) { // TODO: Make private
         registryLock.lock()
         guard state != .notified else {
             registryLock.unlock()
@@ -149,19 +149,6 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
     
     // MARK: - Interface
     
-    /// Notifies all subscriptions in the registry with the given result and removes them from the registry.
-    ///
-    /// - Parameter value: The result to pass to each subscription's callback.
-    func notifyAll(_ value: Result<ValueType, Error>) {
-        registryLock.lock()
-        let locals = registry.values.flatMap { $0 }
-        registry.removeAll()
-        registryLock.unlock()
-        for subscription in locals {
-            subscription.notify(value)
-        }
-    }
-    
     /// Notifies all subscriptions associated with a specific key and removes them from the registry.
     ///
     /// - Parameters:
@@ -171,6 +158,19 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
         registryLock.lock()
         let locals = registry[key].emptyIfNil
         registry[key] = []
+        registryLock.unlock()
+        for subscription in locals {
+            subscription.notify(value)
+        }
+    }
+    
+    /// Notifies all subscriptions in the registry with the given result and removes them from the registry.
+    ///
+    /// - Parameter value: The result to pass to each subscription's callback.
+    func notifyAll(_ value: Result<ValueType, Error>) {
+        registryLock.lock()
+        let locals = registry.values.flatMap { $0 }
+        registry.removeAll()
         registryLock.unlock()
         for subscription in locals {
             subscription.notify(value)
@@ -245,6 +245,18 @@ class ListRegistry<ValueType> {
     
     // MARK: - Interface
     
+    /// Notify the given subscriptiion with the provided result and removes it from the registry.
+    ///
+    /// - Parameters:
+    ///   - subscription: The subscription to notify.
+    ///   - value: The result to pass to the subscription's callback.
+    func notify(subscription: Subscription<ValueType>, value: Result<ValueType, Error>) {
+        registryLock.lock()
+        registry.removeAll { $0 == subscription }
+        registryLock.unlock()
+        subscription.notify(value)
+    }
+    
     /// Notifies all registered subscriptions with the given result and clears the registry.
     ///
     /// - Parameter value: The result to pass to each subscription's callback.
@@ -274,12 +286,13 @@ class ListRegistry<ValueType> {
     ///   - timeout: The duration after which the subscription times out if not notified. Defaults to `.never`.
     ///   - timeoutHandler: A closure that is called if the subscription times out. Defaults to a no-op.
     ///
-    /// - Note: The subscription starts immediately, beginning timeout tracking if a timeout is specified.
+    /// - Note: The subscription timer is not started automatically and must be started manually if necessary.
+    /// - Returns: The subscription that is created.
     func register(
         callback: @escaping ((Result<ValueType, Error>) -> Void),
         timeout: DispatchTimeInterval = .never,
         timeoutHandler: @escaping (Subscription<ValueType>) -> Void = { _ in }
-    ) {
+    ) -> Subscription<ValueType> {
         
         registryLock.lock()
         defer { registryLock.unlock() }
@@ -299,6 +312,7 @@ class ListRegistry<ValueType> {
         
         // Start tracking the subscription's timeout (if any).
         subscription.start()
+        return subscription
         
     }
     
