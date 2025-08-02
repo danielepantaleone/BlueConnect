@@ -99,37 +99,4 @@ extension BleCentralManagerProxy {
         }
     }
     
-    /// Waits asynchronously until the central manager is in the `.poweredOn` state, or throws an error if the state is unauthorized or unsupported.
-    ///
-    /// This method uses an async/await pattern to wait for the central manager to become ready. It checks the central manager's state and resumes
-    /// with success if it is already `.poweredOn`. Otherwise, it waits until the state changes to `.poweredOn` within the specified timeout.
-    /// If the state is unauthorized or unsupported, it throws an error.
-    ///
-    /// Example usage:
-    ///
-    /// ```swift
-    /// do {
-    ///     try await centralManagerProxy.waitUntilReady(timeout: .seconds(5))
-    ///     // Central manager is ready
-    /// } catch {
-    ///     // Handle error (e.g., unsupported or unauthorized state)
-    /// }
-    /// ```
-    ///
-    /// - Parameter timeout: The maximum duration to wait for the central manager to be ready. The default value is `.never`, indicating no timeout.
-    /// - Throws: An error if the it's not possible to wait for the central manager to be ready within the provided timeout.
-    public func waitUntilReady(timeout: DispatchTimeInterval = .never) async throws {
-        try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { continuation in
-                waitUntilReady(timeout: timeout) { result in
-                    globalQueue.async {
-                        continuation.resume(with: result)
-                    }
-                }
-            }
-        } onCancel: {
-            waitUntilReadyRegistry.notifyAll(.failure(CancellationError()))
-        }
-    }
-    
 }

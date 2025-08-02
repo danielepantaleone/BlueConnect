@@ -435,6 +435,7 @@ extension BleCentralManagerProxyStateChangeTests {
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
                 // Expected path
+                print("1")
             } catch {
                 XCTFail("Test failed with error: \(error)")
             }
@@ -443,8 +444,11 @@ extension BleCentralManagerProxyStateChangeTests {
             started.fulfill() // Signal that the second task has started
             do {
                 try await proxy.waitUntilReady(timeout: .seconds(2))
+                XCTFail("Expected task to raise readyTimeout, but it succeeded")
             } catch is CancellationError {
                 XCTFail("Test failed due to cancellation of first task")
+            } catch BleCentralManagerProxyError.readyTimeout {
+                // Expected path
             } catch {
                 XCTFail("Test failed with error: \(error)")
             }

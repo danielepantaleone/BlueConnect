@@ -37,7 +37,7 @@ let registryLock = NSRecursiveLock()
 /// Subscriptions are notified when a result becomes available, an error occurs, or when the timeout is reached if no notification has occurred.
 ///
 /// - Note: This class conforms to `Identifiable` and `Equatable`.
-class Subscription<ValueType>: Identifiable, Equatable {
+final class Subscription<ValueType>: Identifiable, Equatable, @unchecked Sendable {
     
     /// The state of the subscription.
     enum State {
@@ -128,6 +128,26 @@ class Subscription<ValueType>: Identifiable, Equatable {
     static func == (lhs: Subscription<ValueType>, rhs: Subscription<ValueType>) -> Bool {
         return lhs.id == rhs.id
     }
+    
+}
+
+// MARK: - SubscriptionBox
+
+/// A lightweight reference wrapper for a `Subscription` instance.
+///
+/// `SubscriptionBox` is used to safely capture and share a `Subscription` reference across closures, particularly in asynchronous contexts where the reference may need to be mutated from different scopes.
+///
+/// This class is particularly useful in conjunction with cancellation handlers in Swift concurrency, allowing you to capture and access the `Subscription` in both the main continuation and the cancellation block.
+///
+/// - Important: This class is marked as `@unchecked Sendable`. Ensure that it is only used in a thread-safe manner. Concurrent mutation is not safe unless external synchronization is provided.
+/// - Note: This class does not provide any synchronization. It is intended for single-threaded or externally synchronized use cases only.
+/// - SeeAlso: `Subscription`
+final class SubscriptionBox<ValueType>: @unchecked Sendable {
+    
+    /// The wrapped `Subscription` instance.
+    ///
+    /// This value may be set or read from asynchronous contexts such as cancellation handlers.
+    var value: Subscription<ValueType>?
     
 }
 
@@ -310,8 +330,6 @@ class ListRegistry<ValueType> {
         }
         registry.append(subscription)
         
-        // Start tracking the subscription's timeout (if any).
-        subscription.start()
         return subscription
         
     }

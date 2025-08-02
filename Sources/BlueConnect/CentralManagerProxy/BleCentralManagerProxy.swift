@@ -506,69 +506,111 @@ extension BleCentralManagerProxy {
 
 extension BleCentralManagerProxy {
     
-    /// Waits until the central manager is in the `.poweredOn` state, executing the callback upon success or failure.
+    /// Waits until the central manager reaches the `.poweredOn` state, executing the callback upon success or failure.
     ///
-    /// This method registers a callback that is invoked when the central manager's state changes to `.poweredOn`, or an error occurs.
-    /// The method also verifies that the central manager is authorized and supported.
+    /// This method registers a callback that is invoked when the central manager becomes ready (i.e., transitions to the `.poweredOn` state),
+    /// or when an error occurs due to an unsupported or unauthorized state, or a timeout.
+    /// If the central manager is already `.poweredOn`, the callback is invoked immediately with success.
     ///
     /// Example usage:
     ///
     /// ```swift
     /// bleCentralManagerProxy.waitUntilReady(timeout: .seconds(10)) { result in
     ///     switch result {
-    ///         case .success:
-    ///             print("Central manager is ready")
-    ///         case .failure(let error):
-    ///             print("Central manager is not ready: \(error)")
+    ///     case .success:
+    ///         print("Central manager is ready")
+    ///     case .failure(let error):
+    ///         print("Central manager is not ready: \(error)")
     ///     }
     /// }
     /// ```
     ///
     /// - Parameters:
-    ///   - timeout: The maximum time to wait for the central manager to become ready. Default is `.never`.
-    ///   - callback: A closure that receives a `Result` indicating success or an error if the central manager is unauthorized or unsupported.
-    ///
-    /// - Note: If the state is already `.poweredOn`, the callback is called immediately with success.
+    ///   - timeout: The maximum duration to wait for the central manager to become ready. The default is `.never`, meaning no timeout.
+    ///   - callback: A closure that receives a `Result` indicating either success, or failure if the central manager is unauthorized, unsupported, or if the timeout is exceeded.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
-             
-        var localCallback: (() -> Void)? = nil
-
-        lock.lock()
-        defer {
-            lock.unlock()
-            localCallback?()
-        }
-
-        // Ensure central manager is not already powered on.
-        guard centralManager.state != .poweredOn else {
-            localCallback = {
-                callback(.success(()))
-            }
-            return
-        }
-
-        // Ensure central manager is authorized.
-        guard centralManager.state != .unauthorized else {
-            localCallback = {
-                callback(.failure(BleCentralManagerProxyError.invalidState(.unauthorized)))
-            }
-            return
-        }
-
-        // Ensure central manager is supported.
-        guard centralManager.state != .unsupported else {
-            localCallback = {
-                callback(.failure(BleCentralManagerProxyError.invalidState(.unsupported)))
-            }
-            return
-        }
-
-        // Register a callback to be notified when central manager is powered on.
-        waitUntilReadyRegistry.register(
+        let subscription = waitUntilReadyRegistry.register(
             callback: callback,
             timeout: timeout
         ) { subscription in
             subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
+        }
+        waitUntilReady(subscription: subscription)
+    }
+    
+    /// Waits asynchronously until the central manager reaches the `.poweredOn` state, or throws an error if the state is `.unauthorized` or `.unsupported`.
+    ///
+    /// This method uses the async/await pattern to wait for the central manager to become ready.
+    /// If the central manager is already in the `.poweredOn` state, the method resumes immediately with success.
+    /// Otherwise, it waits for the state to transition to `.poweredOn` within the specified timeout period.
+    /// If the state is `.unauthorized` or `.unsupported`, the method throws an appropriate error.
+    ///
+    /// Example usage:
+    ///
+    /// ```swift
+    /// do {
+    ///     try await centralManagerProxy.waitUntilReady(timeout: .seconds(5))
+    ///     // Central manager is ready
+    /// } catch {
+    ///     // Handle error (e.g., unsupported/unauthorized state, or timeout)
+    /// }
+    /// ```
+    ///
+    /// - Parameter timeout: The maximum duration to wait for the central manager to become ready. The default is `.never`, meaning no timeout.
+    /// - Throws: An error if the central manager fails to reach the `.poweredOn` state within the timeout, or if it is unauthorized or unsupported.
+    public func waitUntilReady(timeout: DispatchTimeInterval = .never) async throws {
+        let box = SubscriptionBox<Void>()
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                let subscription = waitUntilReadyRegistry.register(
+                    callback: { continuation.resume(with: $0) },
+                    timeout: timeout
+                ) { subscription in
+                    subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
+                }
+                box.value = subscription
+                return waitUntilReady(subscription: subscription)
+            }
+        } onCancel: {
+            if let subscription = box.value {
+                waitUntilReadyRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(CancellationError())
+                )
+            }
+        }
+    }
+    
+    /// Asynchronously waits until the central manager reaches the `.poweredOn` state, or throws an error if the state is `.unauthorized` or `.unsupported`.
+    ///
+    /// This method follows the async/await pattern to wait for the central manager to become ready.
+    /// If the central manager is already in the `.poweredOn` state, the subscription is immediately notified with success.
+    /// Otherwise, it waits for the state to transition to `.poweredOn` within the specified timeout.
+    /// If the central manager is `.unauthorized` or `.unsupported`, the subscription is notified with a corresponding failure.
+    ///
+    /// - Parameter subscription: The subscription to notify with either success or failure.
+    /// - Throws: An error if the central manager is unauthorized, unsupported, or does not reach the `.poweredOn` state within the timeout period.
+    func waitUntilReady(subscription: Subscription<Void>) {
+            
+        var resultToNotify: Result<Void, Error>? = nil
+        
+        lock.lock()
+        defer {
+            lock.unlock()
+            if let result = resultToNotify {
+                subscription.notify(result)
+            }
+        }
+
+        switch centralManager.state {
+            case .poweredOn:
+                resultToNotify = .success(())
+            case .unauthorized:
+                resultToNotify = .failure(BleCentralManagerProxyError.invalidState(.unauthorized))
+            case .unsupported:
+                resultToNotify = .failure(BleCentralManagerProxyError.invalidState(.unsupported))
+            default:
+                subscription.start()
         }
         
     }
