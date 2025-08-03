@@ -446,7 +446,7 @@ extension BleCentralManagerProxyStateChangeTests {
                 try await proxy.waitUntilReady(timeout: .seconds(2))
                 XCTFail("Expected task to raise readyTimeout, but it succeeded")
             } catch is CancellationError {
-                XCTFail("Test failed due to cancellation of first task")
+                XCTFail("Test failed due to cancellation of second task")
             } catch BleCentralManagerProxyError.readyTimeout {
                 // Expected path
             } catch {
