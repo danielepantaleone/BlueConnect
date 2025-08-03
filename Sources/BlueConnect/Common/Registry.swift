@@ -28,7 +28,7 @@
 import Foundation
 
 /// A global lock to manage registry thread safety.
-let registryLock = NSRecursiveLock()
+fileprivate let registryLock = NSRecursiveLock()
 
 // MARK: - Subscription
 
@@ -141,7 +141,6 @@ final class Subscription<ValueType>: Identifiable, Equatable, @unchecked Sendabl
 ///
 /// - Important: This class is marked as `@unchecked Sendable`. Ensure that it is only used in a thread-safe manner. Concurrent mutation is not safe unless external synchronization is provided.
 /// - Note: This class does not provide any synchronization. It is intended for single-threaded or externally synchronized use cases only.
-/// - SeeAlso: `Subscription`
 final class SubscriptionBox<ValueType>: @unchecked Sendable {
     
     /// The wrapped `Subscription` instance.
@@ -184,6 +183,25 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
         }
     }
     
+    /// Notify the given subscriptiion with the provided result and removes it from the registry.
+    ///
+    /// - Parameters:
+    ///   - subscription: The subscription to notify.
+    ///   - value: The result to pass to the subscription's callback.
+    func notify(subscription: Subscription<ValueType>, value: Result<ValueType, Error>) {
+        registryLock.lock()
+        for key in registry.keys {
+            if var array = registry[key],
+               let index = array.firstIndex(of: subscription) {
+                array.remove(at: index)
+                registry[key] = array.isEmpty ? nil : array
+                break
+            }
+        }
+        registryLock.unlock()
+        subscription.notify(value)
+    }
+    
     /// Notifies all subscriptions in the registry with the given result and removes them from the registry.
     ///
     /// - Parameter value: The result to pass to each subscription's callback.
@@ -215,18 +233,18 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
     ///   - timeout: The duration after which the subscription times out if not notified, defaults to `.never`.
     ///   - timeoutHandler: A closure to be called when the subscription times out, defaults to empty closure.
     ///
-    /// - Note: The subscription is started immediately, which begins tracking its timeout if one is set.
+    /// - Note: The subscription timer is not started automatically and must be started manually if necessary.
+    /// - Returns: The subscription that is created.
     func register(
         key: KeyType,
         callback: @escaping ((Result<ValueType, Error>) -> Void),
         timeout: DispatchTimeInterval = .never,
         timeoutHandler: @escaping (Subscription<ValueType>) -> Void = { _ in }
-    ) {
+    ) -> Subscription<ValueType> {
         
         registryLock.lock()
         defer { registryLock.unlock() }
         
-        // Create and store the subscription in the registry.
         let subscription = Subscription(
             callback: callback,
             timeout: timeout
@@ -242,9 +260,7 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
         }
         registry[key]?.append(subscription)
         
-        // Start tracking the subscription's timeout (if any).
-        subscription.start()
-        
+        return subscription
     }
     
 }
@@ -317,7 +333,6 @@ class ListRegistry<ValueType> {
         registryLock.lock()
         defer { registryLock.unlock() }
         
-        // Create and store the subscription in the registry.
         let subscription = Subscription(
             callback: callback,
             timeout: timeout
