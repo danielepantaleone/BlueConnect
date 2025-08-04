@@ -54,7 +54,7 @@ extension BleCentralManagerProxy {
     ///   - timeout: The maximum duration to wait for the central manager to become ready. The default is `.never`, meaning no timeout.
     ///   - callback: A closure that receives a `Result` indicating either success, or failure if the central manager is unauthorized, unsupported, or if the timeout is exceeded.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
-        let subscription = waitUntilReadySubscription(timeout: timeout, callback: callback)
+        let subscription = buildSubscription(timeout: timeout, callback: callback)
         waitUntilReady(subscription: subscription)
     }
     
@@ -81,7 +81,7 @@ extension BleCentralManagerProxy {
         let box = SubscriptionBox<Void>()
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let subscription = waitUntilReadySubscription(timeout: timeout, callback: { continuation.resume(with: $0) })
+                let subscription = buildSubscription(timeout: timeout, callback: { continuation.resume(with: $0) })
                 box.value = subscription
                 return waitUntilReady(subscription: subscription)
             }
@@ -94,6 +94,23 @@ extension BleCentralManagerProxy {
     
     // MARK: - Private
     
+    /// Internal shared logic to register and wait for readiness, abstracting over how the result is delivered.
+    ///
+    /// - Parameters:
+    ///   - timeout: The maximum duration to wait for the central manager to become ready. The default is `.never`, meaning no timeout.
+    ///   - callback: A closure that receives a `Result` indicating either success or failure.
+    ///
+    /// - Returns: A `Subscription` to be notified whenever the central manager is ready.
+    private func buildSubscription(timeout: DispatchTimeInterval, callback: @escaping (Result<Void, Error>) -> Void) -> Subscription<Void> {
+        waitUntilReadyRegistry.register(
+            callback: callback,
+            timeout: timeout,
+            timeoutHandler: { subscription in
+                subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
+            }
+        )
+    }
+
     /// Asynchronously waits until the central manager reaches the `.poweredOn` state, or throws an error if the state is `.unauthorized` or `.unsupported`.
     ///
     /// If the central manager is already in the `.poweredOn` state, the subscription is immediately notified with success, otherwise, it waits for the state to transition to `.poweredOn` within the specified timeout.
@@ -125,22 +142,5 @@ extension BleCentralManagerProxy {
         }
         
     }
-    
-    /// Internal shared logic to register and wait for readiness, abstracting over how the result is delivered.
-    ///
-    /// - Parameters:
-    ///   - timeout: The maximum duration to wait for the central manager to become ready. The default is `.never`, meaning no timeout.
-    ///   - callback: A closure that receives a `Result` indicating either success or failure.
-    ///
-    /// - Returns: A `Subscription` to be notified whenever the central manager is ready.
-    private func waitUntilReadySubscription(timeout: DispatchTimeInterval, callback: @escaping (Result<Void, Error>) -> Void) -> Subscription<Void> {
-        waitUntilReadyRegistry.register(
-            callback: callback,
-            timeout: timeout,
-            timeoutHandler: { subscription in
-                subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
-            }
-        )
-    }
-    
+
 }
