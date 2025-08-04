@@ -110,7 +110,7 @@ extension BleCentralManagerProxy {
     ///   - timeout: The maximum duration to wait for the central manager to become ready. The default is `.never`, meaning no timeout.
     ///   - callback: A closure that receives a `Result` indicating either success or failure.
     ///
-    /// - Returns: A `Subscription` to be notified whenever the central manager is ready.
+    /// - Returns: A `Subscription` to be notified whenever the peripheral connects.
     private func buildSubscription(
         peripheral: BlePeripheral,
         timeout: DispatchTimeInterval,
