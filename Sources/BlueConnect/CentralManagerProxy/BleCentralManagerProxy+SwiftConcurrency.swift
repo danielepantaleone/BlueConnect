@@ -34,42 +34,6 @@ import Foundation
 
 extension BleCentralManagerProxy {
     
-    /// Connects to a specified BLE peripheral asynchronously.
-    ///
-    /// Example usage:
-    ///
-    /// ```swift
-    /// do {
-    ///     try await bleCentralManagerProxy.connect(peripheral: peripheral, timeout: .seconds(10))
-    /// } catch {
-    ///     print("Failed to connect: \(error)")
-    /// }
-    /// ```
-    ///
-    /// - Parameters:
-    ///   - peripheral: The `BlePeripheral` to connect to.
-    ///   - options: A dictionary of options to customize the connection behavior, such as `CBConnectPeripheralOptionNotifyOnConnectionKey`. Defaults to `nil`.
-    ///   - timeout: A `DispatchTimeInterval` specifying how long to wait before considering the connection as failed due to timeout. Defaults to `.never`, meaning no timeout.
-    ///
-    /// - Throws: An error if the connection fails or if the operation times out.
-    public func connect(
-        peripheral: BlePeripheral,
-        options: [String: Any]? = nil,
-        timeout: DispatchTimeInterval = .never
-    ) async throws {
-        try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { continuation in
-                connect(peripheral: peripheral, options: options, timeout: timeout) { result in
-                    globalQueue.async {
-                        continuation.resume(with: result)
-                    }
-                }
-            }
-        } onCancel: {
-            connectionRegistry.notify(key: peripheral.identifier, value: .failure(CancellationError()))
-        }
-    }
-    
     /// Disconnects from a specified BLE peripheral asynchronously.
     ///
     /// Example usage:

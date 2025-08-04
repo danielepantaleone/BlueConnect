@@ -444,6 +444,49 @@ extension BleCentralManagerProxyConnectionTests {
         _ = await task.result
     }
     
+    func testPeripheralConnectFailOnSingleTaskDueToTaskCancellation() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Assert initial peripheral state
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        // Begin test
+        let central: MockBleCentralManager! = bleCentralManager
+        let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
+        let peripheral: BlePeripheral = try blePeripheral_1
+        let started = XCTestExpectation(description: "Task started")
+        started.expectedFulfillmentCount = 2
+        let task1 = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                central.delayOnConnection = .seconds(2)
+                try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        let task2 = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                central.delayOnConnection = .seconds(2)
+                try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
+            } catch is CancellationError {
+                XCTFail("Test failed due to cancellation of second task")
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task1.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task1.result
+        _ = await task2.result
+    }
+    
     func testPeripheralConnectAndWaitUntilReadyFailDueToTaskCancellation() async throws {
         // Assert initial state
         XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
