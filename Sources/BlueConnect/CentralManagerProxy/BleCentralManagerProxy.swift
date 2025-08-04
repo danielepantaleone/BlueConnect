@@ -531,10 +531,11 @@ extension BleCentralManagerProxy {
     public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
         let subscription = waitUntilReadyRegistry.register(
             callback: callback,
-            timeout: timeout
-        ) { subscription in
-            subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
-        }
+            timeout: timeout,
+            timeoutHandler: { subscription in
+                subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
+            }
+        )
         waitUntilReady(subscription: subscription)
     }
     
@@ -564,10 +565,11 @@ extension BleCentralManagerProxy {
             try await withCheckedThrowingContinuation { continuation in
                 let subscription = waitUntilReadyRegistry.register(
                     callback: { continuation.resume(with: $0) },
-                    timeout: timeout
-                ) { subscription in
-                    subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
-                }
+                    timeout: timeout,
+                    timeoutHandler: { subscription in
+                        subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
+                    }
+                )
                 box.value = subscription
                 return waitUntilReady(subscription: subscription)
             }
