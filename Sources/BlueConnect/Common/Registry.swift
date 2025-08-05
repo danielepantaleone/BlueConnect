@@ -261,6 +261,7 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
         registry[key]?.append(subscription)
         
         return subscription
+        
     }
     
 }

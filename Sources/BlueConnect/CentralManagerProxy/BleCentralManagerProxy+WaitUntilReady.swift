@@ -126,7 +126,7 @@ extension BleCentralManagerProxy {
         defer {
             lock.unlock()
             if let result = resultToNotify {
-                subscription.notify(result)
+                waitUntilReadyRegistry.notify(subscription: subscription, value: result)
             }
         }
 

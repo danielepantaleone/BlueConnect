@@ -168,7 +168,7 @@ extension BleCentralManagerProxy {
         defer {
             lock.unlock()
             if let result = resultToNotify {
-                subscription.notify(result)
+                connectionRegistry.notify(subscription: subscription, value: result)
             }
         }
         
