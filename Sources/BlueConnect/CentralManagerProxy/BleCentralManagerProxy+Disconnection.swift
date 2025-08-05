@@ -116,8 +116,7 @@ extension BleCentralManagerProxy {
         defer {
             lock.unlock()
             if let result = resultToNotify {
-                // FIXME: NOTIFY USING REGISTRY
-                subscription.notify(result)
+                disconnectionRegistry.notify(subscription: subscription, value: result)
             }
         }
         

@@ -75,6 +75,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         wait(for: [disconnectExp, publisherExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.disconnectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralDisconnectWithPeripheralConnecting() throws {
@@ -130,6 +131,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         wait(for: [disconnectExp, publisherExp, connectFailExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.disconnectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralDisconnectWithPeripheralAlreadyDisconnected() throws {
@@ -162,6 +164,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         wait(for: [disconnectExp, publisherExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.disconnectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralDisconnectWithPeripheralAlreadyDisconnecting() throws {
@@ -200,6 +203,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         wait(for: [disconnectExp, publisherExp], timeout: 6.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.disconnectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralDisconnectDueToBleManagerGoingOff() throws {
@@ -231,6 +235,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         wait(for: [expectation], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.disconnectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralDisconnectFailDueToBleCentralManagerOff() throws {
@@ -264,6 +269,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         wait(for: [disconnectExp, disconnectPublisherExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.disconnectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
 }
@@ -284,6 +290,7 @@ extension BleCentralManagerProxyDisconnectionTests {
             XCTFail("peripheral disconnection failed with error: \(error)")
         }
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.disconnectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralDisconnectFailDueToBleCentralManagerOffAsync() async throws {
@@ -292,6 +299,7 @@ extension BleCentralManagerProxyDisconnectionTests {
             try await bleCentralManagerProxy.disconnect(peripheral: try blePeripheral_1)
         } catch BleCentralManagerProxyError.invalidState(let state) {
             XCTAssertEqual(state, .poweredOff)
+            XCTAssertEqual(bleCentralManagerProxy.disconnectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
         } catch {
             XCTFail("peripheral disconnection was expected to fail with BleCentralManagerProxyError 'invalidState', got '\(error)' instead")
         }
@@ -314,7 +322,7 @@ extension BleCentralManagerProxyDisconnectionTests {
                 try await proxy.disconnect(peripheral: peripheral)
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
-                // Expected path
+                XCTAssertEqual(proxy.disconnectionRegistry.subscriptions(with: peripheral.identifier), [])
             } catch {
                 XCTFail("Test failed with error: \(error)")
             }
@@ -345,7 +353,7 @@ extension BleCentralManagerProxyDisconnectionTests {
                 try await proxy.disconnect(peripheral: peripheral)
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
-                // Expected path
+                XCTAssertNotEqual(proxy.disconnectionRegistry.subscriptions(with: peripheral.identifier), [])
             } catch {
                 XCTFail("Test failed with error: \(error)")
             }
@@ -355,6 +363,7 @@ extension BleCentralManagerProxyDisconnectionTests {
             do {
                 central.delayOnDisconnection = .seconds(2)
                 try await proxy.disconnect(peripheral: peripheral)
+                XCTAssertEqual(proxy.disconnectionRegistry.subscriptions(with: peripheral.identifier), [])
             } catch is CancellationError {
                 XCTFail("Test failed due to cancellation of second task")
             } catch {

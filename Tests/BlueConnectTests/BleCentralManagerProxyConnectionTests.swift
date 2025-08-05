@@ -482,6 +482,7 @@ extension BleCentralManagerProxyConnectionTests {
             do {
                 central.delayOnConnection = .seconds(2)
                 try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
+                XCTAssertEqual(proxy.connectionRegistry.subscriptions(with: peripheral.identifier), [])
             } catch is CancellationError {
                 XCTFail("Test failed due to cancellation of second task")
             } catch {
@@ -495,8 +496,6 @@ extension BleCentralManagerProxyConnectionTests {
         // Await the task to ensure cleanup.
         _ = await task1.result
         _ = await task2.result
-        // Assert final state
-        XCTAssertEqual(proxy.connectionRegistry.subscriptions(with: peripheral.identifier), [])
     }
     
     func testPeripheralConnectAndWaitUntilReadyFailDueToTaskCancellation() async throws {
