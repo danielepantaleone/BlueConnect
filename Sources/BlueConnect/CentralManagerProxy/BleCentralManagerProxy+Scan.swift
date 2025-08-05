@@ -43,7 +43,8 @@ extension BleCentralManagerProxy {
     ///   - serviceUUIDs: An optional array of service UUIDs to filter the scan results. If `nil`, it scans for all available peripherals.
     ///   - options: Optional dictionary of options for customizing the scanning behavior.
     ///   - timeout: The time interval after which the scan should stop automatically. Default is 60 seconds.
-    /// - Returns: A publisher that emits `BleCentralManagerScanRecord` instances as peripherals are discovered, and completes or fails on error.
+    ///
+    /// - Returns: A publisher that emits a tuple containing the peripheral, advertisement data and RSSI as peripherals are discovered, and completes or fails on error.
     ///
     /// This function initiates a scan for BLE peripherals. If a scan is already in progress, the existing scan is terminated and a new one is started right after.
     /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
@@ -99,7 +100,8 @@ extension BleCentralManagerProxy {
     ///   - serviceUUIDs: An optional array of service UUIDs to filter the scan results. If `nil`, it scans for all available peripherals.
     ///   - options: Optional dictionary of options for customizing the scanning behavior.
     ///   - timeout: The time interval after which the scan should stop automatically. Default is 60 seconds.
-    /// - Returns: A publisher that emits `BleCentralManagerScanRecord` instances as peripherals are discovered, and completes or fails on error.
+    ///
+    /// - Returns: An asynchronous stream yelding scan result which is composed of a tuple containing the peripheral, advertisement data and RSSI.
     ///
     /// This function initiates a scan for BLE peripherals returning an `AsyncThrowingStream` that can be used to iterate over discovered peripherals.
     /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
@@ -118,8 +120,23 @@ extension BleCentralManagerProxy {
         AsyncThrowingStream { continuation in
             final class CancellableBox: @unchecked Sendable {
                 var cancellable: AnyCancellable?
+                var cancellationMonitor: Task<Void, Never>?
+                var isTerminated = false
             }
             let box = CancellableBox()
+            // Monitor for outer task cancellation.
+            box.cancellationMonitor = Task {
+                while !Task.isCancelled {
+                    try? await Task.sleep(nanoseconds: 500_000_000) // 0.5s polling
+                }
+                guard !box.isTerminated else { return }
+                box.isTerminated = true
+                // If a value is yielded before the continuation is finished with a throwing error, and the
+                // consumer stops before consuming the next value, the error is not always thrown.
+                // https://forums.swift.org/t/why-does-asyncthrowingstream-silently-finish-without-error-if-cancelled/72777
+                continuation.finish(throwing: CancellationError())
+            }
+            // Start combine scan.
             box.cancellable = scanForPeripherals(
                 withServices: serviceUUIDs,
                 options: options,
@@ -128,6 +145,8 @@ extension BleCentralManagerProxy {
             .receive(on: globalQueue)
             .sink(
                 receiveCompletion: { completion in
+                    guard !box.isTerminated else { return }
+                    box.isTerminated = true
                     switch completion {
                         case .finished:
                             continuation.finish()
@@ -139,8 +158,10 @@ extension BleCentralManagerProxy {
                     continuation.yield((peripheral, advertisementData, RSSI))
                 }
             )
-            continuation.onTermination = { @Sendable [weak self]  _ in
+            // Cleanup on termination (e.g. caller stops consuming stream)
+            continuation.onTermination = { @Sendable [weak self] _ in
                 box.cancellable?.cancel()
+                box.cancellationMonitor?.cancel()
                 self?.stopScan()
             }
         }
