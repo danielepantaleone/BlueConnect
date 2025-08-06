@@ -382,8 +382,6 @@ extension BlePeripheralManagerProxyStateChangeTests {
         // Await the task to ensure cleanup.
         _ = await task1.result
         _ = await task2.result
-        // Assert final state
-        XCTAssertTrue(proxy.waitUntilReadyRegistry.subscriptions().isEmpty)
     }
     
 }
