@@ -101,8 +101,6 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
                 localDelay = delayOnStartAdvertising
                 localError = nil
             }
-            self.delayOnStartAdvertising = nil
-            self.errorOnStartAdvertising = nil
             lock.unlock()
             
             if let localError {
@@ -149,7 +147,6 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
                 return
             }
             let localDelay = delayOnStopAdvertising
-            self.delayOnStopAdvertising = nil
             lock.unlock()
             
             @Sendable
