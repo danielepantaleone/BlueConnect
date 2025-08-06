@@ -459,8 +459,9 @@ extension BleCentralManagerProxyConnectionTests {
         centralManager(state: .poweredOn)
         // Assert initial peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        // Mock connection delay
+        bleCentralManager.delayOnConnection = .seconds(2)
         // Begin test
-        let central: MockBleCentralManager! = bleCentralManager
         let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
         let peripheral: BlePeripheral = try blePeripheral_1
         let started = XCTestExpectation(description: "Task started")
@@ -468,7 +469,6 @@ extension BleCentralManagerProxyConnectionTests {
         let task1 = Task {
             started.fulfill() // Signal that the task has started
             do {
-                central.delayOnConnection = .seconds(2)
                 try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
@@ -480,7 +480,6 @@ extension BleCentralManagerProxyConnectionTests {
         let task2 = Task {
             started.fulfill() // Signal that the task has started
             do {
-                central.delayOnConnection = .seconds(2)
                 try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
                 XCTAssertEqual(proxy.connectionRegistry.subscriptions(with: peripheral.identifier), [])
             } catch is CancellationError {

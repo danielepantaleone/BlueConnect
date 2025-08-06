@@ -112,8 +112,6 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
                 localDelay = delayOnConnection
                 localError = nil
             }
-            self.delayOnConnection = nil
-            self.errorOnConnection = nil
             lock.unlock()
             
             if let localError {
@@ -174,8 +172,6 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
                 localDelay = delayOnDisconnection
                 localError = nil
             }
-            self.delayOnDisconnection = nil
-            self.errorOnDisconnection = nil
             lock.unlock()
             
             if let localError {
