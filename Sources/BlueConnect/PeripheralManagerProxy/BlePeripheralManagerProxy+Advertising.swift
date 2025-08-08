@@ -71,7 +71,11 @@ extension BlePeripheralManagerProxy {
         let box = SubscriptionBox<Void>()
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let subscription = buildAdvStartSubscription(timeout: timeout, callback: { continuation.resume(with: $0) })
+                let subscription = buildAdvStartSubscription(timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
+                }
                 box.value = subscription
                 return startAdvertising(advertisementData: advertisementData, subscription: subscription)
             }
@@ -107,7 +111,11 @@ extension BlePeripheralManagerProxy {
         let box = SubscriptionBox<Void>()
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let subscription = buildAdvStopSubscription(timeout: timeout, callback: { continuation.resume(with: $0) })
+                let subscription = buildAdvStopSubscription(timeout: timeout) { result in
+                    globalQueue.async {
+                        continuation.resume(with: result)
+                    }
+                }
                 box.value = subscription
                 return stopAdvertising(subscription: subscription)
             }
