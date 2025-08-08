@@ -125,8 +125,8 @@ extension BleCentralManagerProxy {
         connectionRegistry.register(
             key: peripheral.identifier,
             callback: callback,
-            timeout: timeout
-        ) { [weak self, weak peripheral] subscription in
+            timeout: timeout,
+            timeoutHandler: { [weak self, weak peripheral] subscription in
             
             guard let self else { return }
             guard let peripheral else { return }
@@ -151,7 +151,7 @@ extension BleCentralManagerProxy {
                 subscription.notify(.failure(BleCentralManagerProxyError.connectionTimeout))
             }
             
-        }
+        })
         
     }
     
