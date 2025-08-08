@@ -95,6 +95,7 @@ extension BleCentralManagerProxy {
                 return connect(peripheral: peripheral, options: options, subscription: subscription)
             }
         } onCancel: {
+            // TODO: If it's the last connection attempt, disconnect the peripheral prior notifying cancellation error
             if let subscription = box.value {
                 connectionRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
             }
