@@ -39,15 +39,15 @@ extension BleCentralManagerProxy {
     
     /// Scans for BLE peripherals with specified services and options.
     ///
+    /// This function initiates a scan for BLE peripherals. If a scan is already in progress, the existing scan is terminated and a new one is started right after.
+    /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
+    ///
     /// - Parameters:
     ///   - serviceUUIDs: An optional array of service UUIDs to filter the scan results. If `nil`, it scans for all available peripherals.
     ///   - options: Optional dictionary of options for customizing the scanning behavior.
     ///   - timeout: The time interval after which the scan should stop automatically. Default is 60 seconds.
     ///
     /// - Returns: A publisher that emits a tuple containing the peripheral, advertisement data and RSSI as peripherals are discovered, and completes or fails on error.
-    ///
-    /// This function initiates a scan for BLE peripherals. If a scan is already in progress, the existing scan is terminated and a new one is started right after.
-    /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
     ///
     /// - Note: If the central manager is not in the `.poweredOn` state, the scan fails, and the publisher sends a `.failure` event with an appropriate error.
     public func scanForPeripherals(
@@ -96,16 +96,16 @@ extension BleCentralManagerProxy {
     
     /// Scans for BLE peripherals with specified services and options.
     ///
+    /// This function initiates a scan for BLE peripherals returning an `AsyncThrowingStream` that can be used to iterate over discovered peripherals.
+    /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
+    /// The scan is stopped gracefully if the container `Task` is canceled.
+    /// 
     /// - Parameters:
     ///   - serviceUUIDs: An optional array of service UUIDs to filter the scan results. If `nil`, it scans for all available peripherals.
     ///   - options: Optional dictionary of options for customizing the scanning behavior.
     ///   - timeout: The time interval after which the scan should stop automatically. Default is 60 seconds.
     ///
     /// - Returns: An asynchronous stream yelding scan result which is composed of a tuple containing the peripheral, advertisement data and RSSI.
-    ///
-    /// This function initiates a scan for BLE peripherals returning an `AsyncThrowingStream` that can be used to iterate over discovered peripherals.
-    /// The scan is stopped automatically after the specified timeout, or it can be stopped manually by calling `stopScan()`.
-    /// The scan is stopped gracefully if the container `Task` is canceled.
     ///
     /// - Note: If the central manager is not in the `.poweredOn` state, the scan fails, and the async stream is finished with an appropriate error.
     public func scanForPeripherals(
