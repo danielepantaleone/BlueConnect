@@ -94,24 +94,10 @@ extension BleCentralManagerProxy {
     
     // MARK: - Private
     
-    /// Internal shared logic to register and wait for peripheral disconnection, abstracting over how the result is delivered.
-    ///
-    /// - Parameters:
-    ///   - peripheral: The `BlePeripheral` to disconnect.
-    ///   - callback: A closure that receives a `Result` indicating either success or failure.
-    ///
-    /// - Returns: A `Subscription` to be notified whenever the peripheral is disconnected.
     private func buildSubscription(peripheral: BlePeripheral, callback: @escaping (Result<Void, Error>) -> Void) -> Subscription<Void> {
         disconnectionRegistry.register(key: peripheral.identifier, callback: callback)
     }
     
-    /// Disconnects from a specified BLE peripheral asynchronously.
-    ///
-    /// - Parameters:
-    ///   - peripheral: The `BlePeripheral` to disconnect.
-    ///   - subscription: The subscription to notify with either success or failure.
-    ///
-    /// - Throws: An error if the disconnection fails.
     private func disconnect(peripheral: BlePeripheral, subscription: Subscription<Void>) {
             
         var resultToNotify: Result<Void, Error>? = nil

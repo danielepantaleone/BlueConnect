@@ -100,13 +100,6 @@ extension BlePeripheralManagerProxy {
     
     // MARK: - Private
     
-    /// Internal shared logic to register and wait for readiness, abstracting over how the result is delivered.
-    ///
-    /// - Parameters:
-    ///   - timeout: The maximum duration to wait for the peripheral manager to become ready. The default is `.never`, meaning no timeout.
-    ///   - callback: A closure that receives a `Result` indicating either success or failure.
-    ///
-    /// - Returns: A `Subscription` to be notified whenever the peripheral manager is ready.
     private func buildSubscription(timeout: DispatchTimeInterval, callback: @escaping (Result<Void, Error>) -> Void) -> Subscription<Void> {
         waitUntilReadyRegistry.register(
             callback: callback,
@@ -117,13 +110,6 @@ extension BlePeripheralManagerProxy {
         )
     }
 
-    /// Asynchronously waits until the peripheral manager reaches the `.poweredOn` state, or throws an error if the state is `.unauthorized` or `.unsupported`.
-    ///
-    /// If the peripheral manager is already in the `.poweredOn` state, the subscription is immediately notified with success, otherwise, it waits for the state to transition to `.poweredOn` within the specified timeout.
-    /// If the peripheral manager is `.unauthorized` or `.unsupported`, the subscription is notified with a corresponding failure.
-    ///
-    /// - Parameter subscription: The subscription to notify with either success or failure.
-    /// - Throws: An error if the peripheral manager is unauthorized, unsupported, or does not reach the `.poweredOn` state within the timeout period.
     private func waitUntilReady(subscription: Subscription<Void>) {
             
         var resultToNotify: Result<Void, Error>? = nil

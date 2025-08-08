@@ -108,14 +108,6 @@ extension BleCentralManagerProxy {
     
     // MARK: - Private
     
-    /// Internal shared logic to register and wait for peripheral connection, abstracting over how the result is delivered.
-    ///
-    /// - Parameters:
-    ///   - peripheral: The `BlePeripheral` to connect to.
-    ///   - timeout: The maximum duration to wait for the central manager to connect the peripheral. The default is `.never`, meaning no timeout.
-    ///   - callback: A closure that receives a `Result` indicating either success or failure.
-    ///
-    /// - Returns: A `Subscription` to be notified whenever the peripheral connects.
     private func buildSubscription(
         peripheral: BlePeripheral,
         timeout: DispatchTimeInterval,
@@ -155,12 +147,6 @@ extension BleCentralManagerProxy {
         
     }
     
-    /// Connects to a specified BLE peripheral asynchronously.
-    ///
-    /// - Parameters:
-    ///   - peripheral: The `BlePeripheral` to connect to.
-    ///   - options: A dictionary of options to customize the connection behavior, such as `CBConnectPeripheralOptionNotifyOnConnectionKey`. Defaults to `nil`.
-    ///   - subscription: The subscription to notify with either success or failure.
     private func connect(
         peripheral: BlePeripheral,
         options: [String: Any]? = nil,

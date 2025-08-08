@@ -128,13 +128,6 @@ extension BlePeripheralManagerProxy {
     
     // MARK: - Private
     
-    /// Internal shared logic to register and wait for advertising start, abstracting over how the result is delivered.
-    ///
-    /// - Parameters:
-    ///   - timeout: The maximum duration to wait for the peripheral manager to start advertising. The default is `.never`, meaning no timeout.
-    ///   - callback: A closure that receives a `Result` indicating either success or failure.
-    ///
-    /// - Returns: A `Subscription` to be notified whenever the peripheral manager starts advertising.
     private func buildAdvStartSubscription(timeout: DispatchTimeInterval, callback: @escaping (Result<Void, Error>) -> Void) -> Subscription<Void> {
         startAdvertisingRegistry.register(
             callback: callback,
@@ -145,13 +138,6 @@ extension BlePeripheralManagerProxy {
         )
     }
     
-    /// Internal shared logic to register and wait for advertising stop, abstracting over how the result is delivered.
-    ///
-    /// - Parameters:
-    ///   - timeout: The maximum duration to wait for the peripheral manager to stop advertising. The default is `.never`, meaning no timeout.
-    ///   - callback: A closure that receives a `Result` indicating either success or failure.
-    ///
-    /// - Returns: A `Subscription` to be notified whenever the peripheral manager stops advertising.
     private func buildAdvStopSubscription(timeout: DispatchTimeInterval, callback: @escaping (Result<Void, Error>) -> Void) -> Subscription<Void> {
         stopAdvertisingRegistry.register(
             callback: callback,
@@ -162,13 +148,6 @@ extension BlePeripheralManagerProxy {
         )
     }
     
-    /// Starts advertising peripheral data.
-    ///
-    /// Initiates advertising of the peripheral's services and other provided advertisement data.
-    ///
-    /// - Parameters:
-    ///   - advertisementData: A dictionary containing data to advertise, such as service UUIDs and the local name. Defaults to `nil` if no advertisement data is provided.
-    ///   - subscription: The subscription to notify with either success or failure.
     private func startAdvertising(advertisementData: [String: Any]? = nil, subscription: Subscription<Void>) {
             
         var resultToNotify: Result<Void, Error>? = nil
@@ -201,11 +180,6 @@ extension BlePeripheralManagerProxy {
         
     }
     
-    /// Stops advertising peripheral data.
-    ///
-    /// Calling this method halts any active advertising by the peripheral manager, stopping the broadcast of services and advertisement data.
-    ///
-    /// - Parameter subscription: The subscription to notify with either success or failure.
     private func stopAdvertising(subscription: Subscription<Void>) {
        
         var resultToNotify: Result<Void, Error>? = nil
