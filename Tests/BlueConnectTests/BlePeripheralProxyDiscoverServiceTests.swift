@@ -448,7 +448,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         }
     }
     
-    func testDiscoverServiceFailDueToTaskCancellation() async throws {
+    func testDiscoverServiceFailDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Connect the peripheral

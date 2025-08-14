@@ -136,8 +136,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 localDelay = delayOnDiscoverServices
                 localError = nil
             }
-            self.delayOnDiscoverServices = nil
-            self.errorOnDiscoverServices = nil
             lock.unlock()
             
             if let localError {
@@ -203,8 +201,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 localDelay = delayOnDiscoverCharacteristics
                 localError = nil
             }
-            self.delayOnDiscoverCharacteristics = nil
-            self.errorOnDiscoverCharacteristics = nil
             lock.unlock()
             
             if let localError {
@@ -271,8 +267,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                     localError = MockBleError.characteristicNotFound
                 }
             }
-            self.delayOnRead = nil
-            self.errorOnRead = nil
             lock.unlock()
             
             if let localError {
@@ -339,8 +333,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                     localError = MockBleError.characteristicNotFound
                 }
             }
-            self.delayOnWrite = nil
-            self.errorOnWrite = nil
             lock.unlock()
             
             if let localError {
@@ -407,8 +399,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                     localError = MockBleError.characteristicNotFound
                 }
             }
-            self.delayOnNotify = nil
-            self.errorOnNotify = nil
             lock.unlock()
             
             if let localError {
@@ -471,9 +461,6 @@ class MockBlePeripheral: BlePeripheral, @unchecked Sendable {
                 localDelay = delayOnRSSI
             }
             localRSSI = rssi
-            self.delayOnRSSI = nil
-            self.errorOnRSSI = nil
-            self.rssiNotAvailable = false
             lock.unlock()
             
             if let localError {

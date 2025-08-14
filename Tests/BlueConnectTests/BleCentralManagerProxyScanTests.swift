@@ -390,7 +390,7 @@ extension BleCentralManagerProxyScanTests {
         XCTAssertFalse(bleCentralManager.isScanning)
     }
     
-    func testScanFailDueToTaskCancellation() async throws {
+    func testScanFailDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Begin test

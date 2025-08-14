@@ -346,7 +346,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         _ = await task.result
     }
     
-    func testWaitUntilReadyFailOnSingleTaskDueToTaskCancellation() async throws {
+    func testWaitUntilReadyFailOnSingleTaskDueToTaskCancellationAsync() async throws {
         XCTAssertNotEqual(blePeripheralManager.state, .poweredOn)
         let proxy: BlePeripheralManagerProxy! = blePeripheralManagerProxy
         let started = XCTestExpectation(description: "Task started")

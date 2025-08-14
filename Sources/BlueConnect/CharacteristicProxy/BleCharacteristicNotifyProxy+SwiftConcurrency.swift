@@ -79,13 +79,16 @@ public extension BleCharacteristicNotifyProxy {
     /// - Throws: An error if the characteristic cannot be discovered or notify state changed within the specified timeout.
     @discardableResult
     func setNotify(enabled: Bool, timeout: DispatchTimeInterval = .seconds(10)) async throws -> Bool {
-        try await withCheckedThrowingContinuation { continuation in
-            setNotify(enabled: enabled, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
-                }
-            }
+        guard let peripheralProxy else {
+            throw BlePeripheralProxyError.destroyed
         }
+        let start: DispatchTime = .now()
+        let characteristic = try await discover(timeout: timeout)
+        let result = try await peripheralProxy.setNotify(
+            enabled: enabled,
+            for: characteristic.uuid,
+            timeout: timeout - start.distance(to: .now()))
+        return result
     }
     
 }

@@ -75,20 +75,30 @@ extension BleCentralManagerProxy {
     /// - Throws: An error if the disconnection fails.
     public func disconnect(peripheral: BlePeripheral) async throws {
         let box = SubscriptionBox<Void>()
-        try await withTaskCancellationHandler {
+        return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
                 let subscription = buildSubscription(peripheral: peripheral) { result in
                     globalQueue.async {
                         continuation.resume(with: result)
                     }
                 }
-                box.value = subscription
-                return disconnect(peripheral: peripheral, subscription: subscription)
+                box.lock()
+                box.subscription = subscription
+                let wasCancelled = box.isCancelled
+                box.unlock()
+                if wasCancelled {
+                    disconnectionRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
+                } else {
+                    disconnect(peripheral: peripheral, subscription: subscription)
+                }
             }
         } onCancel: {
-            if let subscription = box.value {
-                disconnectionRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
-            }
+            box.lock()
+            box.isCancelled = true
+            let subscription = box.subscription
+            box.unlock()
+            guard let subscription else { return }
+            disconnectionRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
         }
     }
     

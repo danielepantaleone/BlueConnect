@@ -577,7 +577,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         }
     }
     
-    func testDiscoverCharacteristicFailDueToTaskCancellation() async throws {
+    func testDiscoverCharacteristicFailDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Connect the peripheral

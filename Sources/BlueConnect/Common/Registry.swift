@@ -133,20 +133,42 @@ final class Subscription<ValueType>: Identifiable, Equatable, @unchecked Sendabl
 
 // MARK: - SubscriptionBox
 
-/// A lightweight reference wrapper for a `Subscription` instance.
+/// A thread-safe container that holds a subscription and cancellation state.
 ///
-/// `SubscriptionBox` is used to safely capture and share a `Subscription` reference across closures, particularly in asynchronous contexts where the reference may need to be mutated from different scopes.
+/// It wraps a `Subscription` instance and tracks whether the associated task has been cancelled.
+/// It uses an `NSLock` mutex to protect access to its mutable state, ensuring thread safety.
 ///
-/// This class is particularly useful in conjunction with cancellation handlers in Swift concurrency, allowing you to capture and access the `Subscription` in both the main continuation and the cancellation block.
-///
-/// - Important: This class is marked as `@unchecked Sendable`. Ensure that it is only used in a thread-safe manner. Concurrent mutation is not safe unless external synchronization is provided.
-/// - Note: This class does not provide any synchronization. It is intended for single-threaded or externally synchronized use cases only.
+/// - Note: Marked as `@unchecked Sendable` since thread safety is managed manually.
 final class SubscriptionBox<ValueType>: @unchecked Sendable {
+    
+    /// The lock used to protect access to internal mutable state.
+    private let _lock = NSLock()
+    
+    // MARK: - Properties
+    
+    /// Indicates whether the associated task was cancelled.
+    ///
+    /// This flag can be set from different threads, so use `lock()` and `unlock()` to synchronize access.
+    var isCancelled = false
     
     /// The wrapped `Subscription` instance.
     ///
-    /// This value may be set or read from asynchronous contexts such as cancellation handlers.
-    var value: Subscription<ValueType>?
+    /// This property is accessed and mutated from multiple threads, so use `lock()` and `unlock()` to synchronize access.
+    var subscription: Subscription<ValueType>?
+    
+    // MARK: - Interface
+    
+    /// Acquires the internal lock to protect mutable state.
+    @inline(__always)
+    func lock() {
+        _lock.lock()
+    }
+    
+    /// Releases the internal lock.
+    @inline(__always)
+    func unlock() {
+        _lock.unlock()
+    }
     
 }
 

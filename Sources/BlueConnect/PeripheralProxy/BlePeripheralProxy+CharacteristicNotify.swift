@@ -154,18 +154,31 @@ extension BlePeripheralProxy {
         let box = SubscriptionBox<Bool>()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let subscription = buildSubscription(characteristicUUID: characteristicUUID, timeout: timeout) { result in
+                let subscription = buildSubscription(
+                    characteristicUUID: characteristicUUID,
+                    timeout: timeout
+                ) { result in
                     globalQueue.async {
                         continuation.resume(with: result)
                     }
                 }
-                box.value = subscription
-                setNotify(enabled: enabled, for: characteristicUUID, subscription: subscription)
+                box.lock()
+                box.subscription = subscription
+                let wasCancelled = box.isCancelled
+                box.unlock()
+                if wasCancelled {
+                    characteristicNotifyRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
+                } else {
+                    setNotify(enabled: enabled, for: characteristicUUID, subscription: subscription)
+                }
             }
         } onCancel: {
-            if let subscription = box.value {
-                characteristicNotifyRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
-            }
+            box.lock()
+            box.isCancelled = true
+            let subscription = box.subscription
+            box.unlock()
+            guard let subscription else { return }
+            characteristicNotifyRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
         }
     }
     

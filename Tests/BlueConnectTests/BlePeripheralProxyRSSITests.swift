@@ -366,7 +366,7 @@ extension BlePeripheralProxyRSSITests {
         }
     }
     
-    func testPeripheralRSSIUpdateFailDueToTaskCancellation() async throws {
+    func testPeripheralRSSIUpdateFailDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Connect the peripheral

@@ -305,7 +305,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         }
     }
     
-    func testPeripheralDisconnectFailDueToTaskCancellation() async throws {
+    func testPeripheralDisconnectFailDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Connect the peripheral
@@ -335,7 +335,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         _ = await task.result
     }
     
-    func testPeripheralDisconnectFailOnSingleTaskDueToTaskCancellation() async throws {
+    func testPeripheralDisconnectFailOnSingleTaskDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Connect the peripheral

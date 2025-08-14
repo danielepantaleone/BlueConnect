@@ -76,11 +76,11 @@ extension BlePeripheralProxy {
                         continuation.resume(with: result)
                     }
                 }
-                box.value = subscription
+                box.subscription = subscription
                 readRSSI(subscription: subscription)
             }
         } onCancel: {
-            if let subscription = box.value {
+            if let subscription = box.subscription {
                 rssiReadRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
             }
         }

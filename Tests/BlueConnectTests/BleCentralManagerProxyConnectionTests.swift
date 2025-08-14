@@ -424,7 +424,7 @@ extension BleCentralManagerProxyConnectionTests {
         }
     }
     
-    func testPeripheralConnectFailDueToTaskCancellation() async throws {
+    func testPeripheralConnectFailDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Assert initial peripheral state
@@ -454,7 +454,7 @@ extension BleCentralManagerProxyConnectionTests {
         _ = await task.result
     }
     
-    func testPeripheralConnectFailOnSingleTaskDueToTaskCancellation() async throws {
+    func testPeripheralConnectFailOnSingleTaskDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Assert initial peripheral state
@@ -497,7 +497,7 @@ extension BleCentralManagerProxyConnectionTests {
         _ = await task2.result
     }
     
-    func testPeripheralConnectAndWaitUntilReadyFailDueToTaskCancellation() async throws {
+    func testPeripheralConnectAndWaitUntilReadyFailDueToTaskCancellationAsync() async throws {
         // Assert initial state
         XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)

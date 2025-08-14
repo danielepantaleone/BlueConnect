@@ -414,7 +414,7 @@ extension BleCentralManagerProxyStateChangeTests {
         }
     }
     
-    func testWaitUntilReadyFailDueToTaskCancellation() async throws {
+    func testWaitUntilReadyFailDueToTaskCancellationAsync() async throws {
         XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
         let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
         let started = XCTestExpectation(description: "Task started")
@@ -439,7 +439,7 @@ extension BleCentralManagerProxyStateChangeTests {
         XCTAssertEqual(bleCentralManagerProxy.waitUntilReadyRegistry.subscriptions(), [])
     }
     
-    func testWaitUntilReadyFailOnSingleTaskDueToTaskCancellation() async throws {
+    func testWaitUntilReadyFailOnSingleTaskDueToTaskCancellationAsync() async throws {
         XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
         let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
         let started = XCTestExpectation(description: "Task started")

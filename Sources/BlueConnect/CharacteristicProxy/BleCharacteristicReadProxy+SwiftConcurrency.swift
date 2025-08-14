@@ -48,12 +48,19 @@ public extension BleCharacteristicReadProxy {
     /// - Returns: The characteristic value decoded into the proxy's `ValueType`.
     /// - Throws: An error if the characteristic cannot be discovered or read within the specified timeout, or if decoding the data fails.
     func read(cachePolicy: BlePeripheralCachePolicy = .never, timeout: DispatchTimeInterval = .seconds(10)) async throws -> ValueType {
-        try await withCheckedThrowingContinuation { continuation in
-            read(cachePolicy: cachePolicy, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
-                }
-            }
+        guard let peripheralProxy else {
+            throw BlePeripheralProxyError.destroyed
+        }
+        let start: DispatchTime = .now()
+        let characteristic = try await discover(timeout: timeout)
+        let data = try await peripheralProxy.read(
+            characteristicUUID: characteristic.uuid,
+            cachePolicy: cachePolicy,
+            timeout: timeout - start.distance(to: .now()))
+        do {
+            return try decode(data)
+        } catch {
+            throw BleCharacteristicProxyError.decodingError(characteristicUUID: characteristic.uuid, cause: error)
         }
     }
     

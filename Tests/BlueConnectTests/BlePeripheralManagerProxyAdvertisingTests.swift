@@ -262,7 +262,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         }
     }
     
-    func testStartAdvertisingFailDueToTaskCancellation() async throws {
+    func testStartAdvertisingFailDueToTaskCancellationAsync() async throws {
         // Turn on ble peripheral manager.
         peripheralManager(state: .poweredOn)
         // Assert initial advertising state.
@@ -291,7 +291,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         _ = await task.result
     }
     
-    func testStartAdvertisingFailOnSingleTaskDueToTaskCancellation() async throws {
+    func testStartAdvertisingFailOnSingleTaskDueToTaskCancellationAsync() async throws {
         // Turn on ble peripheral manager.
         peripheralManager(state: .poweredOn)
         // Assert initial advertising state.
@@ -531,7 +531,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         _ = await task.result
     }
     
-    func testStopAdvertisingFailOnSingleTaskDueToTaskCancellation() async throws {
+    func testStopAdvertisingFailOnSingleTaskDueToTaskCancellationAsync() async throws {
         // Turn on ble peripheral manager.
         peripheralManager(state: .poweredOn)
         // Start advertising.

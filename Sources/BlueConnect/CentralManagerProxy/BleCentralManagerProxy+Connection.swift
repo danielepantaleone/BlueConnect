@@ -88,21 +88,33 @@ extension BleCentralManagerProxy {
         timeout: DispatchTimeInterval = .never
     ) async throws {
         let box = SubscriptionBox<Void>()
-        try await withTaskCancellationHandler {
+        return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let subscription = buildSubscription(peripheral: peripheral, timeout: timeout) { result in
+                let subscription = buildSubscription(
+                    peripheral: peripheral,
+                    timeout: timeout
+                ) { result in
                     globalQueue.async {
                         continuation.resume(with: result)
                     }
                 }
-                box.value = subscription
-                return connect(peripheral: peripheral, options: options, subscription: subscription)
+                box.lock()
+                box.subscription = subscription
+                let wasCancelled = box.isCancelled
+                box.unlock()
+                if wasCancelled {
+                    connectionRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
+                } else {
+                    connect(peripheral: peripheral, options: options, subscription: subscription)
+                }
             }
         } onCancel: {
-            // TODO: If it's the last connection attempt, disconnect the peripheral prior notifying cancellation error
-            if let subscription = box.value {
-                connectionRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
-            }
+            box.lock()
+            box.isCancelled = true
+            let subscription = box.subscription
+            box.unlock()
+            guard let subscription else { return }
+            connectionRegistry.notify(subscription: subscription, value: .failure(CancellationError()))
         }
     }
     
