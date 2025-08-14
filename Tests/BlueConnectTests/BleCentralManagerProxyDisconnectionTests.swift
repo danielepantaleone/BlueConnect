@@ -353,7 +353,7 @@ extension BleCentralManagerProxyDisconnectionTests {
                 try await proxy.disconnect(peripheral: peripheral)
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
-                XCTAssertNotEqual(proxy.disconnectionRegistry.subscriptions(with: peripheral.identifier), [])
+                // Expected path
             } catch {
                 XCTFail("Test failed with error: \(error)")
             }

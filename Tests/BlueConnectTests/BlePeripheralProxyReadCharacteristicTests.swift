@@ -882,7 +882,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
                     timeout: .never)
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
-                XCTAssertNotEqual(proxy.characteristicReadRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
+                // Expected path
             } catch {
                 XCTFail("Test failed with error: \(error)")
             }

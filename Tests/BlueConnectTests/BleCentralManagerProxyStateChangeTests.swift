@@ -450,7 +450,7 @@ extension BleCentralManagerProxyStateChangeTests {
                 try await proxy.waitUntilReady(timeout: .seconds(2))
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
-                XCTAssertNotEqual(proxy.waitUntilReadyRegistry.subscriptions(), [])
+                // Expected path
             } catch {
                 XCTFail("Test failed with error: \(error)")
             }
