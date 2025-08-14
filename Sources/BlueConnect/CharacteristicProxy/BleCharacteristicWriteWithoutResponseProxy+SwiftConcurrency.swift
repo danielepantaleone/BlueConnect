@@ -48,7 +48,6 @@ public extension BleCharacteristicWriteWithoutResponseProxy {
         guard let peripheralProxy else {
             throw BlePeripheralProxyError.destroyed
         }
-        let start: DispatchTime = .now()
         let characteristic = try await discover(timeout: timeout)
         let data: Data
         do {
