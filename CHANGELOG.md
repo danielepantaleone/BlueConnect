@@ -3,7 +3,7 @@ Release Notes
 
 ## 1.5.0
 
-TBD
+- Provide swift task cancellation support [#6](https://github.com/danielepantaleone/BlueConnect/pull/6)
 
 ## 1.4.6
 
