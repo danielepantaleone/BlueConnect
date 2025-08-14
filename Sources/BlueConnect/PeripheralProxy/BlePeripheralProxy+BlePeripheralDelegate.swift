@@ -42,9 +42,6 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
     
     public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverServices error: Error?) {
         
-        lock.lock()
-        defer { lock.unlock() }
-        
         guard error == nil else {
             // If the discovery is unsuccessful, the error parameter returns the cause of the failure.
             // However we will be missing the UUID of the service for which the error was generated since
@@ -52,6 +49,9 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
             // rely only on timeouts to notify errors to the caller.
             return
         }
+        
+        lock.lock()
+        defer { lock.unlock() }
         
         // Local store discovered services.
         let services = peripheral.services.emptyIfNil
@@ -67,9 +67,6 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
     }
     
     public func blePeripheral(_ peripheral: BlePeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
-      
-        lock.lock()
-        defer { lock.unlock() }
         
         guard error == nil else {
             // If the discovery is unsuccessful, the error parameter returns the cause of the failure.
@@ -78,6 +75,9 @@ extension BlePeripheralProxy: BlePeripheralDelegate {
             // and rely only on timeouts to notify errors to the caller.
             return
         }
+        
+        lock.lock()
+        defer { lock.unlock() }
         
         // Local store discovered characteristics.
         let characteristics = service.characteristics.emptyIfNil

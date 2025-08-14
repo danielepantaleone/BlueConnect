@@ -42,9 +42,8 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
         didSet {
             queue.async { [weak self] in
                 guard let self else { return }
-                let localDelegate: BleCentralManagerDelegate?
                 lock.lock()
-                localDelegate = centraManagerDelegate
+                let localDelegate: BleCentralManagerDelegate? = centraManagerDelegate
                 disconnectAllPeripheralsIfNotPoweredOn()
                 lock.unlock()
                 localDelegate?.bleCentralManagerDidUpdateState(self)
@@ -97,11 +96,10 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
             guard let self else { return }
             guard let localPeripheral else { return }
             
-            let localDelegate: BleCentralManagerDelegate?
+            lock.lock()
+            let localDelegate: BleCentralManagerDelegate? = centraManagerDelegate
             let localDelay: DispatchTimeInterval?
             let localError: Error?
-            lock.lock()
-            localDelegate = centraManagerDelegate
             if state != .poweredOn {
                 localDelay = nil
                 localError = MockBleError.bluetoothIsOff
@@ -114,8 +112,6 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
                 localDelay = delayOnConnection
                 localError = nil
             }
-            self.delayOnConnection = nil
-            self.errorOnConnection = nil
             lock.unlock()
             
             if let localError {
@@ -162,11 +158,10 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
             guard let self else { return }
             guard let localPeripheral else { return }
             
-            let localDelegate: BleCentralManagerDelegate?
+            lock.lock()
+            let localDelegate: BleCentralManagerDelegate? = centraManagerDelegate
             let localDelay: DispatchTimeInterval?
             let localError: Error?
-            lock.lock()
-            localDelegate = centraManagerDelegate
             if state != .poweredOn {
                 localDelay = nil
                 localError = MockBleError.bluetoothIsOff
@@ -177,8 +172,6 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
                 localDelay = delayOnDisconnection
                 localError = nil
             }
-            self.delayOnDisconnection = nil
-            self.errorOnDisconnection = nil
             lock.unlock()
             
             if let localError {
@@ -267,15 +260,13 @@ class MockBleCentralManager: BleCentralManager, @unchecked Sendable {
     }
     
     private func scanInterval() {
-        let localDelegate: BleCentralManagerDelegate?
-        let localPeripheral: BlePeripheral
         lock.lock()
         guard !peripherals.isEmpty, let scanTimer, !scanTimer.isCancelled else {
             lock.unlock()
             return
         }
-        localDelegate = centraManagerDelegate
-        localPeripheral = peripherals[scanCounter % peripherals.count]
+        let localDelegate: BleCentralManagerDelegate? = centraManagerDelegate
+        let localPeripheral: BlePeripheral = peripherals[scanCounter % peripherals.count]
         scanCounter += 1
         lock.unlock()
         

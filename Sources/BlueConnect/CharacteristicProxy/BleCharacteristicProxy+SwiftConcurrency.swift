@@ -41,13 +41,18 @@ public extension BleCharacteristicProxy {
     /// - Returns: The discovered `CBCharacteristic`.
     @discardableResult
     func discover(timeout: DispatchTimeInterval = .seconds(10)) async throws -> CBCharacteristic {
-        try await withCheckedThrowingContinuation { continuation in
-            discover(timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
-                }
-            }
+        guard let peripheralProxy else {
+            throw BlePeripheralProxyError.destroyed
         }
+        let start: DispatchTime = .now()
+        let service = try await peripheralProxy.discover(
+            serviceUUID: serviceUUID,
+            timeout: timeout)
+        let characteristic = try await peripheralProxy.discover(
+            characteristicUUID: characteristicUUID,
+            in: service.uuid,
+            timeout: timeout - start.distance(to: .now()))
+        return characteristic
     }
     
 }

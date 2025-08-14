@@ -30,8 +30,7 @@ import Foundation
 
 /// An enumeration representing errors related to BLE characteristic data handling in the `BleCharacteristicProxy`.
 ///
-/// `BleCharacteristicProxyError` signals issues with encoding or decoding characteristic data during BLE operations,
-/// and includes the underlying cause of the error.
+/// `BleCharacteristicProxyError` signals issues with encoding or decoding characteristic data during BLE operations, and includes the underlying cause of the error.
 public enum BleCharacteristicProxyError: Error {
     
     /// The characteristic proxy successfully retrieved the characteristic data, but data conversion to the expected type failed.

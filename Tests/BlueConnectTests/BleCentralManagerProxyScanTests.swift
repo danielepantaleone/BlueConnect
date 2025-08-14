@@ -390,4 +390,40 @@ extension BleCentralManagerProxyScanTests {
         XCTAssertFalse(bleCentralManager.isScanning)
     }
     
+    func testScanFailDueToTaskCancellationAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Begin test
+        let scan = expectation(description: "Peripheral discovered")
+        scan.assertForOverFulfill = false
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            let startDate = Date()
+            started.fulfill() // Signal that the task has started
+            do {
+                for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(10)) {
+                    scan.fulfill()
+                }
+                let elapsed = Date().timeIntervalSince(startDate)
+                XCTAssertLessThan(elapsed, 10)
+            } catch is CancellationError {
+                // Expected path #2
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Wait for a first discovered peripheral
+        await fulfillment(of: [scan], timeout: 4.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
+        // Assert final state
+        XCTAssertFalse(bleCentralManagerProxy.isScanning)
+        XCTAssertNil(bleCentralManagerProxy.discoverTimer)
+        XCTAssertNil(bleCentralManagerProxy.discoverSubject)
+    }
+    
 }

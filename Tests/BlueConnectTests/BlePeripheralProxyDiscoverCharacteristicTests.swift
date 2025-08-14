@@ -577,4 +577,38 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         }
     }
     
+    func testDiscoverCharacteristicFailDueToTaskCancellationAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
+        // Mock delay
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(2)
+        // Begin test
+        let proxy: BlePeripheralProxy! = blePeripheralProxy_1
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                _ = try await proxy.discover(
+                    characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
+                    in: MockBleDescriptor.heartRateServiceUUID,
+                    timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
+    }
+    
 }

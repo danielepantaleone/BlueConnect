@@ -45,13 +45,18 @@ public extension BleCharacteristicWriteWithoutResponseProxy {
     ///
     /// - Throws: An error if the characteristic cannot be discovered or data encoding fails.
     func writeWithoutResponse(value: ValueType, timeout: DispatchTimeInterval = .seconds(10)) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            writeWithoutResponse(value: value, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
-                }
-            }
+        guard let peripheralProxy else {
+            throw BlePeripheralProxyError.destroyed
         }
+        let start: DispatchTime = .now()
+        let characteristic = try await discover(timeout: timeout)
+        let data: Data
+        do {
+            data = try encode(value)
+        } catch {
+            throw BleCharacteristicProxyError.encodingError(characteristicUUID: characteristic.uuid, cause: error)
+        }
+        try peripheralProxy.writeWithoutResponse(data: data, to: characteristic.uuid)
     }
     
 }

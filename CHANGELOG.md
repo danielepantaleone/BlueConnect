@@ -1,6 +1,10 @@
 Release Notes
 =============
 
+## 1.5.0
+
+TBD
+
 ## 1.4.6
 
 Released Jun 10, 2025

@@ -71,6 +71,7 @@ extension BleCentralManagerProxyConnectionTests {
         wait(for: [connectExp, publisherExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .connected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralConnectWithPeripheralAlreadyConnected() throws {
@@ -102,6 +103,7 @@ extension BleCentralManagerProxyConnectionTests {
         wait(for: [connectExp, publisherExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .connected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralConnectWithPeripheralAlreadyConnecting() throws {
@@ -135,6 +137,7 @@ extension BleCentralManagerProxyConnectionTests {
         wait(for: [connectExp, publisherExp], timeout: 6.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .connected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralConnectFailDueToBleCentralManagerOff() throws {
@@ -172,6 +175,7 @@ extension BleCentralManagerProxyConnectionTests {
         wait(for: [connectExp, connectPublisherExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralConnectFailDueToBleCentralManagerGoingOff() throws {
@@ -234,6 +238,7 @@ extension BleCentralManagerProxyConnectionTests {
         subscription1.cancel()
         subscription2.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralConnectFailDueToTimeout() throws {
@@ -289,6 +294,7 @@ extension BleCentralManagerProxyConnectionTests {
         subscription1.cancel()
         subscription2.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
 
     func testPeripheralConnectFailDueToErrorOnConnection() throws {
@@ -336,6 +342,7 @@ extension BleCentralManagerProxyConnectionTests {
         subscription1.cancel()
         subscription2.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
 }
@@ -358,6 +365,7 @@ extension BleCentralManagerProxyConnectionTests {
             XCTFail("peripheral connection failed with error: \(error)")
         }
         XCTAssertEqual(try blePeripheral_1.state, .connected)
+        XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
     }
     
     func testPeripheralConnectFailDueToBleCentralManagerOffAsync() async throws {
@@ -369,6 +377,7 @@ extension BleCentralManagerProxyConnectionTests {
                 timeout: .never)
         } catch BleCentralManagerProxyError.invalidState(let state) {
             XCTAssertEqual(state, .poweredOff)
+            XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
         } catch {
             XCTFail("peripheral connection was expected to fail with BleCentralManagerProxyError.invalidState, got '\(error)' instead")
         }
@@ -409,9 +418,111 @@ extension BleCentralManagerProxyConnectionTests {
                 timeout: .never)
         } catch MockBleError.mockedError {
             XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+            XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
         } catch {
             XCTFail("peripheral connection was expected to fail with MockBleError.mockedError, got '\(error)' instead")
         }
+    }
+    
+    func testPeripheralConnectFailDueToTaskCancellationAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Assert initial peripheral state
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        // Mock connection delay
+        bleCentralManager.delayOnConnection = .seconds(2)
+        // Begin test
+        let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
+        let peripheral: BlePeripheral = try blePeripheral_1
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                XCTAssertEqual(proxy.connectionRegistry.subscriptions(with: peripheral.identifier), [])
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
+    }
+    
+    func testPeripheralConnectFailOnSingleTaskDueToTaskCancellationAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Assert initial peripheral state
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        // Mock connection delay
+        bleCentralManager.delayOnConnection = .seconds(2)
+        // Begin test
+        let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
+        let peripheral: BlePeripheral = try blePeripheral_1
+        let started = XCTestExpectation(description: "Task started")
+        started.expectedFulfillmentCount = 2
+        let task1 = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        let task2 = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
+                XCTAssertEqual(proxy.connectionRegistry.subscriptions(with: peripheral.identifier), [])
+            } catch is CancellationError {
+                XCTFail("Test failed due to cancellation of second task")
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task1.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task1.result
+        _ = await task2.result
+    }
+    
+    func testPeripheralConnectAndWaitUntilReadyFailDueToTaskCancellationAsync() async throws {
+        // Assert initial state
+        XCTAssertNotEqual(bleCentralManager.state, .poweredOn)
+        XCTAssertEqual(try blePeripheral_1.state, .disconnected)
+        // Begin test
+        let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
+        let peripheral: BlePeripheral = try blePeripheral_1
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                try await proxy.waitUntilReady()
+                try await proxy.connect(peripheral: peripheral, options: nil, timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                XCTAssertEqual(proxy.connectionRegistry.subscriptions(with: peripheral.identifier), [])
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
     }
     
 }

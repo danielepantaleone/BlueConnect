@@ -822,4 +822,92 @@ extension BlePeripheralProxyReadCharacteristicTests {
         }
     }
     
+    func testReadCharacteristicFailDueToTaskCancellationAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock delay
+        try blePeripheral_1.delayOnRead = .seconds(2)
+        // Begin test
+        let proxy: BlePeripheralProxy! = blePeripheralProxy_1
+        let started = XCTestExpectation(description: "Task started")
+        let task = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                _ = try await proxy.read(
+                    characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                    cachePolicy: .never,
+                    timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task.result
+    }
+    
+    func testReadCharacteristicFailOnSingleTaskDueToTaskCancellationAsync() async throws {
+        // Turn on ble central manager
+        centralManager(state: .poweredOn)
+        // Connect the peripheral
+        connect(peripheral: try blePeripheral_1)
+        // Discover the service
+        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Discover the characteristic
+        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
+        // Mock delay
+        try blePeripheral_1.delayOnRead = .seconds(2)
+        // Begin test
+        let proxy: BlePeripheralProxy! = blePeripheralProxy_1
+        let started = XCTestExpectation(description: "Task started")
+        started.expectedFulfillmentCount = 2
+        let task1 = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                _ = try await proxy.read(
+                    characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                    cachePolicy: .never,
+                    timeout: .never)
+                XCTFail("Expected task to be cancelled, but it succeeded")
+            } catch is CancellationError {
+                // Expected path
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        let task2 = Task {
+            started.fulfill() // Signal that the task has started
+            do {
+                _ = try await proxy.read(
+                    characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
+                    cachePolicy: .never,
+                    timeout: .never)
+                XCTAssertEqual(proxy.characteristicReadRegistry.subscriptions(with: MockBleDescriptor.serialNumberCharacteristicUUID), [])
+            } catch is CancellationError {
+                XCTFail("Test failed due to cancellation of second task")
+            } catch {
+                XCTFail("Test failed with error: \(error)")
+            }
+        }
+        // Wait for the task to begin.
+        await fulfillment(of: [started], timeout: 1.0)
+        // Now cancel the task.
+        task1.cancel()
+        // Await the task to ensure cleanup.
+        _ = await task1.result
+        _ = await task2.result
+    }
+    
 }

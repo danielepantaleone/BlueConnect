@@ -46,13 +46,21 @@ public extension BleCharacteristicWriteProxy {
     ///
     /// - Throws: An error if the characteristic cannot be discovered, the value cannot be encoded, or the write operation fails.
     func write(value: ValueType, timeout: DispatchTimeInterval = .seconds(10)) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            write(value: value, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
-                }
-            }
+        guard let peripheralProxy else {
+            throw BlePeripheralProxyError.destroyed
         }
+        let start: DispatchTime = .now()
+        let characteristic = try await discover(timeout: timeout)
+        let data: Data
+        do {
+            data = try encode(value)
+        } catch {
+            throw BleCharacteristicProxyError.encodingError(characteristicUUID: characteristic.uuid, cause: error)
+        }
+        try await peripheralProxy.write(
+            data: data,
+            to: characteristic.uuid,
+            timeout: timeout - start.distance(to: .now()))
     }
     
 }

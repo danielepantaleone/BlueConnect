@@ -54,8 +54,9 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     // MARK: - Properties
     
     var errorOnUpdateValue: Bool = false
-    var errorOnAdvertising: Error?
-    var delayOnAdvertising: DispatchTimeInterval?
+    var errorOnStartAdvertising: Error?
+    var delayOnStartAdvertising: DispatchTimeInterval?
+    var delayOnStopAdvertising: DispatchTimeInterval?
         
     // MARK: - Protocol properties
     
@@ -82,27 +83,24 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
             
             guard let self else { return }
             
-            let localDelegate: BlePeripheralManagerDelegate?
-            let localDelay: DispatchTimeInterval?
-            let localError: Error?
             lock.lock()
             guard !isAdvertising else {
                 lock.unlock()
                 return
             }
-            localDelegate = peripheralManagerDelegate
+            let localDelegate: BlePeripheralManagerDelegate? = peripheralManagerDelegate
+            let localDelay: DispatchTimeInterval?
+            let localError: Error?
             if state != .poweredOn {
                 localDelay = nil
                 localError = MockBleError.bluetoothIsOff
-            } else if let errorOnAdvertising {
+            } else if let errorOnStartAdvertising {
                 localDelay = nil
-                localError = errorOnAdvertising
+                localError = errorOnStartAdvertising
             } else {
-                localDelay = delayOnAdvertising
+                localDelay = delayOnStartAdvertising
                 localError = nil
             }
-            self.delayOnAdvertising = nil
-            self.errorOnAdvertising = nil
             lock.unlock()
             
             if let localError {
@@ -110,7 +108,7 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
             } else {
                 
                 @Sendable
-                func _advertiseInternal() {
+                func _startAdvertisingInternal() {
                     let localDelegate: BlePeripheralManagerDelegate?
                     lock.lock()
                     guard state == .poweredOn, !isAdvertising else {
@@ -125,10 +123,10 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
                 
                 if let localDelay {
                     queue.asyncAfter(deadline: .now() + localDelay) {
-                        _advertiseInternal()
+                        _startAdvertisingInternal()
                     }
                 } else {
-                    _advertiseInternal()
+                    _startAdvertisingInternal()
                 }
                 
             }
@@ -138,9 +136,40 @@ class MockBlePeripheralManager: BlePeripheralManager, @unchecked Sendable {
     }
     
     func stopAdvertising() {
-        lock.lock()
-        defer { lock.unlock() }
-        isAdvertising = false
+        
+        queue.async { [weak self] in
+            
+            guard let self else { return }
+            
+            lock.lock()
+            guard isAdvertising else {
+                lock.unlock()
+                return
+            }
+            let localDelay = delayOnStopAdvertising
+            lock.unlock()
+            
+            @Sendable
+            func _stopAdvertisingInternal() {
+                lock.lock()
+                guard isAdvertising else {
+                    lock.unlock()
+                    return
+                }
+                isAdvertising = false
+                lock.unlock()
+            }
+            
+            if let localDelay {
+                queue.asyncAfter(deadline: .now() + localDelay) {
+                    _stopAdvertisingInternal()
+                }
+            } else {
+                _stopAdvertisingInternal()
+            }
+            
+        }
+        
     }
     
     func setDesiredConnectionLatency(_ latency: CBPeripheralManagerConnectionLatency, for central: any BlueConnect.BleCentral) {
