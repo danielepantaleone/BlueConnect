@@ -1,6 +1,8 @@
 Release Notes
 =============
 
+Released Aug 16, 2025
+
 ## 1.5.0
 
 - Provide swift task cancellation support [#6](https://github.com/danielepantaleone/BlueConnect/pull/6)
