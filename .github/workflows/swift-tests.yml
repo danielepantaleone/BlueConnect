@@ -25,8 +25,15 @@ jobs:
     name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-15]
-        swift: ["5.9", "5.10", "6.0", "6.1"]
+        include:
+          - os: macos-14
+            swift: "5.9"
+          - os: macos-14
+            swift: "5.10"
+          - os: macos-15
+            swift: "6.0"
+          - os: macos-15
+            swift: "6.1"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Setup swift version ${{ matrix.swift }}
