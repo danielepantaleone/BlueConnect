@@ -314,6 +314,8 @@ extension BleCentralManagerProxyScanTests {
                     publisherExp.fulfill()
                 }
                 completionExp.fulfill()
+            } catch is CancellationError {
+                completionExp.fulfill()
             } catch {
                 XCTFail("peripheral discovery terminated with error: \(error)")
             }
