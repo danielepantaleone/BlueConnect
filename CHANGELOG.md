@@ -4,6 +4,7 @@ Release Notes
 ## 1.5.0
 
 - Provide swift task cancellation support [#6](https://github.com/danielepantaleone/BlueConnect/pull/6)
+- Removed asynchronous isNotifying signature from BLE peripheral proxy [a5cace9](https://github.com/danielepantaleone/BlueConnect/commit/a5cace9d58020766bb234fcc2de0ff22d8566249)
 
 ## 1.4.6
 
