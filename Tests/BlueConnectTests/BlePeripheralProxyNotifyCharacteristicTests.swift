@@ -69,52 +69,21 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Test characteristic notify enabled
-        let expectation = expectation(description: "waiting for characteristic notify state to be retrieved")
-        // Test notify check on callback
-        blePeripheralProxy_1.isNotifying(
-            characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
-            timeout: .never
-        ) { result in
-            switch result {
-                case .success(let enabled):
-                    XCTAssertFalse(enabled)
-                    expectation.fulfill()
-                case .failure(let error):
-                    XCTFail("characteristic notify check failed with error: \(error)")
-            }
-        }
-        // Await expectations
-        wait(for: [expectation], timeout: 4.0)
+        // Test characteristic notify not enabled
+        XCTAssertFalse(try blePeripheralProxy_1.isNotifying(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID))
     }
     
     func testIsNotifyingOnCharacteristicFailDueToPeripheralDisconnected() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Test characteristic notify enabled
-        let expectation = expectation(description: "waiting for characteristic notify state not to be retrieved")
-        // Test notify check on callback
-        blePeripheralProxy_1.isNotifying(
-            characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
-            timeout: .never
-        ) { result in
-            switch result {
-                case .success:
-                    XCTFail("characteristic notify check was expected to fail but succeeded instead")
-                case .failure(let error):
-                    guard let proxyError = error as? BlePeripheralProxyError else {
-                        XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
-                        return
-                    }
-                    guard case .peripheralNotConnected = proxyError else {
-                        XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(proxyError)' instead")
-                        return
-                    }
-                    expectation.fulfill()
-            }
+        do {
+            _ = try blePeripheralProxy_1.isNotifying(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID)
+        } catch BlePeripheralProxyError.peripheralNotConnected {
+            // Expected path
+        } catch {
+            XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
         }
-        // Await expectations
-        wait(for: [expectation], timeout: 4.0)
     }
     
     func testIsNotifyingOnCharacteristicFailDueToCharacteristicNotFound() throws {
@@ -125,30 +94,13 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Discover the service
         discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Test characteristic notify enabled
-        let expectation = expectation(description: "waiting for characteristic notify state not to be retrieved")
-        // Test notify check on callback
-        blePeripheralProxy_1.isNotifying(
-            characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
-            timeout: .never
-        ) { result in
-            switch result {
-                case .success:
-                    XCTFail("characteristic notify check was expected to fail but succeeded instead")
-                case .failure(let error):
-                    guard let proxyError = error as? BlePeripheralProxyError else {
-                        XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
-                        return
-                    }
-                    guard case .characteristicNotFound(let characteristicUUID) = proxyError else {
-                        XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(proxyError)' instead")
-                        return
-                    }
-                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
-                    expectation.fulfill()
-            }
+        do {
+            _ = try blePeripheralProxy_1.isNotifying(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID)
+        } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
+        } catch {
+            XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
-        // Await expectations
-        wait(for: [expectation], timeout: 4.0)
     }
     
     func testIsNotifyingOnCharacteristicFailDueToOperationNotSupported() throws {
@@ -161,30 +113,13 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Test characteristic notify enabled
-        let expectation = expectation(description: "waiting for characteristic notify state not to be retrieved")
-        // Test notify check on callback
-        blePeripheralProxy_1.isNotifying(
-            characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-            timeout: .never
-        ) { result in
-            switch result {
-                case .success:
-                    XCTFail("characteristic notify check was expected to fail but succeeded instead")
-                case .failure(let error):
-                    guard let proxyError = error as? BlePeripheralProxyError else {
-                        XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError, got '\(error)' instead")
-                        return
-                    }
-                    guard case .notifyNotSupported(let characteristicUUID) = proxyError else {
-                        XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError 'notifyNotSupported', got '\(proxyError)' instead")
-                        return
-                    }
-                    XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
-                    expectation.fulfill()
-            }
+        do {
+            _ = try blePeripheralProxy_1.isNotifying(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID)
+        } catch BlePeripheralProxyError.notifyNotSupported(let characteristicUUID) {
+            XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
+        } catch {
+            XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError 'notifyNotSupported', got '\(error)' instead")
         }
-        // Await expectations
-        wait(for: [expectation], timeout: 4.0)
     }
     
 }
@@ -560,90 +495,6 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Await expectations
         wait(for: [expectation], timeout: 4.0)
 
-    }
-    
-}
-
-// MARK: - Notification state check characteristic tests (async)
-
-extension BlePeripheralProxyNotifyCharacteristicTests {
-    
-    func testIsNotifyingOnCharacteristicAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Test notify check
-        do {
-            let enabled = try await blePeripheralProxy_1.isNotifying(
-                characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .never)
-            XCTAssertFalse(enabled)
-        } catch {
-            XCTFail("characteristic notify check failed with error: \(error)")
-        }
-    }
-    
-    func testIsNotifyingOnCharacteristicFailDueToPeripheralDisconnectedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Test notify check
-        do {
-            _ = try await blePeripheralProxy_1.isNotifying(
-                characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .never)
-            XCTFail("characteristic notify check was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.peripheralNotConnected {
-            // PASS
-        } catch {
-            XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError 'peripheralNotConnected', got '\(error)' instead")
-        }
-    }
-    
-    func testIsNotifyingOnCharacteristicFailDueToCharacteristicNotFoundAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
-        // Test notify check
-        do {
-            _ = try await blePeripheralProxy_1.isNotifying(
-                characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .never)
-            XCTFail("characteristic notify check was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
-            XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
-        } catch {
-            XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
-        }
-    }
-    
-    func testIsNotifyingOnCharacteristicFailDueToOperationNotSupportedAsync() async throws {
-        // Turn on ble central manager
-        centralManager(state: .poweredOn)
-        // Connect the peripheral
-        connect(peripheral: try blePeripheral_1)
-        // Discover the service
-        discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Discover the characteristic
-        discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
-        // Test notify check on callback
-        do {
-            _ = try await blePeripheralProxy_1.isNotifying(
-                characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
-                timeout: .never)
-            XCTFail("characteristic notify check was expected to fail but succeeded instead")
-        } catch BlePeripheralProxyError.notifyNotSupported(let characteristicUUID) {
-            XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
-        } catch {
-            XCTFail("characteristic notify check was expected to fail with BlePeripheralProxyError 'notifyNotSupported', got '\(error)' instead")
-        }
     }
     
 }

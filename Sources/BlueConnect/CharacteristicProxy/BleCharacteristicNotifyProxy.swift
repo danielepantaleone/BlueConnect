@@ -64,18 +64,18 @@ public extension BleCharacteristicNotifyProxy {
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<Bool, Error>) -> Void
     ) {
-        let start: DispatchTime = .now()
         discover(timeout: timeout) { characteristicDiscoveryResult in
             characteristicDiscoveryResult.forwardError(to: callback)
             characteristicDiscoveryResult.onSuccess { characteristic in
-                peripheralProxy?.isNotifying(
-                    characteristicUUID: characteristic.uuid,
-                    timeout: timeout - start.distance(to: .now()),
-                    callback: { notifyResult in
-                        notifyResult.forwardError(to: callback)
-                        notifyResult.forwardSuccess(to: callback)
-                    }
-                )
+                guard let peripheralProxy else {
+                    callback(.failure(BlePeripheralProxyError.destroyed))
+                    return
+                }
+                do {
+                    callback(.success(try peripheralProxy.isNotifying(characteristicUUID: characteristic.uuid)))
+                } catch {
+                    callback(.failure(error))
+                }
             }
         }
     }

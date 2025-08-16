@@ -39,76 +39,31 @@ extension BlePeripheralProxy {
     /// Checks whether notification is enabled for a specific characteristic.
     ///
     /// This method verifies if the `isNotifying` flag is set for a characteristic on a connected peripheral.
-    /// If the peripheral is not connected, the characteristic is not found, or the characteristic does not support notifications, the method will return a corresponding error via the callback.
+    /// If the peripheral is not connected, the characteristic is not found, or the characteristic does not support notifications, the method will throw the corresponding error via the callback.
     ///
-    /// - Parameters:
-    ///   - characteristicUUID: The UUID of the characteristic for which to check the notification state.
-    ///   - timeout: The timeout duration for the notification check operation. If the operation does not complete within this time, it will fail.
-    ///   - callback: A closure to execute when the characteristic notification state is retrieved. The closure receives a `Result` indicating success or failure, with the current notification state as a success value.
-    public func isNotifying(
-        characteristicUUID: CBUUID,
-        timeout: DispatchTimeInterval = .seconds(10),
-        callback: @escaping (Result<Bool, Error>) -> Void
-    ) {
+    /// - Parameter characteristicUUID: The UUID of the characteristic for which to check the notification state.
+    /// - Returns: A boolean indicating whether notifying is enabled on the provided characteristic.
+    /// - Throws: An error if the peripheral is not connected, the characteristic is not found, or the characteristic does not support notifications.
+    public func isNotifying(characteristicUUID: CBUUID) throws -> Bool{
         
-        var localCallback: (() -> Void)? = nil
-
         lock.lock()
         defer {
             lock.unlock()
-            localCallback?()
         }
 
         guard peripheral.state == .connected else {
-            localCallback = {
-                callback(.failure(BlePeripheralProxyError.peripheralNotConnected))
-            }
-            return
+            throw BlePeripheralProxyError.peripheralNotConnected
         }
-
         guard let characteristic = getCharacteristic(characteristicUUID) else {
-            localCallback = {
-                callback(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
-            }
-            return
+            throw BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)
         }
-
         guard characteristic.properties.contains(.notify) else {
-            localCallback = {
-                callback(.failure(BlePeripheralProxyError.notifyNotSupported(characteristicUUID: characteristicUUID)))
-            }
-            return
+            throw BlePeripheralProxyError.notifyNotSupported(characteristicUUID: characteristicUUID)
         }
 
-        localCallback = {
-            callback(.success(characteristic.isNotifying))
-        }
+        return characteristic.isNotifying
         
-    } // TODO: MAKE SYNCHRONOUS
-    
-    /// Asynchronously checks whether notifications are currently enabled for a specified Bluetooth characteristic.
-    ///
-    /// This method  checks the `isNotifying` flag of a characteristic on a connected peripheral. If the peripheral is not connected,
-    /// the characteristic is not found, or it does not support notifications, the method will throw an appropriate error.
-    ///
-    /// - Parameters:
-    ///   - characteristicUUID: The UUID of the characteristic to check for notification state.
-    ///   - timeout: The maximum duration to wait for the notification state check. Defaults to 10 seconds. *(Note: currently unused in implementation)*.
-    ///
-    /// - Returns: `true` if notifications are enabled for the characteristic; `false` otherwise.
-    /// - Throws: An error if the peripheral is not connected, the characteristic is not found, or notification is not supported.
-    public func isNotifying(
-        characteristicUUID: CBUUID,
-        timeout: DispatchTimeInterval = .seconds(10)
-    ) async throws -> Bool {
-        try await withCheckedThrowingContinuation { continuation in
-            isNotifying(characteristicUUID: characteristicUUID, timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
-                }
-            }
-        }
-    } // TODO: MAKE SYNCHRONOUS
+    }
      
     /// Enables or disables notifications for a specific characteristic.
     ///
