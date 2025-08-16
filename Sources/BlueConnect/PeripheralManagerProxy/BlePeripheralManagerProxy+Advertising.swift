@@ -152,8 +152,8 @@ extension BlePeripheralManagerProxy {
         startAdvertisingRegistry.register(
             callback: callback,
             timeout: timeout,
-            timeoutHandler: { subscription in
-                subscription.notify(.failure(BlePeripheralManagerProxyError.advertisingTimeout))
+            timeoutHandler: { [weak self] subscription in
+                self?.startAdvertisingRegistry.notify(subscription: subscription, value: .failure(BlePeripheralManagerProxyError.advertisingTimeout))
             }
         )
     }
@@ -162,8 +162,8 @@ extension BlePeripheralManagerProxy {
         stopAdvertisingRegistry.register(
             callback: callback,
             timeout: timeout,
-            timeoutHandler: { subscription in
-                subscription.notify(.failure(BlePeripheralManagerProxyError.advertisingTimeout))
+            timeoutHandler: { [weak self] subscription in
+                self?.stopAdvertisingRegistry.notify(subscription: subscription, value: .failure(BlePeripheralManagerProxyError.advertisingTimeout))
             }
         )
     }

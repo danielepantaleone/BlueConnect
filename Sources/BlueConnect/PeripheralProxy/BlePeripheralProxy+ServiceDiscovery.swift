@@ -136,8 +136,8 @@ extension BlePeripheralProxy {
             key: serviceUUID,
             callback: callback,
             timeout: timeout,
-            timeoutHandler: { subscription in
-                subscription.notify(.failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
+            timeoutHandler: { [weak self] subscription in
+                self?.discoverServiceRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
             }
         )
     }

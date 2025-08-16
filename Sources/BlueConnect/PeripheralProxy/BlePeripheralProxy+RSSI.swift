@@ -136,8 +136,8 @@ extension BlePeripheralProxy {
         rssiReadRegistry.register(
             callback: callback,
             timeout: timeout,
-            timeoutHandler: { subscription in
-                subscription.notify(.failure(BlePeripheralProxyError.rssiReadTimeout))
+            timeoutHandler: { [weak self] subscription in
+                self?.rssiReadRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.rssiReadTimeout))
             }
         )
     }

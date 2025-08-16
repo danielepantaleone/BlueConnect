@@ -165,8 +165,8 @@ extension BlePeripheralProxy {
             key: characteristicUUID,
             callback: callback,
             timeout: timeout,
-            timeoutHandler: { subscription in
-                subscription.notify(.failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+            timeoutHandler: { [weak self] subscription in
+                self?.discoverCharacteristicRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
             }
         )
     }
@@ -174,7 +174,8 @@ extension BlePeripheralProxy {
     private func discover(
         characteristicUUID: CBUUID,
         in serviceUUID: CBUUID,
-        subscription: Subscription<CBCharacteristic>) {
+        subscription: Subscription<CBCharacteristic>
+    ) {
         
         var resultToNotify: Result<CBCharacteristic, Error>? = nil
         

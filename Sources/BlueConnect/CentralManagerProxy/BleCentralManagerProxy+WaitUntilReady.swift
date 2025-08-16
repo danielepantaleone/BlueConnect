@@ -112,8 +112,8 @@ extension BleCentralManagerProxy {
         waitUntilReadyRegistry.register(
             callback: callback,
             timeout: timeout,
-            timeoutHandler: { subscription in
-                subscription.notify(.failure(BleCentralManagerProxyError.readyTimeout))
+            timeoutHandler: { [weak self] subscription in
+                self?.waitUntilReadyRegistry.notify(subscription: subscription, value: .failure(BleCentralManagerProxyError.readyTimeout))
             }
         )
     }

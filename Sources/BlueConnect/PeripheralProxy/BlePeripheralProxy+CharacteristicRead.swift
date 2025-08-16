@@ -117,8 +117,8 @@ extension BlePeripheralProxy {
             key: characteristicUUID,
             callback: callback,
             timeout: timeout,
-            timeoutHandler: { subscription in
-                subscription.notify(.failure(BlePeripheralProxyError.readTimeout(characteristicUUID: characteristicUUID)))
+            timeoutHandler: { [weak self] subscription in
+                self?.characteristicReadRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.readTimeout(characteristicUUID: characteristicUUID)))
             }
         )
     }

@@ -148,11 +148,11 @@ extension BleCentralManagerProxy {
             lock.unlock()
             
             // We attempt to disconnect the peripheral prior notifying.
-            disconnect(peripheral: peripheral) { _ in
-                // Notify only the subscription, the published is triggered by the the delegate.
+            disconnect(peripheral: peripheral) { [weak self] _ in
+                // Notify only the subscription, the publisher is triggered by the the delegate.
                 // This is because when the timeout handler is executed, the subscription is removed
                 // from the registry hence we cannot execute the callback from the delegate.
-                subscription.notify(.failure(BleCentralManagerProxyError.connectionTimeout))
+                self?.connectionRegistry.notify(subscription: subscription, value: .failure(BleCentralManagerProxyError.connectionTimeout))
             }
             
         })

@@ -88,7 +88,7 @@ final class Subscription<ValueType>: Identifiable, Equatable, @unchecked Sendabl
     /// Notifies the subscription with the specified result, triggering the callback and cancelling the timer.
     ///
     /// - Parameter value: The result to notify the subscription with.
-    func notify(_ value: Result<ValueType, Error>) { // TODO: Make private
+    fileprivate func notify(_ value: Result<ValueType, Error>) {
         registryLock.lock()
         guard state != .notified else {
             registryLock.unlock()

@@ -114,8 +114,8 @@ extension BlePeripheralManagerProxy {
         waitUntilReadyRegistry.register(
             callback: callback,
             timeout: timeout,
-            timeoutHandler: { subscription in
-                subscription.notify(.failure(BlePeripheralManagerProxyError.readyTimeout))
+            timeoutHandler: { [weak self] subscription in
+                self?.waitUntilReadyRegistry.notify(subscription: subscription, value: .failure(BlePeripheralManagerProxyError.readyTimeout))
             }
         )
     }
