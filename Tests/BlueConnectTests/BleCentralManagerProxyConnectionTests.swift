@@ -188,7 +188,7 @@ extension BleCentralManagerProxyConnectionTests {
         publisherExp.isInverted = true
         let connectionFailurePublisherExp = expectation(description: "waiting for connection failure publisher to be called")
         // Mock connection delay
-        bleCentralManager.delayOnConnection = .seconds(2)
+        bleCentralManager.delayOnConnection = .seconds(4)
         // Test publisher not called
         let subscription1 = bleCentralManagerProxy.didConnectPublisher
             .receive(on: DispatchQueue.main)
@@ -231,6 +231,8 @@ extension BleCentralManagerProxyConnectionTests {
                     connectExp.fulfill()
             }
         }
+        // Wait for the async block in the BLE central manager connect method to kick in.
+        wait(.seconds(1))
         // Turn off ble central manager
         centralManager(state: .poweredOff)
         // Await expectations
