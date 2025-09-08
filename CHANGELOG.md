@@ -1,6 +1,12 @@
 Release Notes
 =============
 
+Released Sep 8, 2025
+
+## 1.5.1
+
+- Fix not starting connection timeout for already connecting peripherals [41b29cb](https://github.com/danielepantaleone/BlueConnect/commit/41b29cb66ee59292a1032d71c6a71d61e732aea9)
+
 Released Aug 16, 2025
 
 ## 1.5.0
