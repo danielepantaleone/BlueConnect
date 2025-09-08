@@ -192,13 +192,13 @@ extension BleCentralManagerProxy {
         // Remove any connection cancel tracking for this peripheral.
         connectionCanceled.remove(peripheral.identifier)
 
+        // Begin monitoring connection timeout.
+        subscription.start()
+        
         // If already connecting, no need to reinitiate connection
         guard peripheral.state != .connecting else {
             return
         }
-        
-        // Begin monitoring connection timeout.
-        subscription.start()
 
         // Initiate connection.
         centralManager.connect(peripheral, options: options)
