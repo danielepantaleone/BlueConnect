@@ -194,11 +194,6 @@ extension BleCentralManagerProxy {
 
         // Begin monitoring connection timeout.
         subscription.start()
-        
-        // If already connecting, no need to reinitiate connection
-        guard peripheral.state != .connecting else {
-            return
-        }
 
         // Initiate connection.
         centralManager.connect(peripheral, options: options)
