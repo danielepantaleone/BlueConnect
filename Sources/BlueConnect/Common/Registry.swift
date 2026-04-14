@@ -177,8 +177,8 @@ final class SubscriptionBox<ValueType>: @unchecked Sendable {
 /// to be invoked if it is not notified within the specified timeout.
 ///
 /// - Note: `KeyType` must conform to `Hashable`.
-class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
-    
+final class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
+
     // MARK: - Properties
     
     /// A dictionary that stores subscriptions grouped by a unique key.
@@ -291,7 +291,7 @@ class KeyedRegistry<KeyType, ValueType> where KeyType: Hashable {
 /// `ListRegistry` allows you to register subscriptions, notify them with a result, and retrieve
 /// all active subscriptions. Each subscription includes a callback and an optional timeout
 /// with a handler that is invoked if the subscription is not notified within the specified time.
-class ListRegistry<ValueType> {
+final class ListRegistry<ValueType> {
     
     // MARK: - Properties
     

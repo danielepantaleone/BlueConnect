@@ -36,7 +36,7 @@ import XCTest
 
 @testable import BlueConnect
 
-class DispatchTimeIntervalExtensionsTests: XCTestCase {
+final class DispatchTimeIntervalExtensionsTests: XCTestCase {
 
     func testSecondsAdd() {
         let x: DispatchTimeInterval = .seconds(4)
