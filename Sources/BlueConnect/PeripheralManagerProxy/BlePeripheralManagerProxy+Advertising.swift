@@ -51,8 +51,13 @@ extension BlePeripheralManagerProxy {
         timeout: DispatchTimeInterval = .never,
         callback: @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
-        let subscription = buildAdvStartSubscription(timeout: timeout, callback: callback)
-        startAdvertising(advertisementData: advertisementData, subscription: subscription)
+        startAdvertising(
+            advertisementData: advertisementData,
+            subscription: buildAdvStartSubscription(
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Starts advertising peripheral data.
@@ -105,8 +110,12 @@ extension BlePeripheralManagerProxy {
         timeout: DispatchTimeInterval = .never,
         callback: @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
-        let subscription = buildAdvStopSubscription(timeout: timeout, callback: callback)
-        stopAdvertising(subscription: subscription)
+        stopAdvertising(
+            subscription: buildAdvStopSubscription(
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Stops advertising peripheral data.
@@ -149,7 +158,12 @@ extension BlePeripheralManagerProxy {
             callback: callback,
             timeout: timeout,
             timeoutHandler: { [weak self] subscription in
-                self?.startAdvertisingRegistry.notify(subscription: subscription, value: .failure(BlePeripheralManagerProxyError.advertisingTimeout))
+                self?.startAdvertisingRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BlePeripheralManagerProxyError.advertisingTimeout
+                    )
+                )
             }
         )
     }
@@ -159,7 +173,12 @@ extension BlePeripheralManagerProxy {
             callback: callback,
             timeout: timeout,
             timeoutHandler: { [weak self] subscription in
-                self?.stopAdvertisingRegistry.notify(subscription: subscription, value: .failure(BlePeripheralManagerProxyError.advertisingTimeout))
+                self?.stopAdvertisingRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BlePeripheralManagerProxyError.advertisingTimeout
+                    )
+                )
             }
         )
     }
