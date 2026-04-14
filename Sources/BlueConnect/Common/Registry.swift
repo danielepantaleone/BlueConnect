@@ -109,8 +109,8 @@ final class Subscription<ValueType>: Identifiable, Equatable, @unchecked Sendabl
         defer { registryLock.unlock() }
         guard state == .created else { return }
         guard timeout != .never else { return }
-        state = .started
         let nanoseconds = UInt64(timeout.nanoseconds)
+        state = .started
         timerTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: nanoseconds)
             guard !Task.isCancelled else { return }
