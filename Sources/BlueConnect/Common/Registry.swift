@@ -60,8 +60,8 @@ final class Subscription<ValueType>: Identifiable, Equatable, @unchecked Sendabl
     /// The function called when the subscription times out.
     let timeoutHandler: (Subscription) -> Void
    
-    /// A timer that triggers the timeout handler when the subscription times out.
-    private var timer: DispatchSourceTimer?
+    /// A task that triggers the timeout handler when the subscription times out.
+    private var timerTask: Task<Void, Never>?
     /// The current state of the subscription.
     private var state: State = .created
     
@@ -95,13 +95,13 @@ final class Subscription<ValueType>: Identifiable, Equatable, @unchecked Sendabl
             return
         }
         state = .notified
-        timer?.cancel()
-        timer = nil
+        timerTask?.cancel()
+        timerTask = nil
         registryLock.unlock()
         callback(value)
     }
     
-    /// Starts the subscription's timer if it has a timeout and changes its state to `started`.
+    /// Starts the subscription's timeout task if it has a timeout and changes its state to `started`.
     ///
     /// - Note: If `timeout` is `.never`, the subscription is not started.
     func start() {
@@ -110,17 +110,13 @@ final class Subscription<ValueType>: Identifiable, Equatable, @unchecked Sendabl
         guard state == .created else { return }
         guard timeout != .never else { return }
         state = .started
-        timer = DispatchSource.makeTimerSource(queue: globalQueue)
-        timer?.schedule(deadline: .now() + timeout, repeating: .never)
-        timer?.setEventHandler { [weak self] in
+        let nanoseconds = UInt64(timeout.nanoseconds)
+        timerTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: nanoseconds)
+            guard !Task.isCancelled else { return }
             guard let self else { return }
-            registryLock.lock()
-            timer?.cancel()
-            timer = nil
-            registryLock.unlock()
-            timeoutHandler(self)
+            self.timeoutHandler(self)
         }
-        timer?.resume()
     }
     
     // MARK: - Equatable conformance
