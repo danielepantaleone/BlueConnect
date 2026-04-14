@@ -1,5 +1,5 @@
 //
-//  BlueConnectTests.swift
+//  DispatchTimeIntervalExtensionsTests.swift
 //  BlueConnect
 //
 //  GitHub Repo and Documentation: https://github.com/danielepantaleone/BlueConnect
@@ -36,8 +36,8 @@ import XCTest
 
 @testable import BlueConnect
 
-class DispatchTimeIntervalExtTests: XCTestCase {
-    
+class DispatchTimeIntervalExtensionsTests: XCTestCase {
+
     func testSecondsAdd() {
         let x: DispatchTimeInterval = .seconds(4)
         let y: DispatchTimeInterval = .seconds(3)
