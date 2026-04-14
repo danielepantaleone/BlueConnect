@@ -2,7 +2,6 @@
 
 [![Swift](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
 [![Platforms](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdanielepantaleone%2FBlueConnect%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/danielepantaleone/BlueConnect)
-![Cocoapods](https://img.shields.io/cocoapods/v/BlueConnect)
 ![SPM](https://img.shields.io/github/v/release/danielepantaleone/BlueConnect)
 ![License](https://img.shields.io/github/license/danielepantaleone/BlueConnect)
 ![CI](https://img.shields.io/github/actions/workflow/status/danielepantaleone/BlueConnect/swift-tests.yml)
@@ -420,12 +419,6 @@ You can create mock versions of your central manager and peripheral(s) and suppl
 dependencies: [
     .package(url: "https://github.com/danielepantaleone/BlueConnect.git", .upToNextMajor(from: "1.6.0"))
 ]
-```
-
-### Cocoapods
-
-```ruby
-pod 'BlueConnect', '~> 1.6.0'
 ```
 
 ## Contributing
