@@ -57,10 +57,8 @@ public extension BleCharacteristicNotifyProxy {
     /// - Throws: An error if the peripheral is not connected, the characteristic is not found, or notification is not supported.
     func isNotifying(timeout: DispatchTimeInterval = .seconds(10)) async throws -> Bool {
         try await withCheckedThrowingContinuation { continuation in
-            isNotifying(timeout: timeout) { result in
-                globalQueue.async {
-                    continuation.resume(with: result)
-                }
+            isNotifying(timeout: timeout) {
+                continuation.resume(with: $0)
             }
         }
     }

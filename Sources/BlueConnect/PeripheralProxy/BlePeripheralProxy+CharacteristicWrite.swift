@@ -92,13 +92,8 @@ extension BlePeripheralProxy {
         let box = SubscriptionBox<Void>()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let subscription = buildSubscription(
-                    characteristicUUID: characteristicUUID,
-                    timeout: timeout
-                ) { result in
-                    globalQueue.async {
-                        continuation.resume(with: result)
-                    }
+                let subscription = buildSubscription(characteristicUUID: characteristicUUID, timeout: timeout) {
+                    continuation.resume(with: $0)
                 }
                 box.lock()
                 box.subscription = subscription

@@ -75,10 +75,8 @@ extension BlePeripheralProxy {
         let box = SubscriptionBox<Int>()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let subscription = buildSubscription(timeout: timeout) { result in
-                    globalQueue.async {
-                        continuation.resume(with: result)
-                    }
+                let subscription = buildSubscription(timeout: timeout) {
+                    continuation.resume(with: $0)
                 }
                 box.subscription = subscription
                 readRSSI(subscription: subscription)

@@ -97,13 +97,8 @@ extension BleCentralManagerProxy {
         let box = SubscriptionBox<Void>()
         return try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { continuation in
-                let subscription = buildSubscription(
-                    peripheral: peripheral,
-                    timeout: timeout
-                ) { result in
-                    globalQueue.async {
-                        continuation.resume(with: result)
-                    }
+                let subscription = buildSubscription(peripheral: peripheral, timeout: timeout) {
+                    continuation.resume(with: $0)
                 }
                 box.lock()
                 box.subscription = subscription
