@@ -76,9 +76,9 @@ extension BlePeripheralProxyTests {
             .filter { $0 == "YODA" }
             .sink { _ in expectation.fulfill() }
         // Change the name
-        try blePeripheral_2.setName("YODA", after: .seconds(2))
+        try blePeripheral_2.setName("YODA", after: .milliseconds(500))
         // Await expectations
-        wait(for: [expectation], timeout: 4.0)
+        wait(for: [expectation], timeout: 2.0)
         subscription.cancel()
     }
     

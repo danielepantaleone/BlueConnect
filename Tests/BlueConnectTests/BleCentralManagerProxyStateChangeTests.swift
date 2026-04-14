@@ -72,7 +72,7 @@ extension BleCentralManagerProxyStateChangeTests {
         connect(peripheral: try blePeripheral_1)
         XCTAssertEqual(try blePeripheral_1.state, .connected)
         // Mock connection delay
-        bleCentralManager.delayOnConnection = .seconds(4)
+        bleCentralManager.delayOnConnection = .milliseconds(500)
         // Configure assertions
         let disconnectPublisherExp = expectation(description: "waiting for disconnection publisher to be called on blePeripheral_1")
         let connectFailPublisherExp = expectation(description: "waiting for connection failure publisher to be called on blePeripheral_2")
@@ -132,11 +132,11 @@ extension BleCentralManagerProxyStateChangeTests {
             }
         }
         // Wait a bit before turning off central manager.
-        wait(.seconds(2))
+        wait(.milliseconds(100))
         // Turn off ble central manager
         centralManager(state: .poweredOff)
         // Await expectations
-        wait(for: [connectExp, connectFailPublisherExp, disconnectPublisherExp], timeout: 6.0)
+        wait(for: [connectExp, connectFailPublisherExp, disconnectPublisherExp], timeout: 2.0)
         subscription1.cancel()
         subscription2.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
@@ -159,7 +159,7 @@ extension BleCentralManagerProxyStateChangeTests {
         bleCentralManager.state = .poweredOn
         // Await state change.
         let expectation = expectation(description: "waiting for central to be ready")
-        bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1)) { [weak self] result in
+        bleCentralManagerProxy.waitUntilReady(timeout: .milliseconds(500)) { [weak self] result in
             guard let self else { return }
             switch result {
                 case .success:
@@ -170,7 +170,7 @@ extension BleCentralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadySuccessWithCentralAlreadyPoweredOn() throws {
@@ -189,7 +189,7 @@ extension BleCentralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToUnauthorized() throws {
@@ -217,7 +217,7 @@ extension BleCentralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToUnsupported() throws {
@@ -245,7 +245,7 @@ extension BleCentralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToTimeout() throws {
@@ -254,7 +254,7 @@ extension BleCentralManagerProxyStateChangeTests {
         centralManager(state: .resetting)
         // Await state change.
         let expectation = expectation(description: "waiting for central NOT to be ready")
-        bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1)) { [weak self] result in
+        bleCentralManagerProxy.waitUntilReady(timeout: .milliseconds(500)) { [weak self] result in
             guard let self else { return }
             switch result {
                 case .success:
@@ -274,7 +274,7 @@ extension BleCentralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToCentralGoingUnauthorized() throws {
@@ -306,7 +306,7 @@ extension BleCentralManagerProxyStateChangeTests {
         // Go unauthorized.
         centralManager(state: .unauthorized)
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToCentralGoingUnsupported() throws {
@@ -338,7 +338,7 @@ extension BleCentralManagerProxyStateChangeTests {
         // Go unsupported.
         centralManager(state: .unsupported)
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
 }
@@ -352,7 +352,7 @@ extension BleCentralManagerProxyStateChangeTests {
         // Turn it on.
         bleCentralManager.state = .poweredOn
         do {
-            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch {
             XCTFail("waiting for central manager to be ready failed with error: \(error)")
         }
@@ -365,7 +365,7 @@ extension BleCentralManagerProxyStateChangeTests {
         centralManager(state: .poweredOn)
         // Await state change (even if already changed).
         do {
-            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch {
             XCTFail("waiting for central manager to be ready failed with error: \(error)")
         }
@@ -378,7 +378,7 @@ extension BleCentralManagerProxyStateChangeTests {
         centralManager(state: .unauthorized)
         // Await state change failure.
         do {
-            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch BleCentralManagerProxyError.invalidState(let state) {
             XCTAssertEqual(state, .unauthorized)
             XCTAssertEqual(bleCentralManagerProxy.waitUntilReadyRegistry.subscriptions(), [])
@@ -392,7 +392,7 @@ extension BleCentralManagerProxyStateChangeTests {
         centralManager(state: .unsupported)
         // Await state change failure.
         do {
-            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch BleCentralManagerProxyError.invalidState(let state) {
             XCTAssertEqual(state, .unsupported)
             XCTAssertEqual(bleCentralManagerProxy.waitUntilReadyRegistry.subscriptions(), [])
@@ -406,7 +406,7 @@ extension BleCentralManagerProxyStateChangeTests {
         centralManager(state: .resetting)
         // Await state change failure.
         do {
-            try await bleCentralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await bleCentralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch BleCentralManagerProxyError.readyTimeout {
             XCTAssertEqual(bleCentralManagerProxy.waitUntilReadyRegistry.subscriptions(), [])
         } catch {
@@ -421,7 +421,7 @@ extension BleCentralManagerProxyStateChangeTests {
         let task = Task {
             started.fulfill() // Signal that the task has started
             do {
-                try await proxy.waitUntilReady(timeout: .seconds(2))
+                try await proxy.waitUntilReady(timeout: .milliseconds(500))
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
                 // Expected path
@@ -447,7 +447,7 @@ extension BleCentralManagerProxyStateChangeTests {
         let task1 = Task {
             started.fulfill() // Signal that the first task has started
             do {
-                try await proxy.waitUntilReady(timeout: .seconds(2))
+                try await proxy.waitUntilReady(timeout: .milliseconds(500))
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
                 // Expected path
@@ -458,7 +458,7 @@ extension BleCentralManagerProxyStateChangeTests {
         let task2 = Task {
             started.fulfill() // Signal that the second task has started
             do {
-                try await proxy.waitUntilReady(timeout: .seconds(2))
+                try await proxy.waitUntilReady(timeout: .milliseconds(500))
                 XCTFail("Expected task to raise readyTimeout, but it succeeded")
             } catch is CancellationError {
                 XCTFail("Test failed due to cancellation of second task")

@@ -331,7 +331,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         // Discover the service
         discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock characteristic discovery timeout
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(4)
         // Test characteristic discovery
         let discoveryExp = expectation(description: "waiting for characteristic discovery to fail")
         let publisherExp = expectation(description: "waiting for characteristic discovery NOT to be signaled by publisher")
@@ -344,7 +344,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         blePeripheralProxy_1.discover(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
             in: MockBleDescriptor.deviceInformationServiceUUID,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -367,10 +367,10 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [discoveryExp, publisherExp], timeout: 4.0)
+        wait(for: [discoveryExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testDiscoverCharacteristicFailDueToError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -392,7 +392,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         blePeripheralProxy_1.discover(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
             in: MockBleDescriptor.deviceInformationServiceUUID,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -415,10 +415,10 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [discoveryExp, publisherExp], timeout: 4.0)
+        wait(for: [discoveryExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testDiscoverCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -427,7 +427,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         // Discover the service
         discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock discovery delay
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(2)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .milliseconds(500)
         // Test discovery failure
         let expectation = expectation(description: "waiting for characteristic discovery to fail")
         blePeripheralProxy_1.discover(
@@ -453,9 +453,9 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         // Destroy the proxy
         blePeripheralProxy_1 = nil
         // Await expectations
-        wait(for: [expectation], timeout: 4.0)
+        wait(for: [expectation], timeout: 2.0)
     }
-    
+
 }
 
 // MARK: - Discover characteristic tests (async)
@@ -535,13 +535,13 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         // Discover the service
         discover(serviceUUID: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock characteristic discovery timeout
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(4)
         // Test discovery to fail
         do {
             try await blePeripheralProxy_1.discover(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 in: MockBleDescriptor.deviceInformationServiceUUID,
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
             XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
@@ -566,7 +566,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             try await blePeripheralProxy_1.discover(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 in: MockBleDescriptor.deviceInformationServiceUUID,
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
             XCTAssertNotNil(blePeripheralProxy_1.getService(MockBleDescriptor.deviceInformationServiceUUID))
@@ -576,7 +576,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
             XCTFail("characteristic discovery was expected to fail with BlePeripheralProxyError 'characteristicNotFound', got '\(error)' instead")
         }
     }
-    
+
     func testDiscoverCharacteristicFailDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -585,7 +585,7 @@ extension BlePeripheralProxyDiscoverCharacteristicTests {
         // Discover the service
         discover(serviceUUID: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Mock delay
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(2)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralProxy! = blePeripheralProxy_1
         let started = XCTestExpectation(description: "Task started")

@@ -123,7 +123,7 @@ extension BleCharacteristicWriteProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp, publisherExp], timeout: 6.0)
+        wait(for: [writeExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
     
@@ -173,7 +173,7 @@ extension BleCharacteristicWriteProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock write timeout
-        try blePeripheral_1.delayOnWrite = .seconds(10)
+        try blePeripheral_1.delayOnWrite = .seconds(4)
         // Test characteristic write
         let writeExp = expectation(description: "waiting for characteristic write to fail")
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
@@ -184,7 +184,7 @@ extension BleCharacteristicWriteProxyTests {
             .sink { _ in publisherExp.fulfill() }
         bleSecretProxy.write(
             value: "AAAA",
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { result in
             switch result {
                 case .success:
@@ -203,7 +203,7 @@ extension BleCharacteristicWriteProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp, publisherExp], timeout: 4.0)
+        wait(for: [writeExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
     
@@ -213,7 +213,7 @@ extension BleCharacteristicWriteProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover service timeout
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(4)
         // Test characteristic write
         let writeExp = expectation(description: "waiting for characteristic write to fail")
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
@@ -224,7 +224,7 @@ extension BleCharacteristicWriteProxyTests {
             .sink { _ in publisherExp.fulfill() }
         bleSecretProxy.write(
             value: "AAAA",
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { result in
             switch result {
                 case .success:
@@ -243,7 +243,7 @@ extension BleCharacteristicWriteProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp, publisherExp], timeout: 4.0)
+        wait(for: [writeExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
     
@@ -253,7 +253,7 @@ extension BleCharacteristicWriteProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover characteristic timeout
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(4)
         // Test characteristic write
         let writeExp = expectation(description: "waiting for characteristic write to fail")
         let publisherExp = expectation(description: "waiting for characteristic write ack NOT to be signaled by publisher")
@@ -264,7 +264,7 @@ extension BleCharacteristicWriteProxyTests {
             .sink { _ in publisherExp.fulfill() }
         bleSecretProxy.write(
             value: "AAAA",
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { result in
             switch result {
                 case .success:
@@ -283,7 +283,7 @@ extension BleCharacteristicWriteProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp, publisherExp], timeout: 4.0)
+        wait(for: [writeExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
     
@@ -344,10 +344,10 @@ extension BleCharacteristicWriteProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock write timeout
-        try blePeripheral_1.delayOnWrite = .seconds(10)
+        try blePeripheral_1.delayOnWrite = .seconds(4)
         // Test characteristic write
         do {
-            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(2))
+            try await bleSecretProxy.write(value: "AAAA", timeout: .milliseconds(500))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.writeTimeout(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
@@ -362,10 +362,10 @@ extension BleCharacteristicWriteProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover service timeout
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(4)
         // Test characteristic write
         do {
-            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(2))
+            try await bleSecretProxy.write(value: "AAAA", timeout: .milliseconds(500))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
             XCTAssertEqual(serviceUUID, MockBleDescriptor.customServiceUUID)
@@ -380,10 +380,10 @@ extension BleCharacteristicWriteProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover characteristic timeout
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(4)
         // Test characteristic write
         do {
-            try await bleSecretProxy.write(value: "AAAA", timeout: .seconds(2))
+            try await bleSecretProxy.write(value: "AAAA", timeout: .milliseconds(500))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
@@ -398,7 +398,7 @@ extension BleCharacteristicWriteProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock delay
-        try blePeripheral_1.delayOnWrite = .seconds(2)
+        try blePeripheral_1.delayOnWrite = .milliseconds(500)
         // Begin test
         let proxy: MockCharacteristicSecretProxy! = bleSecretProxy
         let started = XCTestExpectation(description: "Task started")
@@ -427,7 +427,7 @@ extension BleCharacteristicWriteProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock delay
-        try blePeripheral_1.delayOnWrite = .seconds(2)
+        try blePeripheral_1.delayOnWrite = .milliseconds(500)
         // Begin test
         let proxy: MockCharacteristicSecretProxy! = bleSecretProxy
         let started = XCTestExpectation(description: "Task started")

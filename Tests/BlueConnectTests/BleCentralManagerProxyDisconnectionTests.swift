@@ -82,7 +82,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Delay connection to mock connecting state
-        bleCentralManager.delayOnConnection = .seconds(4)
+        bleCentralManager.delayOnConnection = .milliseconds(500)
         // Test disconnection and connection failure
         let connectFailExp = expectation(description: "waiting for peripheral to fail connection")
         let disconnectExp = expectation(description: "waiting for peripheral to disconnect")
@@ -173,7 +173,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Delay disconnection to mock disconnecting state
-        bleCentralManager.delayOnDisconnection = .seconds(2)
+        bleCentralManager.delayOnDisconnection = .milliseconds(500)
         // Test disconnection or disconnected peripheral
         let disconnectExp = expectation(description: "waiting for peripheral to disconnect")
         disconnectExp.expectedFulfillmentCount = 3
@@ -200,7 +200,7 @@ extension BleCentralManagerProxyDisconnectionTests {
                 }
             }
         }
-        wait(for: [disconnectExp, publisherExp], timeout: 6.0)
+        wait(for: [disconnectExp, publisherExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         XCTAssertEqual(bleCentralManagerProxy.disconnectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
@@ -311,7 +311,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock disconnection delay
-        bleCentralManager.delayOnDisconnection = .seconds(2)
+        bleCentralManager.delayOnDisconnection = .milliseconds(500)
         // Begin test
         let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
         let peripheral: BlePeripheral = try blePeripheral_1
@@ -341,7 +341,7 @@ extension BleCentralManagerProxyDisconnectionTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock disconnection delay
-        bleCentralManager.delayOnDisconnection = .seconds(2)
+        bleCentralManager.delayOnDisconnection = .milliseconds(500)
         // Begin test
         let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
         let peripheral: BlePeripheral = try blePeripheral_1

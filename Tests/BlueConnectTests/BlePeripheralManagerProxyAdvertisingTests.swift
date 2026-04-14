@@ -122,14 +122,14 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         let publisherExp = expectation(description: "waiting for peripheral manager advertising NOT to be emitted on publisher")
         publisherExp.isInverted = true
         // Mock advertising timeout.
-        blePeripheralManager.delayOnStartAdvertising = .seconds(10)
+        blePeripheralManager.delayOnStartAdvertising = .seconds(4)
         // Assert over publisher notify.
         let subscription = blePeripheralManagerProxy.didUpdateAdvertisingPublisher
             .receive(on: DispatchQueue.main)
             .filter { $0 == true }
             .sink { _ in publisherExp.fulfill() }
         // Assert over callback notify.
-        blePeripheralManagerProxy.startAdvertising(timeout: .seconds(2)) { result in
+        blePeripheralManagerProxy.startAdvertising(timeout: .milliseconds(500)) { result in
             switch result {
                 case .success:
                     XCTFail("peripheral manager advertising was expected to fail but succeeded instead")
@@ -146,7 +146,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [callbackExp, publisherExp], timeout: 4.0)
+        wait(for: [callbackExp, publisherExp], timeout: 2.0)
         subscription.cancel()
         // Assert final state.
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
@@ -232,10 +232,10 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         // Assert initial advertising state.
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
         // Mock advertising timeout
-        blePeripheralManager.delayOnStartAdvertising = .seconds(10)
+        blePeripheralManager.delayOnStartAdvertising = .seconds(4)
         // Test timeout
         do {
-            try await blePeripheralManagerProxy.startAdvertising(timeout: .seconds(2))
+            try await blePeripheralManagerProxy.startAdvertising(timeout: .milliseconds(500))
         } catch BlePeripheralManagerProxyError.advertisingTimeout {
             XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
             XCTAssertEqual(blePeripheralManagerProxy.startAdvertisingRegistry.subscriptions(), [])
@@ -253,7 +253,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         blePeripheralManager.errorOnStartAdvertising = MockBleError.mockedError
         // Test timeout
         do {
-            try await blePeripheralManagerProxy.startAdvertising(timeout: .seconds(2))
+            try await blePeripheralManagerProxy.startAdvertising(timeout: .milliseconds(500))
         } catch MockBleError.mockedError {
             XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
             XCTAssertEqual(blePeripheralManagerProxy.startAdvertisingRegistry.subscriptions(), [])
@@ -268,7 +268,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         // Assert initial advertising state.
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
         // Mock delay
-        blePeripheralManager.delayOnStartAdvertising = .seconds(2)
+        blePeripheralManager.delayOnStartAdvertising = .milliseconds(500)
         // Test
         let proxy: BlePeripheralManagerProxy! = blePeripheralManagerProxy
         let started = XCTestExpectation(description: "Task started")
@@ -297,7 +297,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         // Assert initial advertising state.
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
         // Mock delay
-        blePeripheralManager.delayOnStartAdvertising = .seconds(2)
+        blePeripheralManager.delayOnStartAdvertising = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralManagerProxy! = blePeripheralManagerProxy
         let started = XCTestExpectation(description: "Task started")
@@ -365,7 +365,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [callbackExp, publisherExp], timeout: 4.0)
+        wait(for: [callbackExp, publisherExp], timeout: 2.0)
         subscription.cancel()
         // Assert final state.
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
@@ -398,7 +398,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [callbackExp, publisherExp], timeout: 4.0)
+        wait(for: [callbackExp, publisherExp], timeout: 2.0)
         subscription.cancel()
         // Assert final state.
         XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
@@ -461,7 +461,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         // Test
         do {
             try await blePeripheralManagerProxy.stopAdvertising()
-            wait(.seconds(1)) // for advertisingMonitor to be nil (go figure....)
+            wait(.milliseconds(100)) // for advertisingMonitor to be nil (go figure....)
             XCTAssertFalse(blePeripheralManagerProxy.isAdvertising)
             XCTAssertEqual(blePeripheralManagerProxy.stopAdvertisingRegistry.subscriptions(), [])
             XCTAssertNil(blePeripheralManagerProxy.advertisingMonitor)
@@ -508,7 +508,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         // Check for monitor to be running.
         XCTAssertNotNil(blePeripheralManagerProxy.advertisingMonitor)
         // Mock delay
-        blePeripheralManager.delayOnStopAdvertising = .seconds(2)
+        blePeripheralManager.delayOnStopAdvertising = .milliseconds(500)
         // Test
         let proxy: BlePeripheralManagerProxy! = blePeripheralManagerProxy
         let started = XCTestExpectation(description: "Task started")
@@ -539,7 +539,7 @@ extension BlePeripheralManagerProxyAdvertisingTests {
         // Check for monitor to be running.
         XCTAssertNotNil(blePeripheralManagerProxy.advertisingMonitor)
         // Mock delay
-        blePeripheralManager.delayOnStopAdvertising = .seconds(2)
+        blePeripheralManager.delayOnStopAdvertising = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralManagerProxy! = blePeripheralManagerProxy
         let started = XCTestExpectation(description: "Task started")

@@ -250,7 +250,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
         // Mock write timeout
-        try blePeripheral_1.delayOnWrite = .seconds(10)
+        try blePeripheral_1.delayOnWrite = .seconds(4)
         // Test characteristic write
         let writeExp = expectation(description: "waiting for characteristic write to fail")
         let publisherExp = expectation(description: "waiting for characteristic write NOT to be signaled by publisher")
@@ -264,7 +264,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         blePeripheralProxy_1.write(
             data: "ABCD".data(using: .utf8)!,
             to: MockBleDescriptor.secretCharacteristicUUID,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -285,10 +285,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp, publisherExp], timeout: 4.0)
+        wait(for: [writeExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testWriteCharacteristicFailDueToError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -333,10 +333,10 @@ extension BlePeripheralProxyWriteCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp, publisherExp], timeout: 4.0)
+        wait(for: [writeExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testWriteCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -347,7 +347,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
         // Mock write delay
-        try blePeripheral_1.delayOnWrite = .seconds(2)
+        try blePeripheral_1.delayOnWrite = .milliseconds(500)
         // Test write to fail
         let expectation = expectation(description: "waiting for characteristic write to fail")
         blePeripheralProxy_1.write(
@@ -373,10 +373,9 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Destroy the proxy
         blePeripheralProxy_1 = nil
         // Await expectations
-        wait(for: [expectation], timeout: 4.0)
-
+        wait(for: [expectation], timeout: 2.0)
     }
-    
+
 }
 
 // MARK: - Write characteristic tests (async)
@@ -488,13 +487,13 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
         // Mock write timeout
-        try blePeripheral_1.delayOnWrite = .seconds(10)
+        try blePeripheral_1.delayOnWrite = .seconds(4)
         // Test characteristic write to fail
         do {
             try await blePeripheralProxy_1.write(
                 data: "ABCD".data(using: .utf8)!,
                 to: MockBleDescriptor.secretCharacteristicUUID,
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.writeTimeout(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.secretCharacteristicUUID)
@@ -539,7 +538,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
         // Mock delay
-        try blePeripheral_1.delayOnWrite = .seconds(2)
+        try blePeripheral_1.delayOnWrite = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralProxy! = blePeripheralProxy_1
         let started = XCTestExpectation(description: "Task started")
@@ -575,7 +574,7 @@ extension BlePeripheralProxyWriteCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.secretCharacteristicUUID, in: MockBleDescriptor.customServiceUUID, on: blePeripheralProxy_1)
         // Mock delay
-        try blePeripheral_1.delayOnWrite = .seconds(2)
+        try blePeripheral_1.delayOnWrite = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralProxy! = blePeripheralProxy_1
         let started = XCTestExpectation(description: "Task started")

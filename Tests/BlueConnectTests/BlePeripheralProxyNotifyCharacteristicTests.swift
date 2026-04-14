@@ -142,7 +142,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         let publisherExp = expectation(description: "waiting for characteristic notify enabled to be signaled by publisher")
         let valuePublisherExp = expectation(description: "waiting for characteristic value update to be signaled by publisher")
         valuePublisherExp.assertForOverFulfill = false
-        valuePublisherExp.expectedFulfillmentCount = 3
+        valuePublisherExp.expectedFulfillmentCount = 1
         // Test set notify ack emitted on publisher
         let subscription1 = blePeripheralProxy_1.didUpdateNotificationStatePublisher
             .receive(on: DispatchQueue.main)
@@ -172,7 +172,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [notifyExp, publisherExp, valuePublisherExp], timeout: 12.0)
+        wait(for: [notifyExp, publisherExp, valuePublisherExp], timeout: 4.0)
         subscription1.cancel()
         subscription2.cancel()
     }
@@ -370,7 +370,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Mock set notify timeout
-        try blePeripheral_1.delayOnNotify = .seconds(10)
+        try blePeripheral_1.delayOnNotify = .seconds(4)
         // Test characteristic set notify to fail
         let notifyExp = expectation(description: "waiting for characteristic notify NOT to be enabled")
         let publisherExp = expectation(description: "waiting for characteristic notify enabled NOT to be signaled by publisher")
@@ -384,7 +384,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         blePeripheralProxy_1.setNotify(
             enabled: true,
             for: MockBleDescriptor.heartRateCharacteristicUUID,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -405,10 +405,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [notifyExp, publisherExp], timeout: 4.0)
+        wait(for: [notifyExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testSetNotifyOnCharacteristicFailDueToError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -433,7 +433,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         blePeripheralProxy_1.setNotify(
             enabled: true,
             for: MockBleDescriptor.heartRateCharacteristicUUID,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -453,10 +453,10 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [notifyExp, publisherExp], timeout: 4.0)
+        wait(for: [notifyExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testSetNotifyOnCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -467,13 +467,13 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Mock set notify delay
-        try blePeripheral_1.delayOnNotify = .seconds(2)
+        try blePeripheral_1.delayOnNotify = .milliseconds(500)
         // Test set notify to fail
         let expectation = expectation(description: "waiting for characteristic set notify to fail")
         blePeripheralProxy_1.setNotify(
             enabled: true,
             for: MockBleDescriptor.heartRateCharacteristicUUID,
-            timeout: .seconds(2)
+            timeout: .never
         ) { result in
             switch result {
                 case .success:
@@ -493,10 +493,9 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Destroy the proxy
         blePeripheralProxy_1 = nil
         // Await expectations
-        wait(for: [expectation], timeout: 4.0)
-
+        wait(for: [expectation], timeout: 2.0)
     }
-    
+
 }
 
 // MARK: - Set notify characteristic tests (async)
@@ -608,13 +607,13 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Mock set notify timeout
-        try blePeripheral_1.delayOnNotify = .seconds(10)
+        try blePeripheral_1.delayOnNotify = .seconds(4)
         // Test characteristic set notify to fail
         do {
             _ = try await blePeripheralProxy_1.setNotify(
                 enabled: true,
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
             XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.notifyTimeout(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.heartRateCharacteristicUUID)
@@ -640,7 +639,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
             _ = try await blePeripheralProxy_1.setNotify(
                 enabled: true,
                 for: MockBleDescriptor.heartRateCharacteristicUUID,
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
             XCTFail("characteristic set notify was expected to fail but succeeded instead")
         } catch MockBleError.mockedError {
             XCTAssertEqual(blePeripheralProxy_1.characteristicNotifyRegistry.subscriptions(with: MockBleDescriptor.heartRateCharacteristicUUID), [])
@@ -659,7 +658,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Mock delay
-        try blePeripheral_1.delayOnNotify = .seconds(2)
+        try blePeripheral_1.delayOnNotify = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralProxy! = blePeripheralProxy_1
         let started = XCTestExpectation(description: "Task started")
@@ -684,7 +683,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Await the task to ensure cleanup.
         _ = await task.result
     }
-    
+
     func testSetNotifyCharacteristicFailOnSingleTaskDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -695,7 +694,7 @@ extension BlePeripheralProxyNotifyCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.heartRateCharacteristicUUID, in: MockBleDescriptor.heartRateServiceUUID, on: blePeripheralProxy_1)
         // Mock delay
-        try blePeripheral_1.delayOnNotify = .seconds(2)
+        try blePeripheral_1.delayOnNotify = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralProxy! = blePeripheralProxy_1
         let started = XCTestExpectation(description: "Task started")

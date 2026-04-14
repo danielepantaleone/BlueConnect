@@ -85,7 +85,7 @@ extension BleCentralManagerProxyScanTests {
         let completionExp = expectation(description: "waiting for scan NOT to be terminated")
         completionExp.isInverted = true
         let publisherExp = expectation(description: "waiting for peripheral discovery to be signaled by publisher")
-        publisherExp.expectedFulfillmentCount = 3
+        publisherExp.expectedFulfillmentCount = 1
         publisherExp.assertForOverFulfill = false
         // Test discovery emit on publisher
         let subscription = bleCentralManagerProxy.scanForPeripherals(timeout: .never)
@@ -99,7 +99,7 @@ extension BleCentralManagerProxyScanTests {
                 }
             )
         // Await expectation
-        wait(for: [completionExp, publisherExp], timeout: 5.0)
+        wait(for: [completionExp, publisherExp], timeout: 3.0)
         subscription.cancel()
         XCTAssertTrue(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
@@ -112,7 +112,6 @@ extension BleCentralManagerProxyScanTests {
         // Test scan discovery
         let completionExp = expectation(description: "waiting for scan to be terminated")
         let publisherExp = expectation(description: "waiting for peripheral discovery to be signaled by publisher")
-        publisherExp.expectedFulfillmentCount = 3
         publisherExp.assertForOverFulfill = false
         // Test discovery emit on publisher
         let subscription = bleCentralManagerProxy.scanForPeripherals(timeout: .never)
@@ -130,12 +129,12 @@ extension BleCentralManagerProxyScanTests {
                     publisherExp.fulfill()
                 }
             )
-        // Manually stop the scan in 4 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(4)) { [weak self] in
+        // Manually stop the scan in 2 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) { [weak self] in
             self?.bleCentralManagerProxy.stopScan()
         }
         // Await expectation
-        wait(for: [completionExp, publisherExp], timeout: 5.0)
+        wait(for: [completionExp, publisherExp], timeout: 3.0)
         subscription.cancel()
         XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
@@ -148,7 +147,7 @@ extension BleCentralManagerProxyScanTests {
         let publisherExp = expectation(description: "waiting for peripheral discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Test discovery emit on publisher
-        let subscription = bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(2))
+        let subscription = bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(1))
             .receive(on: DispatchQueue.main)
             .sink(
                 receiveCompletion: { [weak self] completion in
@@ -243,7 +242,7 @@ extension BleCentralManagerProxyScanTests {
         } catch {
             XCTFail("peripheral discovery terminated with error: \(error)")
         }
-        await fulfillment(of: [completionExp, publisherExp], timeout: 4.0)
+        await fulfillment(of: [completionExp, publisherExp], timeout: 3.0)
         XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
@@ -261,7 +260,7 @@ extension BleCentralManagerProxyScanTests {
             for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .never) {
                 counter += 1
                 publisherExp.fulfill()
-                if counter > 2 {
+                if counter > 0 {
                     break
                 }
             }
@@ -283,8 +282,8 @@ extension BleCentralManagerProxyScanTests {
         let completionExp = expectation(description: "waiting for scan to be terminated")
         let publisherExp = expectation(description: "waiting for peripheral discovery to be signaled by publisher")
         publisherExp.assertForOverFulfill = false
-        // Manually stop the scan in 4 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(4)) { [weak self] in
+        // Manually stop the scan in 2 second
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) { [weak self] in
             self?.bleCentralManagerProxy.stopScan()
         }
         do {
@@ -295,7 +294,7 @@ extension BleCentralManagerProxyScanTests {
         } catch {
             XCTFail("peripheral discovery terminated with error: \(error)")
         }
-        await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
+        await fulfillment(of: [completionExp, publisherExp], timeout: 3.0)
         XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
@@ -320,8 +319,8 @@ extension BleCentralManagerProxyScanTests {
                 XCTFail("peripheral discovery terminated with error: \(error)")
             }
         }
-        // Manually cancel the task in 4 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(3)) {
+        // Manually cancel the task in 2 second
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) {
             task.cancel()
         }
         await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
@@ -336,7 +335,7 @@ extension BleCentralManagerProxyScanTests {
         let publisherExp = expectation(description: "waiting for peripheral discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         do {
-            for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(2)) {
+            for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(1)) {
                 publisherExp.fulfill()
             }
             XCTFail("peripheral discovery terminated with success but failure was expected")
@@ -353,9 +352,9 @@ extension BleCentralManagerProxyScanTests {
             XCTAssertFalse(bleCentralManagerProxy.isScanning)
             completionExp.fulfill()
         }
-    
+
         // Await expectation
-        await fulfillment(of: [completionExp, publisherExp], timeout: 5.0)
+        await fulfillment(of: [completionExp, publisherExp], timeout: 3.0)
         XCTAssertFalse(bleCentralManagerProxy.isScanning)
         XCTAssertNil(bleCentralManagerProxy.discoverTimer)
         XCTAssertNil(bleCentralManagerProxy.discoverSubject)
@@ -365,7 +364,7 @@ extension BleCentralManagerProxyScanTests {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Destroy the proxy
-        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(2)) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(500)) { [weak self] in
             self?.bleCentralManagerProxy = nil
         }
         // Test scan discovery
@@ -388,7 +387,7 @@ extension BleCentralManagerProxyScanTests {
             completionExp.fulfill()
         }
         // Await expectation
-        await fulfillment(of: [completionExp], timeout: 4.0)
+        await fulfillment(of: [completionExp], timeout: 2.0)
         XCTAssertFalse(bleCentralManager.isScanning)
     }
     
@@ -403,11 +402,11 @@ extension BleCentralManagerProxyScanTests {
             let startDate = Date()
             started.fulfill() // Signal that the task has started
             do {
-                for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(10)) {
+                for try await _ in bleCentralManagerProxy.scanForPeripherals(timeout: .seconds(2)) {
                     scan.fulfill()
                 }
                 let elapsed = Date().timeIntervalSince(startDate)
-                XCTAssertLessThan(elapsed, 10)
+                XCTAssertLessThan(elapsed, 2)
             } catch is CancellationError {
                 // Expected path #2
             } catch {

@@ -112,7 +112,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp], timeout: 6.0)
+        wait(for: [writeExp], timeout: 2.0)
     }
     
     func testWriteWithoutResponseFailDueToDiscoverServiceTimeout() throws {
@@ -121,12 +121,12 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover service timeout
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(4)
         // Test characteristic write
         let writeExp = expectation(description: "waiting for characteristic write to fail")
         bleBufferProxy.writeWithoutResponse (
             value: Data([0x00, 0x01, 0x02, 0x03]),
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { result in
             switch result {
                 case .success:
@@ -145,7 +145,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp,], timeout: 4.0)
+        wait(for: [writeExp,], timeout: 2.0)
     }
     
     func testWriteWithoutResponseFailDueToDiscoverCharacteristicTimeout() throws {
@@ -154,12 +154,12 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover characteristic timeout
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(4)
         // Test characteristic write
         let writeExp = expectation(description: "waiting for characteristic write to fail")
         bleBufferProxy.writeWithoutResponse (
             value: Data([0x00, 0x01, 0x02, 0x03]),
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { result in
             switch result {
                 case .success:
@@ -178,7 +178,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
             }
         }
         // Await expectations
-        wait(for: [writeExp], timeout: 4.0)
+        wait(for: [writeExp], timeout: 2.0)
     }
     
 }
@@ -224,12 +224,12 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover service timeout
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(4)
         // Test characteristic write
         do {
             try await bleBufferProxy.writeWithoutResponse (
                 value: Data([0x00, 0x01, 0x02, 0x03]),
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
             XCTAssertEqual(serviceUUID, MockBleDescriptor.customServiceUUID)
@@ -249,7 +249,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         do {
             try await bleBufferProxy.writeWithoutResponse (
                 value: Data([0x00, 0x01, 0x02, 0x03]),
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
             XCTFail("characteristic write was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.bufferCharacteristicUUID)
@@ -264,7 +264,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock delay
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(2)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .milliseconds(500)
         // Begin test
         let proxy: MockCharacteristicBufferProxy! = bleBufferProxy
         let started = XCTestExpectation(description: "Task started")
@@ -295,7 +295,7 @@ extension BleCharacteristicWriteWithoutResponseProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock delay
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(2)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .milliseconds(500)
         // Begin test
         let proxy: MockCharacteristicBufferProxy! = bleBufferProxy
         let started = XCTestExpectation(description: "Task started")

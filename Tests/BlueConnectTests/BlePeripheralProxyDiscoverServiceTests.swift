@@ -255,7 +255,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         let publisherExp = expectation(description: "waiting for service discovery NOT to be signaled by publisher")
         publisherExp.isInverted = true
         // Mock discovery timeout
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(4)
         // Test publisher not called
         let subscription = blePeripheralProxy_1.didDiscoverServicesPublisher
             .receive(on: DispatchQueue.main)
@@ -263,7 +263,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             serviceUUID: MockBleDescriptor.heartRateServiceUUID,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -285,10 +285,10 @@ extension BlePeripheralProxyDiscoverServiceTests {
             }
         }
         // Await expectations
-        wait(for: [discoveryExp, publisherExp], timeout: 4.0)
+        wait(for: [discoveryExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testDiscoverServiceFailDueToError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -307,7 +307,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         // Test discovery on callback
         blePeripheralProxy_1.discover(
             serviceUUID: MockBleDescriptor.heartRateServiceUUID,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -329,17 +329,17 @@ extension BlePeripheralProxyDiscoverServiceTests {
             }
         }
         // Await expectations
-        wait(for: [discoveryExp, publisherExp], timeout: 4.0)
+        wait(for: [discoveryExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testDiscoverServiceFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discovery delay
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(2)
+        try blePeripheral_1.delayOnDiscoverServices = .milliseconds(500)
         // Test discovery failure
         let expectation = expectation(description: "waiting for service discovery to fail")
         blePeripheralProxy_1.discover(
@@ -364,9 +364,9 @@ extension BlePeripheralProxyDiscoverServiceTests {
         // Destroy the proxy
         blePeripheralProxy_1 = nil
         // Await expectations
-        wait(for: [expectation], timeout: 4.0)
+        wait(for: [expectation], timeout: 2.0)
     }
-    
+
 }
 
 // MARK: - Discover service tests (async)
@@ -412,12 +412,12 @@ extension BlePeripheralProxyDiscoverServiceTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discovery timeout
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(4)
         // Test timeout
         do {
             try await blePeripheralProxy_1.discover(
                 serviceUUID: MockBleDescriptor.heartRateServiceUUID,
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
         } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
             XCTAssertEqual(serviceUUID, MockBleDescriptor.heartRateServiceUUID)
             XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
@@ -438,7 +438,7 @@ extension BlePeripheralProxyDiscoverServiceTests {
         do {
             try await blePeripheralProxy_1.discover(
                 serviceUUID: MockBleDescriptor.heartRateServiceUUID,
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
         } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
             XCTAssertEqual(serviceUUID, MockBleDescriptor.heartRateServiceUUID)
             XCTAssertNil(blePeripheralProxy_1.getService(MockBleDescriptor.heartRateServiceUUID))
@@ -447,14 +447,14 @@ extension BlePeripheralProxyDiscoverServiceTests {
             XCTFail("service discovery was expected to fail with BlePeripheralProxyError 'serviceNotFound', got '\(error)' instead")
         }
     }
-    
+
     func testDiscoverServiceFailDueToTaskCancellationAsync() async throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock delay
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(2)
+        try blePeripheral_1.delayOnDiscoverServices = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralProxy! = blePeripheralProxy_1
         let started = XCTestExpectation(description: "Task started")

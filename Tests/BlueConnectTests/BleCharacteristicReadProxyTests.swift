@@ -175,7 +175,7 @@ extension BleCharacteristicReadProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock read timeout
-        try blePeripheral_1.delayOnRead = .seconds(10)
+        try blePeripheral_1.delayOnRead = .seconds(4)
         // Test characteristic read
         let readExp = expectation(description: "waiting for characteristic read to fail")
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
@@ -186,7 +186,7 @@ extension BleCharacteristicReadProxyTests {
             .sink { _ in publisherExp.fulfill() }
         bleSerialNumberProxy.read(
             cachePolicy: .never,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { result in
             switch result {
                 case .success:
@@ -205,7 +205,7 @@ extension BleCharacteristicReadProxyTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 4.0)
+        wait(for: [readExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
     
@@ -215,7 +215,7 @@ extension BleCharacteristicReadProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover service timeout
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(4)
         // Test characteristic read
         let readExp = expectation(description: "waiting for characteristic read to fail")
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
@@ -226,7 +226,7 @@ extension BleCharacteristicReadProxyTests {
             .sink { _ in publisherExp.fulfill() }
         bleSerialNumberProxy.read(
             cachePolicy: .never,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { result in
             switch result {
                 case .success:
@@ -245,7 +245,7 @@ extension BleCharacteristicReadProxyTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 4.0)
+        wait(for: [readExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
     
@@ -255,7 +255,7 @@ extension BleCharacteristicReadProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover characteristic timeout
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(4)
         // Test characteristic read
         let readExp = expectation(description: "waiting for characteristic read to fail")
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
@@ -266,7 +266,7 @@ extension BleCharacteristicReadProxyTests {
             .sink { _ in publisherExp.fulfill() }
         bleSerialNumberProxy.read(
             cachePolicy: .never,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { result in
             switch result {
                 case .success:
@@ -285,7 +285,7 @@ extension BleCharacteristicReadProxyTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 4.0)
+        wait(for: [readExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
     
@@ -347,10 +347,10 @@ extension BleCharacteristicReadProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock read timeout
-        try blePeripheral_1.delayOnRead = .seconds(10)
+        try blePeripheral_1.delayOnRead = .seconds(4)
         // Test characteristic read
         do {
-            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .milliseconds(500))
             XCTFail("characteristic read was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.readTimeout(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
@@ -365,10 +365,10 @@ extension BleCharacteristicReadProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover service timeout
-        try blePeripheral_1.delayOnDiscoverServices = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverServices = .seconds(4)
         // Test characteristic read
         do {
-            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .milliseconds(500))
             XCTFail("characteristic read was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.serviceNotFound(let serviceUUID) {
             XCTAssertEqual(serviceUUID, MockBleDescriptor.deviceInformationServiceUUID)
@@ -383,10 +383,10 @@ extension BleCharacteristicReadProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock discover characteristic timeout
-        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(10)
+        try blePeripheral_1.delayOnDiscoverCharacteristics = .seconds(4)
         // Test characteristic read
         do {
-            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .seconds(2))
+            _ = try await bleSerialNumberProxy.read(cachePolicy: .never, timeout: .milliseconds(500))
             XCTFail("characteristic read was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.characteristicNotFound(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
@@ -401,7 +401,7 @@ extension BleCharacteristicReadProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock delay
-        try blePeripheral_1.delayOnRead = .seconds(2)
+        try blePeripheral_1.delayOnRead = .milliseconds(500)
         // Begin test
         let proxy: MockCharacteristicSerialNumberProxy! = bleSerialNumberProxy
         let started = XCTestExpectation(description: "Task started")
@@ -430,7 +430,7 @@ extension BleCharacteristicReadProxyTests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock delay
-        try blePeripheral_1.delayOnRead = .seconds(2)
+        try blePeripheral_1.delayOnRead = .milliseconds(500)
         // Begin test
         let proxy: MockCharacteristicSerialNumberProxy! = bleSerialNumberProxy
         let started = XCTestExpectation(description: "Task started")

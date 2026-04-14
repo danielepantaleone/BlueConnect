@@ -112,7 +112,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock read delay
-        try blePeripheral_1.delayOnRead = .seconds(2)
+        try blePeripheral_1.delayOnRead = .milliseconds(500)
         // Test characteristic read
         let readExp = expectation(description: "waiting for characteristic to be read")
         readExp.expectedFulfillmentCount = 2
@@ -145,10 +145,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 4.0)
+        wait(for: [readExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testReadCharacteristicWithCacheAlwaysPolicy() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -269,7 +269,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         let mutable = characteristic as? CBMutableCharacteristic
         mutable?.value = "2.0.0".data(using: .utf8)
         // Wait to let cache expire
-        wait(.seconds(3))
+        wait(.milliseconds(600))
         // Test characteristic read
         let readExp = expectation(description: "waiting for characteristic to be read")
         let publisherExp = expectation(description: "waiting for characteristic update to be signaled by publisher due to cached value bypass")
@@ -281,7 +281,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         // Test multiple read on callback
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.firmwareRevisionCharacteristicUUID,
-            cachePolicy: .timeSensitive(.seconds(2)),
+            cachePolicy: .timeSensitive(.milliseconds(500)),
             timeout: .never
         ) { [weak self] result in
             guard let self else { return }
@@ -298,10 +298,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 6.0)
+        wait(for: [readExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testReadCharacteristicFailDueToPeripheralDisconnected() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -455,7 +455,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock read timeout
-        try blePeripheral_1.delayOnRead = .seconds(10)
+        try blePeripheral_1.delayOnRead = .seconds(4)
         // Test characteristic read
         let readExp = expectation(description: "waiting for characteristic read to fail")
         let publisherExp = expectation(description: "waiting for characteristic update NOT to be signaled by publisher")
@@ -469,7 +469,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         blePeripheralProxy_1.read(
             characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
             cachePolicy: .never,
-            timeout: .seconds(2)
+            timeout: .milliseconds(500)
         ) { [weak self] result in
             guard let self else { return }
             switch result {
@@ -491,10 +491,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 4.0)
+        wait(for: [readExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testReadCharacteristicFailDueToError() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -540,10 +540,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 4.0)
+        wait(for: [readExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testReadCharacteristicFailDueToNilData() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -592,10 +592,10 @@ extension BlePeripheralProxyReadCharacteristicTests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 4.0)
+        wait(for: [readExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
-    
+
     func testReadCharacteristicFailDueToProxyDestroyed() throws {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
@@ -606,7 +606,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock read delay
-        try blePeripheral_1.delayOnRead = .seconds(2)
+        try blePeripheral_1.delayOnRead = .milliseconds(500)
         // Test read to fail
         let expectation = expectation(description: "waiting for characteristic read to fail")
         blePeripheralProxy_1.read(
@@ -632,9 +632,9 @@ extension BlePeripheralProxyReadCharacteristicTests {
         // Destroy the proxy
         blePeripheralProxy_1 = nil
         // Await expectations
-        wait(for: [expectation], timeout: 4.0)
+        wait(for: [expectation], timeout: 2.0)
     }
-    
+
 }
 
 // MARK: - Read characteristic tests (async)
@@ -750,13 +750,13 @@ extension BlePeripheralProxyReadCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock read timeout
-        try blePeripheral_1.delayOnRead = .seconds(10)
+        try blePeripheral_1.delayOnRead = .seconds(4)
         // Test read to fail
         do {
             _ = try await blePeripheralProxy_1.read(
                 characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID,
                 cachePolicy: .never,
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
             XCTFail("characteristic read was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.readTimeout(let characteristicUUID) {
             XCTAssertEqual(characteristicUUID, MockBleDescriptor.serialNumberCharacteristicUUID)
@@ -832,7 +832,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock delay
-        try blePeripheral_1.delayOnRead = .seconds(2)
+        try blePeripheral_1.delayOnRead = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralProxy! = blePeripheralProxy_1
         let started = XCTestExpectation(description: "Task started")
@@ -868,7 +868,7 @@ extension BlePeripheralProxyReadCharacteristicTests {
         // Discover the characteristic
         discover(characteristicUUID: MockBleDescriptor.serialNumberCharacteristicUUID, in: MockBleDescriptor.deviceInformationServiceUUID, on: blePeripheralProxy_1)
         // Mock delay
-        try blePeripheral_1.delayOnRead = .seconds(2)
+        try blePeripheral_1.delayOnRead = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralProxy! = blePeripheralProxy_1
         let started = XCTestExpectation(description: "Task started")

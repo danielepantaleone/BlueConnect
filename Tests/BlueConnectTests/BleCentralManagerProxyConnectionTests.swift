@@ -110,7 +110,7 @@ extension BleCentralManagerProxyConnectionTests {
         // Turn on ble central manager
         centralManager(state: .poweredOn)
         // Delay connection to mock connecting state
-        bleCentralManager.delayOnConnection = .seconds(4)
+        bleCentralManager.delayOnConnection = .milliseconds(500)
         // Test single emission on connection publisher
         let publisherExp = expectation(description: "waiting for peripheral connection to be signaled by publisher")
         // Test connection not to be emitted on publisher because already connected
@@ -134,7 +134,7 @@ extension BleCentralManagerProxyConnectionTests {
                     }
                 }
         }
-        wait(for: [connectExp, publisherExp], timeout: 6.0)
+        wait(for: [connectExp, publisherExp], timeout: 2.0)
         subscription.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .connected)
         XCTAssertEqual(bleCentralManagerProxy.connectionRegistry.subscriptions(with: try blePeripheral_1.identifier), [])
@@ -188,7 +188,7 @@ extension BleCentralManagerProxyConnectionTests {
         publisherExp.isInverted = true
         let connectionFailurePublisherExp = expectation(description: "waiting for connection failure publisher to be called")
         // Mock connection delay
-        bleCentralManager.delayOnConnection = .seconds(4)
+        bleCentralManager.delayOnConnection = .milliseconds(500)
         // Test publisher not called
         let subscription1 = bleCentralManagerProxy.didConnectPublisher
             .receive(on: DispatchQueue.main)
@@ -232,11 +232,11 @@ extension BleCentralManagerProxyConnectionTests {
             }
         }
         // Wait for the async block in the BLE central manager connect method to kick in.
-        wait(.seconds(1))
+        wait(.milliseconds(100))
         // Turn off ble central manager
         centralManager(state: .poweredOff)
         // Await expectations
-        wait(for: [connectExp, connectionFailurePublisherExp, publisherExp], timeout: 4.0)
+        wait(for: [connectExp, connectionFailurePublisherExp, publisherExp], timeout: 2.0)
         subscription1.cancel()
         subscription2.cancel()
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
@@ -253,7 +253,7 @@ extension BleCentralManagerProxyConnectionTests {
         publisherExp.isInverted = true
         let connectionFailurePublisherExp = expectation(description: "waiting for connection failure publisher to be called")
         // Mock connection timeout
-        bleCentralManager.delayOnConnection = .seconds(10)
+        bleCentralManager.delayOnConnection = .seconds(4)
         // Test publisher not called
         let subscription1 = bleCentralManagerProxy.didConnectPublisher
             .receive(on: DispatchQueue.main)
@@ -275,7 +275,7 @@ extension BleCentralManagerProxyConnectionTests {
         bleCentralManagerProxy.connect(
             peripheral: try blePeripheral_1,
             options: nil,
-            timeout: .seconds(2)) { result in
+            timeout: .milliseconds(500)) { result in
                 switch result {
                     case .success:
                         XCTFail("peripheral connection was expected to fail but succeeded instead")
@@ -291,7 +291,7 @@ extension BleCentralManagerProxyConnectionTests {
                         connectExp.fulfill()
                 }
             }
-        wait(for: [connectExp, publisherExp, connectionFailurePublisherExp], timeout: 4.0)
+        wait(for: [connectExp, publisherExp, connectionFailurePublisherExp], timeout: 2.0)
         // Assert final peripheral state
         subscription1.cancel()
         subscription2.cancel()
@@ -339,7 +339,7 @@ extension BleCentralManagerProxyConnectionTests {
                 }
             }
         // Wait for expectation fulfillment
-        wait(for: [connectExp, connectionPublisherExp, connectionFailurePublisherExp], timeout: 4.0)
+        wait(for: [connectExp, connectionPublisherExp, connectionFailurePublisherExp], timeout: 2.0)
         // Assert final peripheral state
         subscription1.cancel()
         subscription2.cancel()
@@ -391,13 +391,13 @@ extension BleCentralManagerProxyConnectionTests {
         // Assert initial peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         // Mock connection timeout
-        bleCentralManager.delayOnConnection = .seconds(10)
+        bleCentralManager.delayOnConnection = .seconds(4)
         // Test timeout
         do {
             try await bleCentralManagerProxy.connect(
                 peripheral: try blePeripheral_1,
                 options: nil,
-                timeout: .seconds(2))
+                timeout: .milliseconds(500))
         } catch BleCentralManagerProxyError.connectionTimeout {
             XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         } catch {
@@ -432,7 +432,7 @@ extension BleCentralManagerProxyConnectionTests {
         // Assert initial peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         // Mock connection delay
-        bleCentralManager.delayOnConnection = .seconds(2)
+        bleCentralManager.delayOnConnection = .milliseconds(500)
         // Begin test
         let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
         let peripheral: BlePeripheral = try blePeripheral_1
@@ -462,7 +462,7 @@ extension BleCentralManagerProxyConnectionTests {
         // Assert initial peripheral state
         XCTAssertEqual(try blePeripheral_1.state, .disconnected)
         // Mock connection delay
-        bleCentralManager.delayOnConnection = .seconds(2)
+        bleCentralManager.delayOnConnection = .milliseconds(500)
         // Begin test
         let proxy: BleCentralManagerProxy! = bleCentralManagerProxy
         let peripheral: BlePeripheral = try blePeripheral_1

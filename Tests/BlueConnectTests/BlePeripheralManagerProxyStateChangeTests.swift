@@ -68,7 +68,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         blePeripheralManager.state = .poweredOn
         // Await state change.
         let expectation = expectation(description: "waiting for peripheral manager to be ready")
-        blePeripheralManagerProxy.waitUntilReady(timeout: .seconds(1)) { [weak self] result in
+        blePeripheralManagerProxy.waitUntilReady(timeout: .milliseconds(500)) { [weak self] result in
             guard let self else { return }
             switch result {
                 case .success:
@@ -79,7 +79,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadySuccessWithPeripheralManagerAlreadyPoweredOn() throws {
@@ -98,7 +98,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToUnauthorized() throws {
@@ -126,7 +126,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToUnsupported() throws {
@@ -154,7 +154,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToTimeout() throws {
@@ -163,7 +163,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         peripheralManager(state: .resetting)
         // Await state change.
         let expectation = expectation(description: "waiting for peripheral manager NOT to be ready")
-        blePeripheralManagerProxy.waitUntilReady(timeout: .seconds(1)) { [weak self] result in
+        blePeripheralManagerProxy.waitUntilReady(timeout: .milliseconds(500)) { [weak self] result in
             guard let self else { return }
             switch result {
                 case .success:
@@ -183,7 +183,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
             }
         }
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToPeripheralManagerGoingUnauthorized() throws {
@@ -215,7 +215,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         // Go unauthorized.
         peripheralManager(state: .unauthorized)
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
     func testWaitUntilReadyFailDueToPeripheralManagerGoingUnsupported() throws {
@@ -247,7 +247,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         // Go unsupported.
         peripheralManager(state: .unsupported)
         // Await expectation fullfilment.
-        wait(for: [expectation], timeout: 2.0)
+        wait(for: [expectation], timeout: 1.0)
     }
     
 }
@@ -261,7 +261,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         // Turn it on.
         blePeripheralManager.state = .poweredOn
         do {
-            try await blePeripheralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await blePeripheralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch {
             XCTFail("waiting for peripheral manager to be ready failed with error: \(error)")
         }
@@ -274,7 +274,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         peripheralManager(state: .poweredOn)
         // Await state change (even if already changed).
         do {
-            try await blePeripheralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await blePeripheralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch {
             XCTFail("waiting for peripheral manager to be ready failed with error: \(error)")
         }
@@ -287,7 +287,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         peripheralManager(state: .unauthorized)
         // Await state change failure.
         do {
-            try await blePeripheralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await blePeripheralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch BlePeripheralManagerProxyError.invalidState(let state) {
             XCTAssertEqual(state, .unauthorized)
             XCTAssertEqual(blePeripheralManagerProxy.waitUntilReadyRegistry.subscriptions(), [])
@@ -301,7 +301,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         peripheralManager(state: .unsupported)
         // Await state change failure.
         do {
-            try await blePeripheralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await blePeripheralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch BlePeripheralManagerProxyError.invalidState(let state) {
             XCTAssertEqual(state, .unsupported)
             XCTAssertEqual(blePeripheralManagerProxy.waitUntilReadyRegistry.subscriptions(), [])
@@ -315,7 +315,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         peripheralManager(state: .resetting)
         // Await state change failure.
         do {
-            try await blePeripheralManagerProxy.waitUntilReady(timeout: .seconds(1))
+            try await blePeripheralManagerProxy.waitUntilReady(timeout: .milliseconds(500))
         } catch BlePeripheralManagerProxyError.readyTimeout {
             XCTAssertEqual(blePeripheralManagerProxy.waitUntilReadyRegistry.subscriptions(), [])
         } catch {
@@ -330,7 +330,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         let task = Task {
             started.fulfill() // Signal that the task has started
             do {
-                try await proxy.waitUntilReady(timeout: .seconds(2))
+                try await proxy.waitUntilReady(timeout: .milliseconds(500))
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
                 XCTAssertEqual(proxy.waitUntilReadyRegistry.subscriptions(), [])
@@ -354,7 +354,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         let task1 = Task {
             started.fulfill() // Signal that the first task has started
             do {
-                try await proxy.waitUntilReady(timeout: .seconds(2))
+                try await proxy.waitUntilReady(timeout: .milliseconds(500))
                 XCTFail("Expected task to be cancelled, but it succeeded")
             } catch is CancellationError {
                 // Expected path
@@ -365,7 +365,7 @@ extension BlePeripheralManagerProxyStateChangeTests {
         let task2 = Task {
             started.fulfill() // Signal that the second task has started
             do {
-                try await proxy.waitUntilReady(timeout: .seconds(2))
+                try await proxy.waitUntilReady(timeout: .milliseconds(500))
                 XCTFail("Expected task to raise readyTimeout, but it succeeded")
             } catch is CancellationError {
                 XCTFail("Test failed due to cancellation of second task")

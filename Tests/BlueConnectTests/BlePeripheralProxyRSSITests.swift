@@ -173,7 +173,7 @@ extension BlePeripheralProxyRSSITests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock read timeout
-        try blePeripheral_1.delayOnRSSI = .seconds(10)
+        try blePeripheral_1.delayOnRSSI = .seconds(4)
         // Test RSSI update on the publisher
         let readExp = expectation(description: "waiting for peripheral RSSI read to fail")
         let publisherExp = expectation(description: "waiting for peripheral RSSI update NOT to be signaled by publisher")
@@ -183,7 +183,7 @@ extension BlePeripheralProxyRSSITests {
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
         // Test read on callback
-        blePeripheralProxy_1.readRSSI(timeout: .seconds(2)) { [weak self] result in
+        blePeripheralProxy_1.readRSSI(timeout: .milliseconds(500)) { [weak self] result in
             guard let self else { return }
             switch result {
                 case .success:
@@ -203,7 +203,7 @@ extension BlePeripheralProxyRSSITests {
             }
         }
         // Await expectations
-        wait(for: [readExp, publisherExp], timeout: 4.0)
+        wait(for: [readExp, publisherExp], timeout: 2.0)
         subscription.cancel()
     }
 
@@ -223,7 +223,7 @@ extension BlePeripheralProxyRSSITests {
             .receive(on: DispatchQueue.main)
             .sink { _ in publisherExp.fulfill() }
         // Test read on callback
-        blePeripheralProxy_1.readRSSI(timeout: .seconds(2)) { [weak self] result in
+        blePeripheralProxy_1.readRSSI(timeout: .milliseconds(500)) { [weak self] result in
             guard let self else { return }
             switch result {
                 case .success:
@@ -273,7 +273,7 @@ extension BlePeripheralProxyRSSITests {
         // Destroy the proxy
         blePeripheralProxy_1 = nil
         // Await expectations
-        wait(for: [expectation], timeout: 4.0)
+        wait(for: [expectation], timeout: 2.0)
     }
 
 }
@@ -336,10 +336,10 @@ extension BlePeripheralProxyRSSITests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock read timeout
-        try blePeripheral_1.delayOnRSSI = .seconds(10)
+        try blePeripheral_1.delayOnRSSI = .seconds(4)
         // Test read to fail
         do {
-            _ = try await blePeripheralProxy_1.readRSSI(timeout: .seconds(2))
+            _ = try await blePeripheralProxy_1.readRSSI(timeout: .milliseconds(500))
             XCTFail("peripheral RSSI read was expected to fail but succeeded instead")
         } catch BlePeripheralProxyError.rssiReadTimeout {
             XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
@@ -357,7 +357,7 @@ extension BlePeripheralProxyRSSITests {
         try blePeripheral_1.errorOnRSSI = MockBleError.mockedError
         // Test read to fail
         do {
-            _ = try await blePeripheralProxy_1.readRSSI(timeout: .seconds(2))
+            _ = try await blePeripheralProxy_1.readRSSI(timeout: .milliseconds(500))
             XCTFail("peripheral RSSI read was expected to fail but succeeded instead")
         } catch MockBleError.mockedError {
             XCTAssertEqual(blePeripheralProxy_1.rssiReadRegistry.subscriptions(), [])
@@ -372,7 +372,7 @@ extension BlePeripheralProxyRSSITests {
         // Connect the peripheral
         connect(peripheral: try blePeripheral_1)
         // Mock delay
-        try blePeripheral_1.delayOnRSSI = .seconds(2)
+        try blePeripheral_1.delayOnRSSI = .milliseconds(500)
         // Begin test
         let proxy: BlePeripheralProxy! = blePeripheralProxy_1
         let started = XCTestExpectation(description: "Task started")
