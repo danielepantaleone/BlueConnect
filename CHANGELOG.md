@@ -5,6 +5,8 @@ Release Notes
 
 - Explicit conformance to Sendable for CoreBluetooth specific types [5618a4d](https://github.com/danielepantaleone/BlueConnect/commit/5618a4d588287726ae607adc066a7682cee8f0d1)
 - Replace registry timeout timer using Swift concurrency task [eb8b487](https://github.com/danielepantaleone/BlueConnect/commit/eb8b487c7e367f04afb98cb6c33e5edc33b12794)
+- Reduced test duration by half
+- Drop Cocoapods support
 
 Released Apr 14, 2026
 
