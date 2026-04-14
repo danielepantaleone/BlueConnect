@@ -104,8 +104,16 @@ public protocol BlePeripheral: AnyObject, Sendable {
 
 #if $RetroactiveAttribute
 extension CBPeripheral: @retroactive @unchecked Sendable { }
+extension CBCharacteristic: @retroactive @unchecked Sendable { }
+extension CBService: @retroactive @unchecked Sendable { }
+extension CBDescriptor: @retroactive @unchecked Sendable { }
+extension CBUUID: @retroactive @unchecked Sendable { }
 #else
 extension CBPeripheral: @unchecked Sendable { }
+extension CBCharacteristic: @unchecked Sendable { }
+extension CBService: @unchecked Sendable { }
+extension CBDescriptor: @unchecked Sendable { }
+extension CBUUID: @unchecked Sendable { }
 #endif
 
 extension CBPeripheral: BlePeripheral {
