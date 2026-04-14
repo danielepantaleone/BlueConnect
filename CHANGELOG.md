@@ -1,18 +1,25 @@
 Release Notes
 =============
 
-Released Sep 8, 2025
+## 1.6.0
+
+- Explicit conformance to Sendable for CoreBluetooth specific types [5618a4d](https://github.com/danielepantaleone/BlueConnect/commit/5618a4d588287726ae607adc066a7682cee8f0d1)
+- Replace registry timeout timer using Swift concurrency task [eb8b487](https://github.com/danielepantaleone/BlueConnect/commit/eb8b487c7e367f04afb98cb6c33e5edc33b12794)
+
+Released Apr 14, 2026
 
 ## 1.5.1
 
 - Fix not starting connection timeout for already connecting peripherals [41b29cb](https://github.com/danielepantaleone/BlueConnect/commit/41b29cb66ee59292a1032d71c6a71d61e732aea9)
 
-Released Aug 16, 2025
+Released Sep 8, 2025
 
 ## 1.5.0
 
 - Provide swift task cancellation support [#6](https://github.com/danielepantaleone/BlueConnect/pull/6)
 - Removed asynchronous isNotifying signature from BLE peripheral proxy [a5cace9](https://github.com/danielepantaleone/BlueConnect/commit/a5cace9d58020766bb234fcc2de0ff22d8566249)
+
+Released Aug 16, 2025
 
 ## 1.4.6
 
