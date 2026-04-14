@@ -47,15 +47,23 @@ extension BlePeripheralProxy {
     ///   - timeout: The timeout for the characteristic read operation. This is ignored if the value is fetched from the cache. Defaults to 10 seconds.
     ///   - callback: A closure that is executed when the read operation completes. The closure is passed a `Result` containing the characteristic's data or an error if the read fails.
     ///
-    /// - Note: The read operation will only occur if no other read for the same characteristic is already in progress. Multiple simultaneous read requests for the same characteristic will not trigger multiple read operations.
+    /// - Note: The read operation will only occur if no other read for the same characteristic is already in progress.
+    /// Multiple simultaneous read requests for the same characteristic will not trigger multiple read operations.
     public func read(
         characteristicUUID: CBUUID,
         cachePolicy: BlePeripheralCachePolicy = .never,
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<Data, Error>) -> Void
     ) {
-        let subscription = buildSubscription(characteristicUUID: characteristicUUID, timeout: timeout, callback: callback)
-        read(characteristicUUID: characteristicUUID, cachePolicy: cachePolicy, subscription: subscription)
+        read(
+            characteristicUUID: characteristicUUID,
+            cachePolicy: cachePolicy,
+            subscription: buildSubscription(
+                characteristicUUID: characteristicUUID,
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Reads the value of a characteristic.
@@ -65,7 +73,8 @@ extension BlePeripheralProxy {
     ///
     /// - Parameters:
     ///   - characteristicUUID: The UUID of the characteristic to read.
-    ///   - cachePolicy: The cache policy dictating whether to fetch the value from the peripheral or use cached data. Defaults to `.never`, meaning fresh data is read directly from the peripheral.
+    ///   - cachePolicy: The cache policy dictating whether to fetch the value from the peripheral or use cached data.
+    ///   Defaults to `.never`, meaning fresh data is read directly from the peripheral.
     ///   - timeout: The timeout duration for the read operation. Ignored if fetching from cache. Defaults to 10 seconds.
     ///
     /// - Returns: The characteristic data as `Data`.
@@ -118,7 +127,14 @@ extension BlePeripheralProxy {
             callback: callback,
             timeout: timeout,
             timeoutHandler: { [weak self] subscription in
-                self?.characteristicReadRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.readTimeout(characteristicUUID: characteristicUUID)))
+                self?.characteristicReadRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BlePeripheralProxyError.readTimeout(
+                            characteristicUUID: characteristicUUID
+                        )
+                    )
+                )
             }
         )
     }

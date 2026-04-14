@@ -90,10 +90,10 @@ public class BleCentralManagerProxy: NSObject, @unchecked Sendable {
     var connectionState: [UUID: CBPeripheralState] = [:]
     var connectionTimeouts: Set<UUID> = []
     var connectionCanceled: Set<UUID> = []
-    let connectionRegistry: KeyedRegistry<UUID, Void> = .init()
-    let disconnectionRegistry: KeyedRegistry<UUID, Void> = .init()
-    let waitUntilReadyRegistry: ListRegistry<Void> = .init()
-   
+    let connectionRegistry = KeyedRegistry<UUID, Void>()
+    let disconnectionRegistry = KeyedRegistry<UUID, Void>()
+    let waitUntilReadyRegistry = ListRegistry<Void>()
+
     var discoverTimer: DispatchSourceTimer?
     var discoverSubject: PassthroughSubject<(
         peripheral: BlePeripheral,
@@ -101,12 +101,12 @@ public class BleCentralManagerProxy: NSObject, @unchecked Sendable {
         RSSI: Int), Error>?
     let lock = NSRecursiveLock()
     
-    let didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
-    let didConnectSubject: PassthroughSubject<BlePeripheral, Never> = .init()
-    let didDisconnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error?), Never> = .init()
-    let didFailToConnectSubject: PassthroughSubject<(peripheral: BlePeripheral, error: Error), Never> = .init()
-    let willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
-    
+    let didUpdateStateSubject =  PassthroughSubject<CBManagerState, Never>()
+    let didConnectSubject =  PassthroughSubject<BlePeripheral, Never>()
+    let didDisconnectSubject =  PassthroughSubject<(peripheral: BlePeripheral, error: Error?), Never>()
+    let didFailToConnectSubject =  PassthroughSubject<(peripheral: BlePeripheral, error: Error), Never>()
+    let willRestoreStateSubject =  PassthroughSubject<[String: Any], Never>()
+
     // MARK: - Initialization
     
     /// Unavailable initializer.

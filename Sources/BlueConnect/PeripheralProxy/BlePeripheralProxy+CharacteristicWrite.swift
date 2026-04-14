@@ -63,8 +63,15 @@ extension BlePeripheralProxy {
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<Void, Error>) -> Void
     ) {
-        let subscription = buildSubscription(characteristicUUID: characteristicUUID, timeout: timeout, callback: callback)
-        write(data: data, to: characteristicUUID, subscription: subscription)
+        write(
+            data: data,
+            to: characteristicUUID,
+            subscription: buildSubscription(
+                characteristicUUID: characteristicUUID,
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Writes a value to a specific characteristic.
@@ -160,7 +167,14 @@ extension BlePeripheralProxy {
             callback: callback,
             timeout: timeout,
             timeoutHandler: { [weak self] subscription in
-                self?.characteristicWriteRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.writeTimeout(characteristicUUID: characteristicUUID)))
+                self?.characteristicWriteRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BlePeripheralProxyError.writeTimeout(
+                            characteristicUUID: characteristicUUID
+                        )
+                    )
+                )
             }
         )
     }

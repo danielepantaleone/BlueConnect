@@ -56,8 +56,12 @@ extension BlePeripheralProxy {
     ///   - timeout: The maximum time to wait for an RSSI read operation. Defaults to 10 seconds.
     ///   - callback: A closure that is called with the result of the RSSI read operation. The closure is passed a `Result` containing the RSSI value or an error if the read fails.
     public func readRSSI(timeout: DispatchTimeInterval = .seconds(10), callback: @escaping (Result<Int, Error>) -> Void = { _ in }) {
-        let subscription = buildSubscription(timeout: timeout, callback: callback)
-        readRSSI(subscription: subscription)
+        readRSSI(
+            subscription: buildSubscription(
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Reads the RSSI (Received Signal Strength Indicator) value of the peripheral.
@@ -137,7 +141,12 @@ extension BlePeripheralProxy {
             callback: callback,
             timeout: timeout,
             timeoutHandler: { [weak self] subscription in
-                self?.rssiReadRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.rssiReadTimeout))
+                self?.rssiReadRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BlePeripheralProxyError.rssiReadTimeout
+                    )
+                )
             }
         )
     }

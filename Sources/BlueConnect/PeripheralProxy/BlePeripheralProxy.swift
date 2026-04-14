@@ -95,21 +95,21 @@ public final class BlePeripheralProxy: NSObject, @unchecked Sendable {
     var rssiTimer: DispatchSourceTimer?
     let lock = NSRecursiveLock()
     
-    let characteristicReadRegistry: KeyedRegistry<CBUUID, Data> = .init()
-    let characteristicNotifyRegistry: KeyedRegistry<CBUUID, Bool> = .init()
-    let characteristicWriteRegistry: KeyedRegistry<CBUUID, Void> = .init()
-    let discoverCharacteristicRegistry: KeyedRegistry<CBUUID, CBCharacteristic> = .init()
-    let discoverServiceRegistry: KeyedRegistry<CBUUID, CBService> = .init()
-    let rssiReadRegistry: ListRegistry<Int> = .init()
+    let characteristicReadRegistry = KeyedRegistry<CBUUID, Data>()
+    let characteristicNotifyRegistry = KeyedRegistry<CBUUID, Bool>()
+    let characteristicWriteRegistry = KeyedRegistry<CBUUID, Void>()
+    let discoverCharacteristicRegistry = KeyedRegistry<CBUUID, CBCharacteristic>()
+    let discoverServiceRegistry = KeyedRegistry<CBUUID, CBService>()
+    let rssiReadRegistry = ListRegistry<Int>()
 
-    let didDiscoverCharacteristicsSubject: PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never> = .init()
-    let didDiscoverServicesSubject: PassthroughSubject<[CBService], Never> = .init()
-    let didUpdateNameSubject: PassthroughSubject<String?, Never> = .init()
-    let didUpdateNotificationStateSubject: PassthroughSubject<(characteristic: CBCharacteristic, enabled: Bool), Never> = .init()
-    let didUpdateRSSISubject: PassthroughSubject<Int, Never> = .init()
-    let didUpdateValueSubject: PassthroughSubject<(characteristic: CBCharacteristic, data: Data), Never> = .init()
-    let didWriteValueSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
-    
+    let didDiscoverCharacteristicsSubject = PassthroughSubject<(service: CBService, characteristics: [CBCharacteristic]), Never>()
+    let didDiscoverServicesSubject = PassthroughSubject<[CBService], Never>()
+    let didUpdateNameSubject = PassthroughSubject<String?, Never>()
+    let didUpdateNotificationStateSubject = PassthroughSubject<(characteristic: CBCharacteristic, enabled: Bool), Never>()
+    let didUpdateRSSISubject = PassthroughSubject<Int, Never>()
+    let didUpdateValueSubject = PassthroughSubject<(characteristic: CBCharacteristic, data: Data), Never>()
+    let didWriteValueSubject = PassthroughSubject<CBCharacteristic, Never>()
+
     // MARK: - Initialization
     
     /// Unavailable initializer.

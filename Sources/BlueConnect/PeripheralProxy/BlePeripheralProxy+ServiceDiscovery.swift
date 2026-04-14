@@ -49,8 +49,14 @@ extension BlePeripheralProxy {
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<CBService, Error>) -> Void
     ) {
-        let subscription = buildSubscription(serviceUUID: serviceUUID, timeout: timeout, callback: callback)
-        discover(serviceUUID: serviceUUID, subscription: subscription)
+        discover(
+            serviceUUID: serviceUUID,
+            subscription: buildSubscription(
+                serviceUUID: serviceUUID,
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Initiates the discovery of a set of services, or discovers all available services if `nil` is specified as `serviceUUIDs`.
@@ -59,16 +65,12 @@ extension BlePeripheralProxy {
     ///
     /// - Parameter serviceUUIDs: The UUIDs of the services to discover, or `nil` to discover all services on the peripheral.
     public func discover(serviceUUIDs: [CBUUID]?) {
-        
         lock.lock()
         defer { lock.unlock() }
-        
         guard peripheral.state == .connected else {
             return
         }
-        
         peripheral.discoverServices(serviceUUIDs)
-        
     }
     
     /// Initiates the discovery of a specific service by its UUID and returns the discovered service.
@@ -137,7 +139,14 @@ extension BlePeripheralProxy {
             callback: callback,
             timeout: timeout,
             timeoutHandler: { [weak self] subscription in
-                self?.discoverServiceRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.serviceNotFound(serviceUUID: serviceUUID)))
+                self?.discoverServiceRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BlePeripheralProxyError.serviceNotFound(
+                            serviceUUID: serviceUUID
+                        )
+                    )
+                )
             }
         )
     }

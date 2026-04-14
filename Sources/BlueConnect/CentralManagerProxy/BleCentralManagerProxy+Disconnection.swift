@@ -54,8 +54,13 @@ extension BleCentralManagerProxy {
     /// - Note: If the peripheral is already in a `.disconnected` state, the callback is immediately called with success.
     /// - Note: If the peripheral is already in the process of disconnecting (`.disconnecting` state), the method does not reinitiate the disconnection.
     public func disconnect(peripheral: BlePeripheral, callback: @escaping (Result<Void, Error>) -> Void = { _ in }) {
-        let subscription = buildSubscription(peripheral: peripheral, callback: callback)
-        disconnect(peripheral: peripheral, subscription: subscription)
+        disconnect(
+            peripheral: peripheral,
+            subscription: buildSubscription(
+                peripheral: peripheral,
+                callback: callback
+            )
+        )
     }
     
     /// Disconnects from a specified BLE peripheral asynchronously.

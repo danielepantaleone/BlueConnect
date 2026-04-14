@@ -51,33 +51,36 @@ extension BlePeripheralProxy {
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<CBCharacteristic, Error>) -> Void
     ) {
-        let subscription = buildSubscription(characteristicUUID: characteristicUUID, timeout: timeout, callback: callback)
-        discover(characteristicUUID: characteristicUUID, in: serviceUUID, subscription: subscription)
+        discover(
+            characteristicUUID: characteristicUUID,
+            in: serviceUUID,
+            subscription: buildSubscription(
+                characteristicUUID: characteristicUUID,
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Discover a set of characteristics for the provided service, or all available characteristics if `nil` is specified for `characteristicUUIDs`.
     ///
-    /// The discovered characteristics will trigger notifications via the `didDiscoverCharacteristicsPublisher`, which can be triggered multiple times.
-    /// If specific characteristics are not found, they will not be advertised, so using `discover(characteristicUUID:in:timeout:callback)` is recommended for specific use cases.
+    /// The discovered characteristics will trigger notifications via the `didDiscoverCharacteristicsPublisher`,
+    /// which can be triggered multiple times. If specific characteristics are not found, they will not be advertised, so using
+    /// `discover(characteristicUUID:in:timeout:callback)` is recommended for specific use cases.
     ///
     /// - Parameters:
     ///   - characteristicUUIDs: An array of UUIDs representing the characteristics to discover, or `nil` to discover all characteristics for the service.
     ///   - serviceUUID: The UUID of the service containing the characteristics.
     public func discover(characteristicUUIDs: [CBUUID]?, in serviceUUID: CBUUID) {
-  
         lock.lock()
         defer { lock.unlock() }
-        
         guard peripheral.state == .connected else {
             return
         }
-
         guard let service = getService(serviceUUID) else {
             return
         }
-        
         peripheral.discoverCharacteristics(characteristicUUIDs, for: service)
-        
     }
     
     /// Discover a specific characteristic for the provided service and returns the discovered characteristic.
@@ -166,7 +169,14 @@ extension BlePeripheralProxy {
             callback: callback,
             timeout: timeout,
             timeoutHandler: { [weak self] subscription in
-                self?.discoverCharacteristicRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.characteristicNotFound(characteristicUUID: characteristicUUID)))
+                self?.discoverCharacteristicRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BlePeripheralProxyError.characteristicNotFound(
+                            characteristicUUID: characteristicUUID
+                        )
+                    )
+                )
             }
         )
     }

@@ -109,19 +109,19 @@ public class BlePeripheralManagerProxy: NSObject, @unchecked Sendable {
     
     var advertisingMonitor: DispatchSourceTimer?
     let lock = NSRecursiveLock()
-    let startAdvertisingRegistry: ListRegistry<Void> = .init()
-    let stopAdvertisingRegistry: ListRegistry<Void> = .init()
-    let waitUntilReadyRegistry: ListRegistry<Void> = .init()
-    
-    let didUpdateStateSubject: PassthroughSubject<CBManagerState, Never> = .init()
-    let didUpdateAdvertisingSubject: PassthroughSubject<Bool, Never> = .init()
-    let didAddServiceSubject: PassthroughSubject<(service: CBService, error: Error?), Never> = .init()
-    let didSubscribeToCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
-    let didUnsubscribeFromCharacteristicSubject: PassthroughSubject<CBCharacteristic, Never> = .init()
-    let didReceiveReadRequestSubject: PassthroughSubject<CBATTRequest, Never> = .init()
-    let didReceiveWriteRequestsSubject: PassthroughSubject<[CBATTRequest], Never> = .init()
-    let isReadyToUpdateSubscribersSubject: PassthroughSubject<Void, Never> = .init()
-    let willRestoreStateSubject: PassthroughSubject<[String: Any], Never> = .init()
+    let startAdvertisingRegistry = ListRegistry<Void>()
+    let stopAdvertisingRegistry = ListRegistry<Void>()
+    let waitUntilReadyRegistry = ListRegistry<Void>()
+
+    let didUpdateStateSubject = PassthroughSubject<CBManagerState, Never>()
+    let didUpdateAdvertisingSubject = PassthroughSubject<Bool, Never>()
+    let didAddServiceSubject = PassthroughSubject<(service: CBService, error: Error?), Never>()
+    let didSubscribeToCharacteristicSubject = PassthroughSubject<CBCharacteristic, Never>()
+    let didUnsubscribeFromCharacteristicSubject = PassthroughSubject<CBCharacteristic, Never>()
+    let didReceiveReadRequestSubject = PassthroughSubject<CBATTRequest, Never>()
+    let didReceiveWriteRequestsSubject = PassthroughSubject<[CBATTRequest], Never>()
+    let isReadyToUpdateSubscribersSubject = PassthroughSubject<Void, Never>()
+    let willRestoreStateSubject = PassthroughSubject<[String: Any], Never>()
     
     // MARK: - Initialization
     

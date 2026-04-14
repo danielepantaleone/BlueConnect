@@ -54,8 +54,12 @@ extension BleCentralManagerProxy {
     ///   - timeout: The maximum duration to wait for the central manager to become ready. The default is `.never`, meaning no timeout.
     ///   - callback: A closure that receives a `Result` indicating either success, or failure if the central manager is unauthorized, unsupported, or if the timeout is exceeded.
     public func waitUntilReady(timeout: DispatchTimeInterval = .never, callback: @escaping ((Result<Void, Error>) -> Void)) {
-        let subscription = buildSubscription(timeout: timeout, callback: callback)
-        waitUntilReady(subscription: subscription)
+        waitUntilReady(
+            subscription: buildSubscription(
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Waits asynchronously until the central manager reaches the `.poweredOn` state, or throws an error if the state is `.unauthorized` or `.unsupported`.
@@ -113,7 +117,12 @@ extension BleCentralManagerProxy {
             callback: callback,
             timeout: timeout,
             timeoutHandler: { [weak self] subscription in
-                self?.waitUntilReadyRegistry.notify(subscription: subscription, value: .failure(BleCentralManagerProxyError.readyTimeout))
+                self?.waitUntilReadyRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BleCentralManagerProxyError.readyTimeout
+                    )
+                )
             }
         )
     }

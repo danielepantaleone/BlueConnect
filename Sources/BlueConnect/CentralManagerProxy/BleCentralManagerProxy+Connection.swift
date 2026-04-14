@@ -60,8 +60,15 @@ extension BleCentralManagerProxy {
         timeout: DispatchTimeInterval = .never,
         callback: @escaping (Result<Void, Error>) -> Void = { _ in }
     ) {
-        let subscription = buildSubscription(peripheral: peripheral, timeout: timeout, callback: callback)
-        connect(peripheral: peripheral, options: options, subscription: subscription)
+        connect(
+            peripheral: peripheral,
+            options: options,
+            subscription: buildSubscription(
+                peripheral: peripheral,
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Connects to a specified BLE peripheral asynchronously.
@@ -152,7 +159,12 @@ extension BleCentralManagerProxy {
                 // Notify only the subscription, the publisher is triggered by the the delegate.
                 // This is because when the timeout handler is executed, the subscription is removed
                 // from the registry hence we cannot execute the callback from the delegate.
-                self?.connectionRegistry.notify(subscription: subscription, value: .failure(BleCentralManagerProxyError.connectionTimeout))
+                self?.connectionRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BleCentralManagerProxyError.connectionTimeout
+                    )
+                )
             }
             
         })

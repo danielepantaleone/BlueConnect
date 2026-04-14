@@ -39,18 +39,17 @@ extension BlePeripheralProxy {
     /// Checks whether notification is enabled for a specific characteristic.
     ///
     /// This method verifies if the `isNotifying` flag is set for a characteristic on a connected peripheral.
-    /// If the peripheral is not connected, the characteristic is not found, or the characteristic does not support notifications, the method will throw the corresponding error via the callback.
+    /// If the peripheral is not connected, the characteristic is not found, or the characteristic does not support notifications,
+    /// the method will throw the corresponding error via the callback.
     ///
     /// - Parameter characteristicUUID: The UUID of the characteristic for which to check the notification state.
     /// - Returns: A boolean indicating whether notifying is enabled on the provided characteristic.
     /// - Throws: An error if the peripheral is not connected, the characteristic is not found, or the characteristic does not support notifications.
     public func isNotifying(characteristicUUID: CBUUID) throws -> Bool{
-        
         lock.lock()
         defer {
             lock.unlock()
         }
-
         guard peripheral.state == .connected else {
             throw BlePeripheralProxyError.peripheralNotConnected
         }
@@ -60,9 +59,7 @@ extension BlePeripheralProxy {
         guard characteristic.properties.contains(.notify) else {
             throw BlePeripheralProxyError.notifyNotSupported(characteristicUUID: characteristicUUID)
         }
-
         return characteristic.isNotifying
-        
     }
      
     /// Enables or disables notifications for a specific characteristic.
@@ -74,7 +71,8 @@ extension BlePeripheralProxy {
     ///   - enabled: `true` to enable notifications, `false` to disable notifications for the characteristic.
     ///   - characteristicUUID: The UUID of the characteristic for which to set the notification state.
     ///   - timeout: The timeout duration for the notification set operation. If the operation does not complete within this time, it will fail.
-    ///   - callback: A closure to execute when the characteristic notification state is updated. The closure receives a `Result` indicating success or failure, with the current notification state as a success value.
+    ///   - callback: A closure to execute when the characteristic notification state is updated. The closure receives a `Result` indicating
+    ///   success or failure, with the current notification state as a success value.
     ///
     /// - Note: If the desired notification state is already set, the method will immediately return the current state without performing any further operations.
     public func setNotify(
@@ -83,9 +81,15 @@ extension BlePeripheralProxy {
         timeout: DispatchTimeInterval = .seconds(10),
         callback: @escaping (Result<Bool, Error>) -> Void
     ) {
-        let subscription = buildSubscription(characteristicUUID: characteristicUUID, timeout: timeout, callback: callback)
-        setNotify(enabled: enabled, for: characteristicUUID, subscription: subscription)
-    
+        setNotify(
+            enabled: enabled,
+            for: characteristicUUID,
+            subscription: buildSubscription(
+                characteristicUUID: characteristicUUID,
+                timeout: timeout,
+                callback: callback
+            )
+        )
     }
     
     /// Enables or disables notifications for a specific characteristic.
@@ -149,7 +153,14 @@ extension BlePeripheralProxy {
             callback: callback,
             timeout: timeout,
             timeoutHandler: { [weak self] subscription in
-                self?.characteristicNotifyRegistry.notify(subscription: subscription, value: .failure(BlePeripheralProxyError.notifyTimeout(characteristicUUID: characteristicUUID)))
+                self?.characteristicNotifyRegistry.notify(
+                    subscription: subscription,
+                    value: .failure(
+                        BlePeripheralProxyError.notifyTimeout(
+                            characteristicUUID: characteristicUUID
+                        )
+                    )
+                )
             }
         )
     }
